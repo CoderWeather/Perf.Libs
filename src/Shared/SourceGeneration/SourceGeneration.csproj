@@ -5,6 +5,31 @@
         <LangVersion>preview</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <AssemblyName>Perf.SourceGeneration</AssemblyName>
+        <RootNamespace>Perf.SourceGeneration</RootNamespace>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
     </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="System.Text" />
+        <Using Include="System.Globalization" />
+        <Using Include="System.Collections.Immutable" />
+        <Using Include="System.Collections.Concurrent" />
+        <Using Include="System.CodeDom.Compiler" />
+        <Using Include="Microsoft.CodeAnalysis" />
+        <Using Include="Microsoft.CodeAnalysis.Text" />
+        <Using Include="Microsoft.CodeAnalysis.CSharp" />
+        <Using Include="Microsoft.CodeAnalysis.CSharp.Syntax" />
+        <Using Include="Perf.SourceGeneration.Internal" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0-1.final" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4-beta1.22362.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
 </Project>

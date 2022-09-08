@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7F85CEC3-3F2D-4B8D-B4F0-3506CF533024}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_globals", "_globals", "{2A1E6F4A-47BA-4B99-B6EB-D34C30B75DDF}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+		nuget-pack.sh = nuget-pack.sh
+		README.md = README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Xml", "Xml", "{F30F6269-7029-473C-BF71-2A77CFC46C8C}"
 EndProject
@@ -20,6 +25,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerfXml.Net6", "src\Xml\Per
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerfXml.Generator", "src\Xml\PerfXml.Generator\PerfXml.Generator.csproj", "{483B296B-AD98-4572-99EC-F077B795A1BB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceGeneration", "src\Shared\SourceGeneration\SourceGeneration.csproj", "{2A260FE2-723B-4737-9E38-89A501EBC0B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +43,8 @@ Global
 		{4B675B5C-7C6F-4592-9403-614A4AD88B64} = {F30F6269-7029-473C-BF71-2A77CFC46C8C}
 		{13D57801-2FB9-4A0F-A0B9-B0B264DFF006} = {F30F6269-7029-473C-BF71-2A77CFC46C8C}
 		{483B296B-AD98-4572-99EC-F077B795A1BB} = {F30F6269-7029-473C-BF71-2A77CFC46C8C}
+		{AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A} = {7F85CEC3-3F2D-4B8D-B4F0-3506CF533024}
+		{2A260FE2-723B-4737-9E38-89A501EBC0B5} = {AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{516175A8-D959-4438-9787-01611127C4C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -60,5 +71,9 @@ Global
 		{483B296B-AD98-4572-99EC-F077B795A1BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{483B296B-AD98-4572-99EC-F077B795A1BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{483B296B-AD98-4572-99EC-F077B795A1BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A260FE2-723B-4737-9E38-89A501EBC0B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A260FE2-723B-4737-9E38-89A501EBC0B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A260FE2-723B-4737-9E38-89A501EBC0B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A260FE2-723B-4737-9E38-89A501EBC0B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

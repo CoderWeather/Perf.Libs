@@ -29,9 +29,4 @@
         <PackageReference Include="System.Text.Json" Version="6.0.5" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="obj\Debug\net6.0" />
-      <Folder Include="obj\Debug\netstandard2.0" />
-    </ItemGroup>
-
 </Project>

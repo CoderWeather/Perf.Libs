@@ -24,9 +24,4 @@
         <None Include="../../LICENSE" Pack="true" PackagePath="" Visible="false" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="obj\Debug\net7.0" />
-      <Folder Include="obj\Debug\netstandard2.0" />
-    </ItemGroup>
-
 </Project>

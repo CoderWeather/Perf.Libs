@@ -46,9 +46,4 @@
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.2.0" PrivateAssets="all" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="bin\Debug\netstandard2.0" />
-      <Folder Include="obj\Debug\netstandard2.0" />
-    </ItemGroup>
-
 </Project>

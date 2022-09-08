@@ -28,8 +28,4 @@
         <ProjectReference Include="..\PerfXml\PerfXml.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="obj\Debug\net6.0" />
-    </ItemGroup>
-
 </Project>

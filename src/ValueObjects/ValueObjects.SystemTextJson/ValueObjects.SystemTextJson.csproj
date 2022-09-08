@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+        <LangVersion>10.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>Perf.ValueObjects</AssemblyName>
+        <RootNamespace>$(AssemblyName)</RootNamespace>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageId>PerfValueObjects.SystemTextJson</PackageId>
+        <Version>1.0.10</Version>
+        <Authors>Ilya Pogodin</Authors>
+        <Description>Simple source generator for type per value unique id types</Description>
+        <RepositoryUrl>https://github.com/CoderWeather/Perf.ValueObjects</RepositoryUrl>
+        <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+        <PackageTags>DDD valueobject c# perf sourcegen</PackageTags>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../../LICENSE" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="PerfValueObjects" Version="1.0.11" />
+        <PackageReference Include="System.Text.Json" Version="6.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="obj\Debug\net6.0" />
+      <Folder Include="obj\Debug\netstandard2.0" />
+    </ItemGroup>
+
+</Project>

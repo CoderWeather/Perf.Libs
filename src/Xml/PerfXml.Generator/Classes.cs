@@ -3,63 +3,64 @@
 namespace PerfXml.Generator;
 
 internal sealed class ClassGenInfo {
-	public readonly INamedTypeSymbol Symbol;
-	public readonly List<BaseMemberGenInfo> XmlAttributes = new();
-	public readonly List<BaseMemberGenInfo> XmlBodies = new();
-	public bool InheritedClassName = false;
-	public bool InheritedFromSerializable = false;
+    public readonly INamedTypeSymbol Symbol;
+    public readonly List<BaseMemberGenInfo> XmlAttributes = new();
+    public readonly List<BaseMemberGenInfo> XmlBodies = new();
 
-	public string? ClassName;
+    public string? ClassName;
+    public bool InheritedClassName = false;
+    public bool InheritedFromSerializable = false;
 
-	public ClassGenInfo(INamedTypeSymbol symbol) {
-		Symbol = symbol;
-	}
+    public ClassGenInfo(INamedTypeSymbol symbol) {
+        Symbol = symbol;
+    }
 
-	public string? AdditionalInheritanceMethodModifiers =>
-		InheritedFromSerializable
-			? " override"
-			: Symbol.IsSealed is false || Symbol.IsAbstract
-				? " virtual"
-				: null;
+    public string? AdditionalInheritanceMethodModifiers =>
+        InheritedFromSerializable
+            ? " override"
+            : Symbol.IsSealed is false || Symbol.IsAbstract
+                ? " virtual"
+                : null;
 }
 
 internal abstract class BaseMemberGenInfo {
-	public ISymbol Symbol { get; }
-	public ITypeSymbol OriginalType { get; }
-	public ITypeSymbol Type { get; }
+    public char? SplitChar;
+    public bool TypeIsSerializable;
 
-	public string TypeName =>
-		Type switch {
-			INamedTypeSymbol nts => nts.IsGenericType ? nts.ToString() : nts.Name,
-			ITypeParameterSymbol => Type.Name,
-			_                    => Type.ToString()
-		};
+    public string? XmlName;
 
-	public string? XmlName;
-	public char? SplitChar;
-	public bool TypeIsSerializable;
+    protected BaseMemberGenInfo(ISymbol symbol, ITypeSymbol type) {
+        Symbol = symbol;
+        Type = type;
+        OriginalType = Type.IsDefinition ? Type : Type.OriginalDefinition;
+    }
 
-	protected BaseMemberGenInfo(ISymbol symbol, ITypeSymbol type) {
-		Symbol = symbol;
-		Type = type;
-		OriginalType = Type.IsDefinition ? Type : Type.OriginalDefinition;
-	}
+    public ISymbol Symbol { get; }
+    public ITypeSymbol OriginalType { get; }
+    public ITypeSymbol Type { get; }
+
+    public string TypeName =>
+        Type switch {
+            INamedTypeSymbol nts => nts.IsGenericType ? nts.ToString() : nts.Name,
+            ITypeParameterSymbol => Type.Name,
+            _                    => Type.ToString()
+        };
 }
 
 internal sealed class FieldGenInfo : BaseMemberGenInfo {
-	public new IFieldSymbol Symbol { get; }
+    public FieldGenInfo(IFieldSymbol fieldSymbol) :
+        base(fieldSymbol, fieldSymbol.Type) {
+        Symbol = fieldSymbol;
+    }
 
-	public FieldGenInfo(IFieldSymbol fieldSymbol) :
-		base(fieldSymbol, fieldSymbol.Type) {
-		Symbol = fieldSymbol;
-	}
+    public new IFieldSymbol Symbol { get; }
 }
 
 internal sealed class PropertyGenInfo : BaseMemberGenInfo {
-	public new IPropertySymbol Symbol { get; }
+    public PropertyGenInfo(IPropertySymbol propertySymbol) :
+        base(propertySymbol, propertySymbol.Type) {
+        Symbol = propertySymbol;
+    }
 
-	public PropertyGenInfo(IPropertySymbol propertySymbol) :
-		base(propertySymbol, propertySymbol.Type) {
-		Symbol = propertySymbol;
-	}
+    public new IPropertySymbol Symbol { get; }
 }

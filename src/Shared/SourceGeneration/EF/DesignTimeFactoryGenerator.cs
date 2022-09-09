@@ -2,111 +2,111 @@ namespace Perf.SourceGeneration.EF;
 
 [Generator]
 internal sealed class DesignTimeFactoryGenerator : IIncrementalGenerator {
-	public void Initialize(IncrementalGeneratorInitializationContext context) {
-		var types = context.SyntaxProvider
-		   .CreateSyntaxProvider(SyntaxFilter, SyntaxTransform)
-		   .Where(x => x is not null)
-		   .Select((nts, ct) => nts!)
-		   .Collect();
+    private const string AttributeFullName = "Perf.Infrastructure.EF.SourceGeneration.AutoGenDesignTimeFactory";
+    private const string DbContextTypeFullName = "Microsoft.EntityFrameworkCore.DbContext";
 
-		context.RegisterSourceOutput(types, CodeGeneration);
-	}
+    public void Initialize(IncrementalGeneratorInitializationContext context) {
+        var types = context.SyntaxProvider
+           .CreateSyntaxProvider(SyntaxFilter, SyntaxTransform)
+           .Where(x => x is not null)
+           .Select((nts, ct) => nts!)
+           .Collect();
 
-	private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
-		if (node is ClassDeclarationSyntax {
-				TypeParameterList: null,
-				Modifiers.Count: > 0,
-				AttributeLists.Count: > 0,
-				BaseList.Types.Count: > 0
-			} c) {
-			if (c.Modifiers.Any(SyntaxKind.AbstractKeyword) || c.Modifiers.Any(SyntaxKind.PartialKeyword) is false) {
-				return false;
-			}
+        context.RegisterSourceOutput(types, CodeGeneration);
+    }
 
-			foreach (var al in c.AttributeLists) {
-				foreach (var a in al.Attributes) {
-					if (a.Name is SimpleNameSyntax {
-							Identifier.Text: "AutoGenDesignTimeFactory"
-						}) {
-						return true;
-					}
-				}
-			}
-		}
+    private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
+        if (node is ClassDeclarationSyntax {
+                TypeParameterList: null,
+                Modifiers.Count: > 0,
+                AttributeLists.Count: > 0,
+                BaseList.Types.Count: > 0
+            } c) {
+            if (c.Modifiers.Any(SyntaxKind.AbstractKeyword) || c.Modifiers.Any(SyntaxKind.PartialKeyword) is false) {
+                return false;
+            }
 
-		return false;
-	}
+            foreach (var al in c.AttributeLists) {
+                foreach (var a in al.Attributes) {
+                    if (a.Name is SimpleNameSyntax {
+                            Identifier.Text: "AutoGenDesignTimeFactory"
+                        }) {
+                        return true;
+                    }
+                }
+            }
+        }
 
-	private const string AttributeFullName = "Perf.Infrastructure.EF.SourceGeneration.AutoGenDesignTimeFactory";
-	private const string DbContextTypeFullName = "Microsoft.EntityFrameworkCore.DbContext";
+        return false;
+    }
 
-	private static INamedTypeSymbol? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
-		var classDeclaration = (ClassDeclarationSyntax)context.Node;
-		var symbol = context.SemanticModel.GetDeclaredSymbol(classDeclaration, ct);
-		if (symbol is null or { IsGenericType: true } or { IsStatic: true }) {
-			return null;
-		}
+    private static INamedTypeSymbol? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
+        var classDeclaration = (ClassDeclarationSyntax)context.Node;
+        var symbol = context.SemanticModel.GetDeclaredSymbol(classDeclaration, ct);
+        if (symbol is null or { IsGenericType: true } or { IsStatic: true }) {
+            return null;
+        }
 
-		var markerCheck = symbol.HasAttribute(AttributeFullName);
-		var baseTypeCheck = symbol.GetAllAncestors().Any(x => x.FullPath() is DbContextTypeFullName);
+        var markerCheck = symbol.HasAttribute(AttributeFullName);
+        var baseTypeCheck = symbol.GetAllAncestors().Any(x => x.FullPath() is DbContextTypeFullName);
 
-		if (markerCheck is false || baseTypeCheck is false) {
-			return null;
-		}
+        if (markerCheck is false || baseTypeCheck is false) {
+            return null;
+        }
 
-		var alreadyHasDesignTimeFactory = false;
-		foreach (var innerTypeSymbols in symbol.GetTypeMembers()) {
-			alreadyHasDesignTimeFactory = innerTypeSymbols.Interfaces
-			   .Select(i => i.IsDefinition ? i : i.OriginalDefinition)
-			   .Any(x => x.Name is "IDesignTimeDbContextFactory");
-		}
+        var alreadyHasDesignTimeFactory = false;
+        foreach (var innerTypeSymbols in symbol.GetTypeMembers()) {
+            alreadyHasDesignTimeFactory = innerTypeSymbols.Interfaces
+               .Select(i => i.IsDefinition ? i : i.OriginalDefinition)
+               .Any(x => x.Name is "IDesignTimeDbContextFactory");
+        }
 
-		if (alreadyHasDesignTimeFactory) {
-			return null;
-		}
+        if (alreadyHasDesignTimeFactory) {
+            return null;
+        }
 
-		return symbol;
-	}
+        return symbol;
+    }
 
-	private static void CodeGeneration(SourceProductionContext context, ImmutableArray<INamedTypeSymbol> types) {
-		if (types.IsDefaultOrEmpty) {
-			return;
-		}
+    private static void CodeGeneration(SourceProductionContext context, ImmutableArray<INamedTypeSymbol> types) {
+        if (types.IsDefaultOrEmpty) {
+            return;
+        }
 
-		foreach (var type in types) {
-			context.CancellationToken.ThrowIfCancellationRequested();
-			var sourceCode = GenerateSourceCode(type);
-			context.CancellationToken.ThrowIfCancellationRequested();
-			context.AddSource($"{type.Name}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
-		}
-	}
+        foreach (var type in types) {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            var sourceCode = GenerateSourceCode(type);
+            context.CancellationToken.ThrowIfCancellationRequested();
+            context.AddSource($"{type.Name}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
+        }
+    }
 
-	private static string GenerateSourceCode(INamedTypeSymbol type) {
-		using var writer = new IndentedTextWriter(new StringWriter(), "	");
+    private static string GenerateSourceCode(INamedTypeSymbol type) {
+        using var writer = new IndentedTextWriter(new StringWriter(), "	");
 
-		writer.WriteLines(
-			"// <auto-generated />",
-			"using Microsoft.EntityFrameworkCore;",
-			"using Microsoft.EntityFrameworkCore.Design;",
-			null,
-			$"namespace {type.ContainingNamespace};",
-			null
-		);
+        writer.WriteLines(
+            "// <auto-generated />",
+            "using Microsoft.EntityFrameworkCore;",
+            "using Microsoft.EntityFrameworkCore.Design;",
+            null,
+            $"namespace {type.ContainingNamespace};",
+            null
+        );
 
-		writer.WriteLines(
-			$"partial class {type.Name} {{",
-			$"	private sealed class DesignTimeFactory : IDesignTimeDbContextFactory<{type.Name}> {{",
-			$"		public {type.Name} CreateDbContext(string[] args) {{",
-			$"			var optionsBuilder = new DbContextOptionsBuilder<{type.Name}>();",
-			"			optionsBuilder.UseNpgsql();",
-			"			var options = optionsBuilder.Options;",
-			"			return new(options);",
-			"		}",
-			"	}",
-			"}"
-		);
+        writer.WriteLines(
+            $"partial class {type.Name} {{",
+            $"	private sealed class DesignTimeFactory : IDesignTimeDbContextFactory<{type.Name}> {{",
+            $"		public {type.Name} CreateDbContext(string[] args) {{",
+            $"			var optionsBuilder = new DbContextOptionsBuilder<{type.Name}>();",
+            "			optionsBuilder.UseNpgsql();",
+            "			var options = optionsBuilder.Options;",
+            "			return new(options);",
+            "		}",
+            "	}",
+            "}"
+        );
 
-		var resultCode = writer.InnerWriter.ToString();
-		return resultCode;
-	}
+        var resultCode = writer.InnerWriter.ToString();
+        return resultCode;
+    }
 }

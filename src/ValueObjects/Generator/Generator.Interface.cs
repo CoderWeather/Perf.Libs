@@ -1,20 +1,7 @@
 namespace Perf.ValueObjects.Generator;
 
 public partial class ValueObjectGenerator {
-	private static void WriteBodyFromInterfaceDefinition(IndentedTextWriter writer, ValueObject vo) {
-		var keyType = vo.KeyType;
-		var type = vo.Type;
-
-		writer.WriteLineNoTabs(string.Format(ValueObjectFromValidatableInterfacePattern,
-			null,
-			type.IsRecord ? "record struct" : "struct",
-			type.MinimalName(),
-			keyType.MinimalName(),
-			vo.IsValidatable ? null : "private bool IsValid() => value != default;"
-		));
-	}
-
-	private const string ValueObjectFromValidatableInterfacePattern = @"
+    private const string ValueObjectFromValidatableInterfacePattern = @"
 partial {1} {2} {{
 	public {2}() {{
 		value = default;
@@ -38,4 +25,17 @@ partial {1} {2} {{
 	public override string ToString() => Value.ToString();
 	public override int GetHashCode() => Value.GetHashCode();
 }}";
+
+    private static void WriteBodyFromInterfaceDefinition(IndentedTextWriter writer, ValueObject vo) {
+        var keyType = vo.KeyType;
+        var type = vo.Type;
+
+        writer.WriteLineNoTabs(string.Format(ValueObjectFromValidatableInterfacePattern,
+            null,
+            type.IsRecord ? "record struct" : "struct",
+            type.MinimalName(),
+            keyType.MinimalName(),
+            vo.IsValidatable ? null : "private bool IsValid() => value != default;"
+        ));
+    }
 }

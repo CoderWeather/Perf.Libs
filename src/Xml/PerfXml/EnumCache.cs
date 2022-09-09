@@ -30,7 +30,7 @@ public static class EnumCache {
             }
 
 
-            ByValues[value] = name = Enum.GetName(typeof(T), value);
+            ByValues[value] = name = Enum.GetName(typeof(T), value)!;
             ByNames[name] = value;
             return name!;
         }

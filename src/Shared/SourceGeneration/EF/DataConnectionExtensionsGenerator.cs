@@ -2,145 +2,151 @@ namespace Perf.SourceGeneration.EF;
 
 [Generator]
 internal sealed class DataConnectionExtensionsGenerator : IIncrementalGenerator {
-    public void Initialize(IncrementalGeneratorInitializationContext context) {
-        var types = context.SyntaxProvider
-           .CreateSyntaxProvider(SyntaxFilter, SyntaxTransform)
-           .Where(x => x is not null)
-           .Select((nts, ct) => nts!)
-           .Collect();
+	private sealed record ContextPack(INamedTypeSymbol Symbol) {
+		public readonly List<(INamedTypeSymbol Type, string Name, bool HasDtoRepresentation)> Tables = new();
+	}
 
-        context.RegisterSourceOutput(types, CodeGeneration);
-    }
+	public void Initialize(IncrementalGeneratorInitializationContext context) {
+		var types = context.SyntaxProvider
+		   .CreateSyntaxProvider(SyntaxFilter, SyntaxTransform)
+		   .Where(x => x is not null)
+		   .Select((nts, ct) => nts!)
+		   .Collect();
 
-    private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
-        if (node is ClassDeclarationSyntax cls) {
-            var isBaseTypeDbContext = cls.BaseList?.Types
-               .Any(x => x.ToString() is "DbContext" or "IdentityContext" || x.ToString().StartsWith("IdentityContext")) is true;
-            var isAbstract = cls.Modifiers.Any(SyntaxKind.AbstractKeyword);
+		context.RegisterSourceOutput(types, CodeGeneration);
+	}
 
-            return isBaseTypeDbContext && isAbstract is false;
-        }
+	private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
+		if (node is ClassDeclarationSyntax cls) {
+			var isBaseTypeDbContext = Enumerable.Any<BaseTypeSyntax>(
+				cls.BaseList?.Types,
+				x => x.ToString() is "DbContext" or "IdentityContext" || x.ToString().StartsWith("IdentityContext")
+			) is true;
+			var isAbstract = cls.Modifiers.Any(SyntaxKind.AbstractKeyword);
 
-        return false;
-    }
+			return isBaseTypeDbContext && isAbstract is false;
+		}
 
-    private static ContextPack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
-        var contextType = context.TryGetType("Microsoft.EntityFrameworkCore.DbContext");
-        var dataConnectionType = context.TryGetType("LinqToDB.Data.DataConnection");
-        var dbSetType = context.TryGetType("Microsoft.EntityFrameworkCore.DbSet`1")!;
+		return false;
+	}
 
-        if (contextType is null || dataConnectionType is null) {
-            return null;
-        }
+	private static ContextPack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
+		var contextType = context.TryGetType("Microsoft.EntityFrameworkCore.DbContext");
+		var dataConnectionType = context.TryGetType("LinqToDB.Data.DataConnection");
+		var dbSetType = context.TryGetType("Microsoft.EntityFrameworkCore.DbSet`1")!;
 
-        var symbol = context.Node switch {
-            ClassDeclarationSyntax cls => context.SemanticModel.GetDeclaredSymbol(cls),
-            _                          => null
-        };
-        if (symbol is null) {
-            return null;
-        }
+		if (contextType is null || dataConnectionType is null) {
+			return null;
+		}
 
-        if (symbol.GetAllAncestors()
-               .Any(x => x.OriginalDefinition.StrictEquals(contextType)) is false) {
-            return null;
-        }
+		var symbol = context.Node switch {
+			ClassDeclarationSyntax cls => context.SemanticModel.GetDeclaredSymbol(cls),
+			_                          => null
+		};
+		if (symbol is null) {
+			return null;
+		}
 
-        var properties = symbol.GetMembers()
-           .OfType<IPropertySymbol>()
-           .Where(x => x.Type.OriginalDefinition.StrictEquals(dbSetType))
-           .ToArray();
+		if (symbol.GetAllAncestors()
+			   .Any(x => x.OriginalDefinition.StrictEquals(contextType)) is false) {
+			return null;
+		}
 
-        if (properties.Length is 0) {
-            return null;
-        }
+		var properties = symbol.GetMembers()
+		   .OfType<IPropertySymbol>()
+		   .Where(x => x.Type.OriginalDefinition.StrictEquals(dbSetType))
+		   .ToArray();
 
-        var pack = new ContextPack(symbol);
-        foreach (var set in properties) {
-            if (set.Type is not INamedTypeSymbol nt) {
-                continue;
-            }
+		if (properties.Length is 0) {
+			return null;
+		}
 
-            var table = nt.TypeArguments[0];
-            if (table is not INamedTypeSymbol tableSymbol) {
-                continue;
-            }
+		var pack = new ContextPack(symbol);
+		foreach (var set in properties) {
+			if (set.Type is not INamedTypeSymbol nt) {
+				continue;
+			}
 
-            var hasDtoRepresentation = table.OriginalDefinition.GetAttributes()
-               .Any(x => x.AttributeClass?.Name is "RecordAsDtoAttribute");
+			var table = nt.TypeArguments[0];
+			if (table is not INamedTypeSymbol tableSymbol) {
+				continue;
+			}
 
-            pack.Tables.Add((tableSymbol.OriginalDefinition, set.Name, hasDtoRepresentation));
-        }
+			var hasDtoRepresentation = table.OriginalDefinition.GetAttributes()
+			   .Any(x => x.AttributeClass?.Name is "RecordAsDtoAttribute");
 
-        return pack;
-    }
+			pack.Tables.Add((tableSymbol.OriginalDefinition, set.Name, hasDtoRepresentation));
+		}
 
-    private static void CodeGeneration(SourceProductionContext context, ImmutableArray<ContextPack> types) {
-        if (types.IsDefaultOrEmpty) {
-            return;
-        }
+		return pack;
+	}
 
-        foreach (var type in types) {
-            context.CancellationToken.ThrowIfCancellationRequested();
-            var sourceCode = GenerateSourceCode(type);
-            if (sourceCode is null) {
-                continue;
-            }
+	private static void CodeGeneration(SourceProductionContext context, ImmutableArray<ContextPack> types) {
+		if (types.IsDefaultOrEmpty) {
+			return;
+		}
 
-            context.CancellationToken.ThrowIfCancellationRequested();
-            context.AddSource($"{type.Symbol.Name}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
-        }
-    }
+		foreach (var type in types) {
+			context.CancellationToken.ThrowIfCancellationRequested();
+			var sourceCode = GenerateSourceCode(type);
+			if (sourceCode is null) {
+				continue;
+			}
 
-    private static string? GenerateSourceCode(ContextPack type) {
-        using var writer = new IndentedTextWriter(new StringWriter(), "	");
+			context.CancellationToken.ThrowIfCancellationRequested();
+			context.AddSource($"{type.Symbol.Name}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
+		}
+	}
 
-        writer.WriteLines(
-            "// <auto-generated />",
-            "#pragma warning disable CS8019",
-            "#pragma warning disable CS0105",
-            "#nullable enable",
-            null,
-            $"namespace {type.Symbol.ContainingNamespace};",
-            null,
-            "using LinqToDB;",
-            "using LinqToDB.Data;",
-            null
-        );
+	private static string? GenerateSourceCode(ContextPack type) {
+		using var writer = new IndentedTextWriter(new StringWriter(), "	");
 
-        var nsFromTables = type
-           .Tables.SelectMany(x => x.HasDtoRepresentation
-                ? new[] {
-                    x.Type.ContainingNamespace.ToDisplayString(),
-                    $"{x.Type.ContainingNamespace}.Dto"
-                }
-                : new[] { x.Type.ContainingNamespace.ToDisplayString() })
-           .Distinct()
-           .ToArray();
+		writer.WriteLines(
+			"// <auto-generated />",
+			"#pragma warning disable CS8019",
+			"#pragma warning disable CS0105",
+			"#nullable enable",
+			null,
+			$"namespace {type.Symbol.ContainingNamespace};",
+			null,
+			"using LinqToDB;",
+			"using LinqToDB.Data;",
+			null
+		);
 
-        foreach (var n in nsFromTables) {
-            writer.WriteLine($"using {n};");
-        }
+		var nsFromTables = type
+		   .Tables.SelectMany(
+				x => x.HasDtoRepresentation
+					? new[] {
+						x.Type.ContainingNamespace.ToDisplayString(),
+						$"{x.Type.ContainingNamespace}.Dto"
+					}
+					: new[] { x.Type.ContainingNamespace.ToDisplayString() }
+			)
+		   .Distinct()
+		   .ToArray();
 
-        writer.WriteLine();
+		foreach (var n in nsFromTables) {
+			writer.WriteLine($"using {n};");
+		}
 
-        var accessibility = type.Symbol.Accessibility();
-        writer.WriteLine($"{accessibility} static class {type.Symbol.Name}_Tables_DataConnectionExtensions");
-        using (NestedScope.Start(writer)) {
-            foreach (var t in type.Tables) {
-                writer.WriteLine(
-                    $"public static ITable<{t.Type.Name}> {t.Name}(this DataConnection connection) => connection.GetTable<{t.Type.Name}>();");
-                if (t.HasDtoRepresentation) {
-                    writer.WriteLine(
-                        $"public static ITable<{t.Type.Name}Dto> {t.Name}Dto(this DataConnection connection) => connection.GetTable<{t.Type.Name}Dto>();");
-                }
-            }
-        }
+		writer.WriteLine();
 
-        return writer.InnerWriter.ToString();
-    }
+		var accessibility = type.Symbol.Accessibility();
+		writer.WriteLine($"{accessibility} static class {type.Symbol.Name}_Tables_DataConnectionExtensions");
+		using (NestedScope.Start(writer)) {
+			foreach (var t in type.Tables) {
+				writer.WriteLine(
+					$"public static ITable<{t.Type.Name}> {t.Name}(this DataConnection connection) => connection.GetTable<{t.Type.Name}>();"
+				);
+				if (t.HasDtoRepresentation) {
+					writer.WriteLine(
+						$"public static ITable<{t.Type.Name}Dto> {t.Name}Dto(this DataConnection connection) => connection.GetTable<{t.Type.Name}Dto>();"
+					);
+				}
+			}
+		}
 
-    private sealed record ContextPack(INamedTypeSymbol Symbol) {
-        public readonly List<(INamedTypeSymbol Type, string Name, bool HasDtoRepresentation)> Tables = new();
-    }
+		return writer.InnerWriter.ToString();
+	}
 }

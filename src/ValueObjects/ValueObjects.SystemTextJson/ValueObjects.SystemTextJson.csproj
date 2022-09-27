@@ -26,7 +26,7 @@
 
     <ItemGroup>
         <PackageReference Include="PerfValueObjects" Version="1.0.11" />
-        <PackageReference Include="System.Text.Json" Version="6.0.5" />
+        <PackageReference Include="System.Text.Json" Version="7.0.0-rc.1.22426.10" />
     </ItemGroup>
 
 </Project>

@@ -3,9 +3,9 @@ namespace Perf.SourceGeneration.DbServices;
 [Generator]
 public sealed class IdentitySequenceCollectorStatic : IIncrementalGenerator {
 	private const string BaseCollectorGlobalName =
-		"global::ExpressMobile.Services.Shared.Infrastructure.DbServices.LongIdentitySequenceBasedCollector";
+		"global::Services.Shared.Infrastructure.DbServices.LongIdentitySequenceBasedCollector";
 
-	private const string AttributeMarkerFullName = "ExpressMobile.Services.Shared.Infrastructure.DbServices.GenerateStaticCollectorForIdentity";
+	private const string AttributeMarkerFullName = "Services.Shared.Infrastructure.DbServices.GenerateStaticCollectorForIdentity";
 
 	private readonly record struct Wrapper(INamedTypeSymbol Collector) {
 		public readonly List<(string Name, AttributeData, INamedTypeSymbol? Type)> Identities = new();

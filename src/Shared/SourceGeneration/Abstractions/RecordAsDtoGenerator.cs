@@ -48,13 +48,13 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 		return attributeMarked && isStruct is false && isAbstract is false;
 	}
 
-	private const string RecordAsDtoAttributeFullName = "ExpressMobile.Services.Shared.Abstractions.Attributes.RecordAsDtoAttribute";
+	private const string RecordAsDtoAttributeFullName = "Services.Shared.Abstractions.Attributes.RecordAsDtoAttribute";
 
 	private const string AddAttributeToGeneratedDtoAttributeFullName =
-		"ExpressMobile.Services.Shared.Abstractions.Attributes.AddAttributeToGeneratedDto";
+		"Services.Shared.Abstractions.Attributes.AddAttributeToGeneratedDto";
 
 	private const string AddInterfacesToGeneratedDtoAttributeFullName =
-		"ExpressMobile.Services.Shared.Abstractions.Attributes.AddInterfacesToGeneratedDto";
+		"Services.Shared.Abstractions.Attributes.AddInterfacesToGeneratedDto";
 
 	private static RecPack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
 		if (context.SemanticModel.GetDeclaredSymbol((RecordDeclarationSyntax)context.Node, ct) is not { } symbol) {
@@ -194,7 +194,7 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 		);
 
 		writer.WriteLines(
-			"using ExpressMobile.Services.Shared.Abstractions.Attributes;",
+			"using Services.Shared.Abstractions.Attributes;",
 			$"using {containingNamespace};",
 			null
 		);
@@ -449,7 +449,7 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 			null,
 			$"namespace {containingNamespace};",
 			null,
-			"using ExpressMobile.Services.Shared.Abstractions.Attributes;",
+			"using Services.Shared.Abstractions.Attributes;",
 			null
 		);
 

@@ -36,7 +36,7 @@ internal sealed class MapperExtensionGenerator : IIncrementalGenerator {
 		context.RegisterSourceOutput(configs.Collect(), CodeGeneration);
 	}
 
-	private const string RecordAsDtoAttribute = "ExpressMobile.Services.Shared.Abstractions.Attributes.RecordAsDtoAttribute";
+	private const string RecordAsDtoAttribute = "Services.Shared.Abstractions.Attributes.RecordAsDtoAttribute";
 	private const string CopyTypeMembersAttribute = "Utilities.SourceGeneration.CopyTypeMembersAttribute";
 
 	private const string IgnoreValueObjectsAttribute = "Utilities.SourceGeneration.IgnoreValueObjects";

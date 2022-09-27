@@ -34,7 +34,7 @@ internal sealed class PostgresEnumMappingGenerator : IIncrementalGenerator {
 
 	private static ContextPack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
 		var attributeType = context.TryGetType(
-			"ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.AutoGenPostgresEnumMapping"
+			"Services.Shared.Infrastructure.EF.SourceGeneration.AutoGenPostgresEnumMapping"
 		);
 		var dbContextType = context.TryGetType(
 			"Microsoft.EntityFrameworkCore.DbContext"

@@ -32,15 +32,15 @@ internal sealed class ValueConvertersGenerator : IIncrementalGenerator {
 							var from = bt.TypeArguments[0];
 							var to = bt.TypeArguments[1];
 							return new(symbol, from, to);
-						case "ExpressMobile.Services.Shared.Infrastructure.EF.ValueObjectValueConverter":
+						case "Services.Shared.Infrastructure.EF.ValueObjectValueConverter":
 							var vo = bt.TypeArguments[0];
 							var key = bt.TypeArguments[1];
 							return new(symbol, vo, key);
-						case "ExpressMobile.Services.Shared.Infrastructure.EF.JsonValueConverter":
+						case "Services.Shared.Infrastructure.EF.JsonValueConverter":
 							var jsonFrom = bt.TypeArguments[0];
 							var strType = bt.BaseType!.TypeArguments[1];
 							return new(symbol, jsonFrom, strType);
-						case "ExpressMobile.Services.Shared.Infrastructure.EF.MessagePackValueConverter":
+						case "Services.Shared.Infrastructure.EF.MessagePackValueConverter":
 							var msgPackFrom = bt.TypeArguments[0];
 							var btArrayType = bt.BaseType!.TypeArguments[1];
 							return new(symbol, msgPackFrom, btArrayType);
@@ -71,7 +71,7 @@ internal sealed class ValueConvertersGenerator : IIncrementalGenerator {
 	private record struct Converter(INamedTypeSymbol Type, ITypeSymbol From, ITypeSymbol To);
 
 	private const string NpgsqlArrayConverterAttributeFullName =
-		"ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.NpgsqlArrayConverter";
+		"Services.Shared.Infrastructure.EF.SourceGeneration.NpgsqlArrayConverter";
 
 	private static string ProcessTypes(string containingNamespace, ImmutableArray<Converter> converters) {
 		using var writer = new IndentedTextWriter(new StringWriter(), "	");

@@ -37,7 +37,7 @@ internal sealed class DesignTimeFactoryGenerator : IIncrementalGenerator {
 		return false;
 	}
 
-	private const string AttributeFullName = "ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.AutoGenDesignTimeFactory";
+	private const string AttributeFullName = "Services.Shared.Infrastructure.EF.SourceGeneration.AutoGenDesignTimeFactory";
 	private const string DbContextTypeFullName = "Microsoft.EntityFrameworkCore.DbContext";
 
 	private static INamedTypeSymbol? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {

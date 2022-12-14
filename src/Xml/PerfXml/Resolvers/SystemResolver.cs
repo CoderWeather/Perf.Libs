@@ -5,7 +5,7 @@ namespace PerfXml.Resolvers;
 public sealed class SystemResolver : IXmlFormatterResolver {
     public static readonly SystemResolver Instance = new();
 
-    private static readonly Dictionary<Type, IXmlFormatter> Formatters = new() {
+    static readonly Dictionary<Type, IXmlFormatter> Formatters = new() {
         { typeof(byte), ByteFormatter.Instance },
         { typeof(short), Int16Formatter.Instance },
         { typeof(int), Int32Formatter.Instance },
@@ -20,11 +20,11 @@ public sealed class SystemResolver : IXmlFormatterResolver {
         { typeof(DateTime), DateTimeFormatter.Instance }
     };
 
-    private SystemResolver() { }
+    SystemResolver() { }
 
     public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
-    private static class Cache<T> {
+    static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
 
         static Cache() {

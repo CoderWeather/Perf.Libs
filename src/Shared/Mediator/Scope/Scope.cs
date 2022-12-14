@@ -140,6 +140,8 @@ public readonly record struct ScopedQuery<TIn, TOut>(
 
 #region Source Generation Handler Markers
 
+public interface IScopedHandler { }
+
 public interface IScopedRequestHandler<in TRequest> where TRequest : IRequest { }
 
 public interface IScopedCommandHandler<in TCommand> where TCommand : ICommand { }
@@ -150,15 +152,15 @@ public interface IScopedQueryHandler<in TQuery> where TQuery : IQuery { }
 
 #region Handlers
 
-public interface IScopedRequestHandler<TRequest, TResponse> :
+public interface IScopedRequestHandler<TRequest, TResponse> : IScopedHandler,
 	IRequestHandler<ScopedRequest<TRequest, TResponse>, TResponse>
 	where TRequest : IRequest<TResponse> { }
 
-public interface IScopedCommandHandler<TCommand, TResponse> :
+public interface IScopedCommandHandler<TCommand, TResponse> : IScopedHandler,
 	ICommandHandler<ScopedCommand<TCommand, TResponse>, TResponse>
 	where TCommand : ICommand<TResponse> { }
 
-public interface IScopedQueryHandler<TQuery, TResponse> :
+public interface IScopedQueryHandler<TQuery, TResponse> : IScopedHandler,
 	IQueryHandler<ScopedQuery<TQuery, TResponse>, TResponse>
 	where TQuery : IQuery<TResponse> { }
 

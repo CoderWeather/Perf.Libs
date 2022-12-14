@@ -4,13 +4,13 @@ namespace PerfXml.Resolvers;
 
 public sealed class NullableStructFormatterResolver : IXmlFormatterResolver {
     public static readonly NullableStructFormatterResolver Instance = new();
-    private static readonly Type NullableType = typeof(Nullable<>);
-    private static readonly Type NullableStructFormatterType = typeof(NullableStructFormatter<>);
-    private NullableStructFormatterResolver() { }
+    static readonly Type NullableType = typeof(Nullable<>);
+    static readonly Type NullableStructFormatterType = typeof(NullableStructFormatter<>);
+    NullableStructFormatterResolver() { }
 
     public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
-    private static class Cache<T> {
+    static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
 
         static Cache() {

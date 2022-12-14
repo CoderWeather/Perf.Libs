@@ -1,4 +1,4 @@
-namespace Utilities.Attributes;
+namespace Utilities.SourceGeneration;
 
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class RecordAsDtoAttribute : Attribute {

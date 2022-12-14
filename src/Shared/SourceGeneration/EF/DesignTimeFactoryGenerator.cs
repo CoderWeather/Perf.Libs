@@ -14,11 +14,11 @@ internal sealed class DesignTimeFactoryGenerator : IIncrementalGenerator {
 
 	private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
 		if (node is ClassDeclarationSyntax {
-				TypeParameterList: null,
-				Modifiers.Count: > 0,
-				AttributeLists.Count: > 0,
-				BaseList.Types.Count: > 0
-			} c) {
+			    TypeParameterList: null,
+			    Modifiers.Count: > 0,
+			    AttributeLists.Count: > 0,
+			    BaseList.Types.Count: > 0
+		    } c) {
 			if (c.Modifiers.Any(SyntaxKind.AbstractKeyword) || c.Modifiers.Any(SyntaxKind.PartialKeyword) is false) {
 				return false;
 			}
@@ -26,8 +26,8 @@ internal sealed class DesignTimeFactoryGenerator : IIncrementalGenerator {
 			foreach (var al in c.AttributeLists) {
 				foreach (var a in al.Attributes) {
 					if (a.Name is SimpleNameSyntax {
-							Identifier.Text: "AutoGenDesignTimeFactory"
-						}) {
+						    Identifier.Text: "AutoGenDesignTimeFactory"
+					    }) {
 						return true;
 					}
 				}
@@ -37,7 +37,7 @@ internal sealed class DesignTimeFactoryGenerator : IIncrementalGenerator {
 		return false;
 	}
 
-	private const string AttributeFullName = "Services.Shared.Infrastructure.EF.SourceGeneration.AutoGenDesignTimeFactory";
+	private const string AttributeFullName = "ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.AutoGenDesignTimeFactory";
 	private const string DbContextTypeFullName = "Microsoft.EntityFrameworkCore.DbContext";
 
 	private static INamedTypeSymbol? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {

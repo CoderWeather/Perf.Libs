@@ -36,12 +36,12 @@ internal sealed class MapperExtensionGenerator : IIncrementalGenerator {
 		context.RegisterSourceOutput(configs.Collect(), CodeGeneration);
 	}
 
-	private const string RecordAsDtoAttribute = "Services.Shared.Abstractions.Attributes.RecordAsDtoAttribute";
-	private const string CopyTypeMembersAttribute = "Utilities.SourceGeneration.CopyTypeMembersAttribute";
+	private const string RecordAsDtoAttribute = "ExpressMobile.Services.Shared.Utilities.SourceGeneration.RecordAsDtoAttribute";
+	private const string CopyTypeMembersAttribute = "ExpressMobile.Services.Shared.Utilities.SourceGeneration.CopyTypeMembersAttribute";
 
-	private const string IgnoreValueObjectsAttribute = "Utilities.SourceGeneration.IgnoreValueObjects";
-	private const string IgnoreRecordAsDtoAttribute = "Utilities.SourceGeneration.IgnoreRecordAsDto";
-	private const string IgnoreCopyTypeMembersAttribute = "Utilities.SourceGeneration.IgnoreCopyTypeMembers";
+	private const string IgnoreValueObjectsAttribute = "ExpressMobile.Services.Shared.Utilities.SourceGeneration.IgnoreValueObjects";
+	private const string IgnoreRecordAsDtoAttribute = "ExpressMobile.Services.Shared.Utilities.SourceGeneration.IgnoreRecordAsDto";
+	private const string IgnoreCopyTypeMembersAttribute = "ExpressMobile.Services.Shared.Utilities.SourceGeneration.IgnoreCopyTypeMembers";
 
 	private static Mapper SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct = default) {
 		var typeAdapterConfigType = context.TryGetType("Mapster.TypeAdapterConfig");

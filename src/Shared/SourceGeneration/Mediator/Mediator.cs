@@ -63,26 +63,26 @@ internal sealed partial class MediatorGenerator : IIncrementalGenerator {
 		var handlersForMediator = context.SyntaxProvider.CreateSyntaxProvider(
 				static (node, ct) => {
 					if (node is TypeDeclarationSyntax {
-							TypeParameterList: null,
-							BaseList.Types.Count: > 0,
-							RawKind: (int)SyntaxKind.ClassDeclaration or (int)SyntaxKind.RecordDeclaration
-						} t
+						    TypeParameterList: null,
+						    BaseList.Types.Count: > 0,
+						    RawKind: (int)SyntaxKind.ClassDeclaration or (int)SyntaxKind.RecordDeclaration
+					    } t
 					 && t.Modifiers.Any(SyntaxKind.SealedKeyword)) {
 						foreach (var bt in t.BaseList.Types) {
 							ct.ThrowIfCancellationRequested();
 							// Common handlers
 							if (bt.Type is GenericNameSyntax {
-									TypeArgumentList.Arguments.Count: 1 or 2,
-									Identifier.Text: "IRequestHandler" or "ICommandHandler" or "IQueryHandler" or "INotificationHandler"
-								}) {
+								    TypeArgumentList.Arguments.Count: 1 or 2,
+								    Identifier.Text: "IRequestHandler" or "ICommandHandler" or "IQueryHandler" or "INotificationHandler"
+							    }) {
 								return true;
 							}
 
 							// Mirror handlers
 							if (bt.Type is GenericNameSyntax {
-									TypeArgumentList.Arguments.Count: 1 or 4,
-									Identifier.Text: "IMirrorRequestHandler" or "IMirrorCommandHandler" or "IMirrorQueryHandler"
-								}) {
+								    TypeArgumentList.Arguments.Count: 1 or 4,
+								    Identifier.Text: "IMirrorRequestHandler" or "IMirrorCommandHandler" or "IMirrorQueryHandler"
+							    }) {
 								return true;
 							}
 						}
@@ -253,9 +253,6 @@ internal sealed partial class MediatorGenerator : IIncrementalGenerator {
 			static (context, tuple) => {
 				var (assembly, handlers) = tuple;
 				var ct = context.CancellationToken;
-				if (handlers.IsDefaultOrEmpty) {
-					return;
-				}
 
 				if (handlers.Any(x => x.Common.Notifications.Any())) {
 					assembly = assembly with {

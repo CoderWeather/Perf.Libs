@@ -3,9 +3,9 @@ namespace Perf.SourceGeneration.DbServices;
 [Generator]
 public sealed class IdentitySequenceCollectorStatic : IIncrementalGenerator {
 	private const string BaseCollectorGlobalName =
-		"global::Services.Shared.Infrastructure.DbServices.LongIdentitySequenceBasedCollector";
+		"global::ExpressMobile.Services.Shared.Infrastructure.DbServices.LongIdentitySequenceBasedCollector";
 
-	private const string AttributeMarkerFullName = "Services.Shared.Infrastructure.DbServices.GenerateStaticCollectorForIdentity";
+	private const string AttributeMarkerFullName = "ExpressMobile.Services.Shared.Infrastructure.DbServices.GenerateStaticCollectorForIdentity";
 
 	private readonly record struct Wrapper(INamedTypeSymbol Collector) {
 		public readonly List<(string Name, AttributeData, INamedTypeSymbol? Type)> Identities = new();
@@ -15,9 +15,9 @@ public sealed class IdentitySequenceCollectorStatic : IIncrementalGenerator {
 		var collectors = context.SyntaxProvider.CreateSyntaxProvider(
 				static (node, ct) => {
 					if (node is ClassDeclarationSyntax {
-							AttributeLists.Count: > 0,
-							TypeParameterList: null, BaseList: null
-						} c) {
+						    AttributeLists.Count: > 0,
+						    TypeParameterList: null, BaseList: null
+					    } c) {
 						if (c.Modifiers.Any(SyntaxKind.StaticKeyword) && c.Modifiers.Any(SyntaxKind.PartialKeyword)) {
 							foreach (var al in c.AttributeLists) {
 								foreach (var a in al.Attributes) {

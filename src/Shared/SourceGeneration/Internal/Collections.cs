@@ -1,3 +1,6 @@
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+
 namespace Perf.SourceGeneration.Internal;
 
 public static class EnumerableExtensions {
@@ -39,5 +42,52 @@ public static class EnumerableExtensions {
 		}
 
 		return default;
+	}
+
+	public static void AddRange<T>(this HashSet<T> set, IEnumerable<T> enumerable) {
+		foreach (var i in enumerable) {
+			set.Add(i);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Span<T> Span<T>(this List<T> list) => ListCache<T>.GetItems(list).AsSpan().Slice(0, list.Count);
+
+	private static class ListCache<T> {
+		public static readonly Func<List<T>, T[]> GetItems;
+
+		static ListCache() {
+			var list = Expression.Parameter(typeof(List<T>));
+
+			var lambda = Expression.Lambda<Func<List<T>, T[]>>(
+				Expression.Field(list, "_items"),
+				list
+			);
+			GetItems = lambda.Compile();
+		}
+	}
+
+	public static bool All<T>(this Span<T> span, Func<T, bool> predicate) {
+		foreach (var i in span) {
+			if (predicate.Invoke(i) is false) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static void AddIfAll<T>(this List<T> list, T item, Func<T, T, bool> predicate) {
+		if (list.Span().All(x => predicate.Invoke(x, item))) {
+			return;
+		}
+
+		list.Add(item);
+	}
+
+	public static void AddRangeIfAll<T>(this List<T> list, IEnumerable<T> items, Func<T, T, bool> predicate) {
+		foreach (var i in items) {
+			list.AddIfAll(i, predicate);
+		}
 	}
 }

@@ -9,10 +9,10 @@ public static class EnumCache {
         where T : struct, Enum =>
         Cache<T>.ByName(s);
 
-    private static class Cache<T>
+    static class Cache<T>
         where T : struct, Enum {
-        private static readonly Dictionary<string, T> ByNames = new(StringComparer.InvariantCultureIgnoreCase);
-        private static readonly Dictionary<T, string> ByValues = new();
+        static readonly Dictionary<string, T> ByNames = new(StringComparer.InvariantCultureIgnoreCase);
+        static readonly Dictionary<T, string> ByValues = new();
 
         public static T ByName(string s) {
             if (ByNames.TryGetValue(s, out var t)) {

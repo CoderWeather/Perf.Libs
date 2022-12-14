@@ -1,4 +1,4 @@
-namespace Perf.SourceGeneration.Abstractions;
+namespace Perf.SourceGeneration;
 
 [Generator]
 internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
@@ -48,13 +48,13 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 		return attributeMarked && isStruct is false && isAbstract is false;
 	}
 
-	private const string RecordAsDtoAttributeFullName = "Services.Shared.Abstractions.Attributes.RecordAsDtoAttribute";
+	private const string RecordAsDtoAttributeFullName = "ExpressMobile.Services.Shared.Utilities.SourceGeneration.RecordAsDtoAttribute";
 
 	private const string AddAttributeToGeneratedDtoAttributeFullName =
-		"Services.Shared.Abstractions.Attributes.AddAttributeToGeneratedDto";
+		"ExpressMobile.Services.Shared.Utilities.SourceGeneration.AddAttributeToGeneratedDto";
 
 	private const string AddInterfacesToGeneratedDtoAttributeFullName =
-		"Services.Shared.Abstractions.Attributes.AddInterfacesToGeneratedDto";
+		"ExpressMobile.Services.Shared.Utilities.SourceGeneration.AddInterfacesToGeneratedDto";
 
 	private static RecPack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
 		if (context.SemanticModel.GetDeclaredSymbol((RecordDeclarationSyntax)context.Node, ct) is not { } symbol) {
@@ -194,7 +194,7 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 		);
 
 		writer.WriteLines(
-			"using Services.Shared.Abstractions.Attributes;",
+			"using ExpressMobile.Services.Shared.Utilities.SourceGeneration;",
 			$"using {containingNamespace};",
 			null
 		);
@@ -324,7 +324,7 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 								};
 								var nullWord = nullable ? "null" : "null!";
 								writer.WriteLine(
-									$"this.{pn} = rec.{pn} != {nullWord} ? Utilities.ArrayUnsafe.MapCast<{ota.ElementType.GlobalName()}, {pta.ElementType.GlobalName()}>(rec.{pn}) : {nullWord};"
+									$"this.{pn} = rec.{pn} != {nullWord} ? ExpressMobile.Services.Shared.Utilities.ArrayUnsafe.MapCast<{ota.ElementType.GlobalName()}, {pta.ElementType.GlobalName()}>(rec.{pn}) : {nullWord};"
 								);
 							} else {
 								writer.WriteLine($"this.{pn} = ({pt.GlobalName()})rec.{pn};");
@@ -354,7 +354,7 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 								};
 								var nullWord = nullable ? "null" : "null!";
 								writer.WriteLine(
-									$"{pn}: this.{pn} != {nullWord} ? Utilities.ArrayUnsafe.MapCast<{pta.ElementType.GlobalName()}, {ota.ElementType.GlobalName()}>(this.{pn}) : {nullWord}{(withComma-- > 0 ? ',' : null)}"
+									$"{pn}: this.{pn} != {nullWord} ? ExpressMobile.Services.Shared.Utilities.ArrayUnsafe.MapCast<{pta.ElementType.GlobalName()}, {ota.ElementType.GlobalName()}>(this.{pn}) : {nullWord}{(withComma-- > 0 ? ',' : null)}"
 								);
 							} else {
 								writer.WriteLine(
@@ -449,7 +449,7 @@ internal sealed class RecordAsDtoGenerator : IIncrementalGenerator {
 			null,
 			$"namespace {containingNamespace};",
 			null,
-			"using Services.Shared.Abstractions.Attributes;",
+			"using ExpressMobile.Services.Shared.Utilities.SourceGeneration;",
 			null
 		);
 

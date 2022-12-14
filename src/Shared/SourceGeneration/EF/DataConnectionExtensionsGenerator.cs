@@ -20,7 +20,7 @@ internal sealed class DataConnectionExtensionsGenerator : IIncrementalGenerator 
 		if (node is ClassDeclarationSyntax cls) {
 			var isBaseTypeDbContext = Enumerable.Any<BaseTypeSyntax>(
 				cls.BaseList?.Types,
-				x => x.ToString() is "DbContext" or "IdentityContext" || x.ToString().StartsWith("IdentityContext")
+				x => x.ToString() is "DbContext" or "IdentityDbContext" || x.ToString().StartsWith("IdentityDbContext")
 			) is true;
 			var isAbstract = cls.Modifiers.Any(SyntaxKind.AbstractKeyword);
 

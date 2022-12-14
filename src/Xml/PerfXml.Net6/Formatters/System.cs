@@ -2,7 +2,7 @@
 
 public sealed class DateOnlyFormatter : IXmlFormatter<DateOnly> {
     public static readonly DateOnlyFormatter Instance = new();
-    private readonly string format;
+    readonly string format;
 
     public DateOnlyFormatter(string format = "yyyy-MM-dd") {
         this.format = format;
@@ -16,7 +16,7 @@ public sealed class DateOnlyFormatter : IXmlFormatter<DateOnly> {
 
 public sealed class TimeOnlyFormatter : IXmlFormatter<TimeOnly> {
     public static readonly TimeOnlyFormatter Instance = new();
-    private readonly string format;
+    readonly string format;
 
     public TimeOnlyFormatter(string format = "HH:mm") {
         this.format = format;

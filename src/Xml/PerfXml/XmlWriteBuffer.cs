@@ -7,22 +7,22 @@ namespace PerfXml;
 /// <summary>Stack based XML serializer</summary>
 public ref struct XmlWriteBuffer {
     /// <summary>Internal char buffer</summary>
-    private char[] buffer;
+    char[] buffer;
 
     /// <summary>Span over the internal char buffer</summary>
-    private Span<char> bufferSpan;
+    Span<char> bufferSpan;
 
     /// <summary>Current write offset within <see cref="buffer"/></summary>
-    private int currentOffset;
+    int currentOffset;
 
     /// <summary>Whether or not a node head is currently open (&gt; hasn't been written)</summary>
-    private bool pendingNodeHeadClose;
+    bool pendingNodeHeadClose;
 
     /// <summary>Type of text blocks to serialize</summary>
     public CDataMode CdataMode;
 
     /// <summary>Span representing the tail of the internal buffer</summary>
-    private Span<char> WriteSpan => bufferSpan[currentOffset..];
+    Span<char> WriteSpan => bufferSpan[currentOffset..];
 
     /// <summary>
     /// Create a new XmlWriteBuffer
@@ -35,7 +35,7 @@ public ref struct XmlWriteBuffer {
     /// </summary>
     /// <param name="_">blank parameter</param>
     // ReSharper disable once UnusedParameter.Local
-    private XmlWriteBuffer(int _ = 0) {
+    XmlWriteBuffer(int _ = 0) {
         pendingNodeHeadClose = false;
         buffer = ArrayPool<char>.Shared.Rent(1024);
         bufferSpan = buffer;
@@ -45,7 +45,7 @@ public ref struct XmlWriteBuffer {
     }
 
     /// <summary>Resize internal char buffer (<see cref="buffer"/>)</summary>
-    private void Resize() {
+    void Resize() {
         var newBuffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2); // double size
         var newBufferSpan = new Span<char>(newBuffer);
 
@@ -69,7 +69,7 @@ public ref struct XmlWriteBuffer {
     /// <summary>
     /// Puts a "&gt;" character to signify the end of the current node head ("&lt;name&gt;") if it hasn't been already done
     /// </summary>
-    private void CloseNodeHeadForBodyIfOpen() {
+    void CloseNodeHeadForBodyIfOpen() {
         if (pendingNodeHeadClose is false) {
             return;
         }
@@ -147,7 +147,7 @@ public ref struct XmlWriteBuffer {
 
     /// <summary>Write the starting characters for an attribute (" name=''")</summary>
     /// <param name="name">Name of the attribute</param>
-    private void StartAttrCommon(ReadOnlySpan<char> name) {
+    void StartAttrCommon(ReadOnlySpan<char> name) {
         Debug.Assert(pendingNodeHeadClose);
         PutChar(' ');
         Write(name);
@@ -156,7 +156,7 @@ public ref struct XmlWriteBuffer {
 
     /// <summary>End an attribute</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)] // don't bother calling this
-    private void EndAttrCommon() {
+    void EndAttrCommon() {
         PutChar('\'');
     }
 
@@ -208,7 +208,8 @@ public ref struct XmlWriteBuffer {
     /// <param name="cdataMode">Should text be written as CDATA</param>
     /// <param name="resolver"></param>
     /// <returns>Serialized XML</returns>
-    internal static ReadOnlySpan<char> SerializeStatic<T>(T obj,
+    internal static ReadOnlySpan<char> SerializeStatic<T>(
+        T obj,
         CDataMode cdataMode = CDataMode.Off,
         IXmlFormatterResolver? resolver = null
     ) where T : IXmlSerialization {
@@ -230,11 +231,13 @@ public ref struct XmlWriteBuffer {
         }
     }
 
-    internal static void SerializeStatic<T>(T obj,
+    internal static void SerializeStatic<T>(
+        T obj,
         Span<char> span,
         out int charsWritten,
         IXmlFormatterResolver? resolver = null,
-        CDataMode cdataMode = CDataMode.Off)
+        CDataMode cdataMode = CDataMode.Off
+    )
         where T : IXmlSerialization {
         resolver ??= Xml.DefaultResolver;
         if (obj == null) {
@@ -255,11 +258,11 @@ public ref struct XmlWriteBuffer {
     }
 
 
-    private static readonly char[] EscapeChars = {
+    static readonly char[] EscapeChars = {
         '<', '>', '&'
     };
 
-    private static readonly char[] EscapeCharsAttribute = {
+    static readonly char[] EscapeCharsAttribute = {
         '<', '>', '&', '\'', '\"', '\n', '\r', '\t'
     };
 
@@ -280,17 +283,19 @@ public ref struct XmlWriteBuffer {
             Write(currentInput[..escapeCharIdx]);
 
             var charToEncode = currentInput[escapeCharIdx];
-            Write(charToEncode switch {
-                '<'  => "&lt;",
-                '>'  => "&gt;",
-                '&'  => "&amp;",
-                '\'' => "&apos;",
-                '\"' => "&quot;",
-                '\n' => "&#xA;",
-                '\r' => "&#xD;",
-                '\t' => "&#x9;",
-                _    => throw new($"unknown escape char \"{charToEncode}\". how did we get here")
-            });
+            Write(
+                charToEncode switch {
+                    '<'  => "&lt;",
+                    '>'  => "&gt;",
+                    '&'  => "&amp;",
+                    '\'' => "&apos;",
+                    '\"' => "&quot;",
+                    '\n' => "&#xA;",
+                    '\r' => "&#xD;",
+                    '\t' => "&#x9;",
+                    _    => throw new($"unknown escape char \"{charToEncode}\". how did we get here")
+                }
+            );
             currentInput = currentInput[(escapeCharIdx + 1)..];
         }
     }

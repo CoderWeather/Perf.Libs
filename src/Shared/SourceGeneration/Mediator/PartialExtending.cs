@@ -8,18 +8,18 @@ public sealed class MediatorPartialExtending : IIncrementalGenerator {
 		var mirrorMessagesToPartialExtend = context.SyntaxProvider.CreateSyntaxProvider(
 			static (node, ct) => {
 				if (node is TypeDeclarationSyntax {
-						BaseList.Types.Count: > 0,
-						TypeParameterList: null,
-						Keyword.Text: "class" or "record" or "struct"
-					} t
+					    BaseList.Types.Count: > 0,
+					    TypeParameterList: null,
+					    Keyword.Text: "class" or "record" or "struct"
+				    } t
 				 && t.Modifiers.Any(SyntaxKind.PartialKeyword)) {
 					foreach (var bt in t.BaseList.Types) {
 						if (bt is SimpleBaseTypeSyntax {
-								Type: GenericNameSyntax {
-									Identifier.Text: "IMirrorRequest" or "IMirrorCommand" or "IMirrorQuery",
-									TypeArgumentList.Arguments.Count: 1 or 2
-								}
-							}) {
+							    Type: GenericNameSyntax {
+								    Identifier.Text: "IMirrorRequest" or "IMirrorCommand" or "IMirrorQuery",
+								    TypeArgumentList.Arguments.Count: 1 or 2
+							    }
+						    }) {
 							return true;
 						}
 					}
@@ -112,26 +112,26 @@ public sealed class MediatorPartialExtending : IIncrementalGenerator {
 		var handlersToExtendWithPartials = context.SyntaxProvider.CreateSyntaxProvider(
 				static (node, ct) => {
 					if (node is TypeDeclarationSyntax {
-							BaseList.Types.Count: > 0,
-							TypeParameterList: null,
-							Keyword.Text: "class" or "record"
-						} t
+						    BaseList.Types.Count: > 0,
+						    TypeParameterList: null,
+						    Keyword.Text: "class" or "record"
+					    } t
 					 && t.Modifiers.Any(SyntaxKind.PartialKeyword)) {
 						foreach (var bt in t.BaseList.Types) {
 							if (bt is SimpleBaseTypeSyntax {
-									Type: GenericNameSyntax {
-										Identifier.Text: "IMirrorRequestHandler"
-										or "IRequestHandler"
-										or "IScopedRequestHandler"
-										or "IMirrorCommandHandler"
-										or "ICommandHandler"
-										or "IScopedCommandHandler"
-										or "IMirrorQueryHandler"
-										or "IQueryHandler"
-										or "IScopedQueryHandler",
-										TypeArgumentList.Arguments.Count: 1
-									}
-								}) {
+								    Type: GenericNameSyntax {
+									    Identifier.Text: "IMirrorRequestHandler"
+									    or "IRequestHandler"
+									    or "IScopedRequestHandler"
+									    or "IMirrorCommandHandler"
+									    or "ICommandHandler"
+									    or "IScopedCommandHandler"
+									    or "IMirrorQueryHandler"
+									    or "IQueryHandler"
+									    or "IScopedQueryHandler",
+									    TypeArgumentList.Arguments.Count: 1
+								    }
+							    }) {
 								return true;
 							}
 						}
@@ -355,16 +355,16 @@ public sealed class MediatorPartialExtending : IIncrementalGenerator {
 		var coverMessages = context.SyntaxProvider.CreateSyntaxProvider(
 				static (node, ct) => {
 					if (node is TypeDeclarationSyntax {
-							TypeParameterList: null,
-							BaseList.Types.Count: > 0,
-							RawKind: (int)SyntaxKind.StructDeclaration or (int)SyntaxKind.RecordStructDeclaration,
-							Keyword.Text: "record" or "struct"
-						} td) {
+						    TypeParameterList: null,
+						    BaseList.Types.Count: > 0,
+						    RawKind: (int)SyntaxKind.StructDeclaration or (int)SyntaxKind.RecordStructDeclaration,
+						    Keyword.Text: "record" or "struct"
+					    } td) {
 						foreach (var bt in td.BaseList.Types) {
 							if (bt.Type is GenericNameSyntax {
-									Identifier.Text: "ICoverRequest" or "ICoverCommand" or "ICoverQuery",
-									TypeArgumentList.Arguments.Count: 1
-								}) {
+								    Identifier.Text: "ICoverRequest" or "ICoverCommand" or "ICoverQuery",
+								    TypeArgumentList.Arguments.Count: 1
+							    }) {
 								return true;
 							}
 						}

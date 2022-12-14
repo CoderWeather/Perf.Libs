@@ -1,11 +1,7 @@
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using PerfXml.Generator.Internal;
-
 namespace PerfXml.Generator;
 
 [Generator]
-internal sealed partial class XmlGenerator : IIncrementalGenerator {
+public sealed partial class XmlGenerator : IIncrementalGenerator {
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var valueObjects = context.SyntaxProvider
            .CreateSyntaxProvider(SyntaxFilter, SyntaxTransform)
@@ -13,20 +9,36 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
            .Select((nts, ct) => nts!)
            .Collect();
 
-        context.RegisterSourceOutput(valueObjects, CodeGeneration);
+        var models = context.SyntaxProvider
+           .CreateSyntaxProvider(
+                static (context, ct) => {
+                    //
+                    return false;
+                },
+                static (context, ct) => {
+                    return context.Node;
+                    //
+                }
+            );
+
+        context.RegisterSourceOutput(context.CompilationProvider.Combine(valueObjects), CodeGeneration);
     }
 
-    private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
+    static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
         if (node is ClassDeclarationSyntax cls) {
-            var attributeCheck = cls.AttributeLists.Any(x => x.Attributes
-               .Any(y => y.Name.ToString() is "XmlCls" or "XmlClsAttribute"));
+            var attributeCheck = cls.AttributeLists.Any(
+                x => x.Attributes
+                   .Any(y => y.Name.ToString() is "XmlCls" or "XmlClsAttribute")
+            );
             var partialCheck = cls.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
             return attributeCheck && partialCheck;
         }
 
         if (node is RecordDeclarationSyntax rec) {
-            var attributeCheck = rec.AttributeLists.Any(x => x.Attributes
-               .Any(y => y.Name.ToString() is "XmlCls" or "XmlClsAttribute"));
+            var attributeCheck = rec.AttributeLists.Any(
+                x => x.Attributes
+                   .Any(y => y.Name.ToString() is "XmlCls" or "XmlClsAttribute")
+            );
             var partialCheck = rec.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword));
             return attributeCheck && partialCheck;
         }
@@ -34,15 +46,11 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
         return false;
     }
 
-    private static ClassGenInfo? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
-        var bodyAttributeSymbol = context.SemanticModel.Compilation
-           .GetTypeByMetadataName("PerfXml.XmlBodyAttribute");
-        var fieldAttributeSymbol = context.SemanticModel.Compilation
-           .GetTypeByMetadataName("PerfXml.XmlFieldAttribute");
-        var classAttributeSymbol = context.SemanticModel.Compilation
-           .GetTypeByMetadataName("PerfXml.XmlClsAttribute");
-        var splitStringAttributeSymbol = context.SemanticModel.Compilation
-           .GetTypeByMetadataName("PerfXml.XmlSplitStrAttribute");
+    static ClassGenInfo? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
+        var bodyAttributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName("PerfXml.XmlBodyAttribute");
+        var fieldAttributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName("PerfXml.XmlFieldAttribute");
+        var classAttributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName("PerfXml.XmlClsAttribute");
+        var splitStringAttributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName("PerfXml.XmlSplitStrAttribute");
 
         if (bodyAttributeSymbol is null
          || fieldAttributeSymbol is null
@@ -58,15 +66,17 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
             }
 
             var clsGen = new ClassGenInfo(namedType) {
-                ClassName = clsAttribute.ConstructorArguments[0].AsString(),
+                ClassName = clsAttribute.ConstructorArguments[0].As<string>(),
                 InheritedFromSerializable = namedType.BaseType?.ToString() is not (null or "Object")
                  && namedType.BaseType.TryGetAttribute(classAttributeSymbol) is not null
             };
 
             if (clsGen.ClassName is null) {
                 var ancestor = namedType.GetAllAncestors()
-                   .FirstOrDefault(t =>
-                        t.TryGetAttribute(classAttributeSymbol)?.ConstructorArguments[0].Value is not null);
+                   .FirstOrDefault(
+                        t =>
+                            t.TryGetAttribute(classAttributeSymbol)?.ConstructorArguments[0].Value is not null
+                    );
                 if (ancestor is not null) {
                     clsGen.ClassName =
                         ancestor.GetAttribute(classAttributeSymbol).ConstructorArguments[0].Value!.ToString();
@@ -95,11 +105,13 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
 
         var fields = symbol.GetMembers()
            .OfType<IFieldSymbol>()
-           .Where(f => f is {
-                AssociatedSymbol: null,
-                IsConst: false,
-                IsStatic: false
-            });
+           .Where(
+                f => f is {
+                    AssociatedSymbol: null,
+                    IsConst         : false,
+                    IsStatic        : false
+                }
+            );
         foreach (var field in fields) {
             var fieldAttr = field.TryGetAttribute(fieldAttributeSymbol);
             var bodyAttr = field.TryGetAttribute(bodyAttributeSymbol);
@@ -121,12 +133,12 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
                         }
             };
             if (fieldAttr is not null) {
-                fieldInfo.XmlName = fieldAttr.ConstructorArguments[0].AsString() ?? field.Name;
+                fieldInfo.XmlName = fieldAttr.ConstructorArguments[0].As<string>() ?? field.Name;
                 classGenInfo.XmlAttributes.Add(fieldInfo);
             }
 
             if (bodyAttr is not null) {
-                fieldInfo.XmlName = bodyAttr.ConstructorArguments[0].AsString() ?? field.Name;
+                fieldInfo.XmlName = bodyAttr.ConstructorArguments[0].As<string>() ?? field.Name;
                 classGenInfo.XmlBodies.Add(fieldInfo);
             }
 
@@ -137,10 +149,12 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
 
         var properties = symbol.GetMembers()
            .OfType<IPropertySymbol>()
-           .Where(p => p is {
-                IsStatic: false,
-                IsIndexer: false
-            });
+           .Where(
+                p => p is {
+                    IsStatic : false,
+                    IsIndexer: false
+                }
+            );
         foreach (var prop in properties) {
             var fieldAttr = prop.TryGetAttribute(fieldAttributeSymbol);
             var bodyAttr = prop.TryGetAttribute(bodyAttributeSymbol);
@@ -163,7 +177,7 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
             };
 
             if (fieldAttr is not null) {
-                propInfo.XmlName = fieldAttr.ConstructorArguments[0].AsString() ?? prop.Name;
+                propInfo.XmlName = fieldAttr.ConstructorArguments[0].As<string>() ?? prop.Name;
                 classGenInfo.XmlAttributes.Add(propInfo);
             }
 
@@ -173,11 +187,12 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
                     propInfo.XmlName = prop.Type switch {
                         INamedTypeSymbol nt => GetClsNameForSerializationType(nt),
                         ITypeParameterSymbol => throw new(
-                            "Cannot set name of sub-body entry with name of base of generic type parameter type"),
+                            "Cannot set name of sub-body entry with name of base of generic type parameter type"
+                        ),
                         _ => null
                     };
                 } else {
-                    propInfo.XmlName = bodyAttr.ConstructorArguments[0].AsString();
+                    propInfo.XmlName = bodyAttr.ConstructorArguments[0].As<string>();
                 }
 
                 classGenInfo.XmlBodies.Add(propInfo);
@@ -191,26 +206,28 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
         return classGenInfo;
 
         string GetClsNameForSerializationType(INamedTypeSymbol typeSymbol) {
-            var nameFromClsAttribute = typeSymbol.TryGetAttribute(classAttributeSymbol)
-              ?.ConstructorArguments[0]
-               .AsString();
+            var nameFromClsAttribute = typeSymbol.TryGetAttribute(classAttributeSymbol)?.ConstructorArguments[0].As<string>();
             if (nameFromClsAttribute is not null) {
                 return nameFromClsAttribute;
             }
 
             var ancestor = typeSymbol.GetAllAncestors()
-               .FirstOrDefault(t =>
-                    t.TryGetAttribute(classAttributeSymbol)?.ConstructorArguments[0].Value is not null);
+               .FirstOrDefault(
+                    t =>
+                        t.TryGetAttribute(classAttributeSymbol)?.ConstructorArguments[0].Value is not null
+                );
             return ancestor is not null
                 ? ancestor.GetAttribute(classAttributeSymbol).ConstructorArguments[0].Value!.ToString()
                 : typeSymbol.Name;
         }
     }
 
-    private static void CodeGeneration(SourceProductionContext context, ImmutableArray<ClassGenInfo> types) {
+    static void CodeGeneration(SourceProductionContext context, (Compilation, ImmutableArray<ClassGenInfo>) tuple) {
+        var (compilation, types) = tuple;
         if (types.IsDefaultOrEmpty) {
             return;
         }
+        // compilation.Options.
 
         var typesGroupedByNamespace = types
            .ToLookup(x => x.Symbol.ContainingNamespace, SymbolEqualityComparer.Default);
@@ -219,64 +236,73 @@ internal sealed partial class XmlGenerator : IIncrementalGenerator {
             var group = a.ToArray();
             var ns = a.Key!.ToString()!;
             var sourceCode = ProcessClasses(context, ns, group);
-            if (sourceCode is null) {
-                continue;
-            }
 
-            context.AddSource($"{nameof(XmlGenerator)}_{ns}.cs", SourceText.From(sourceCode, Encoding.UTF8));
+            context.AddSource($"{nameof(XmlGenerator)}_{ns}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
         }
     }
 
-    private static string? ProcessClasses(SourceProductionContext context,
+    static string ProcessClasses(
+        SourceProductionContext context,
         string containingNamespace,
         ClassGenInfo[] classes
     ) {
-        using var sourceCodeWriter = new SourceCodeWriter("  ");
-        var writer = sourceCodeWriter.Writer;
-        writer.WriteLine("using System;");
-        writer.WriteLine("using System.IO;");
-        writer.WriteLine("using System.Collections.Generic;");
-        writer.WriteLine("using PerfXml;");
-        writer.WriteLine("using PerfXml.Str;");
-        writer.WriteLine();
-        writer.WriteLine($"namespace {containingNamespace};");
-        writer.WriteLine();
+        using var writer = new IndentedTextWriter(new StringWriter(), "	");
+        writer.WriteLines(
+            $"namespace {containingNamespace};",
+            "",
+            "using System;",
+            "using System.IO;",
+            "using System.Collections.Generic;",
+            "using PerfXml;",
+            // "using PerfXml.Str;",
+            ""
+        );
 
         foreach (var cls in classes) {
-            using (NestedClassScope.Start(writer, cls.Symbol, cls.InheritedFromSerializable is false)) {
-                if (cls.InheritedClassName is false) {
-                    writer.WriteLine("public{0} ReadOnlySpan<char> GetNodeName() => \"{1}\";",
-                        cls.AdditionalInheritanceMethodModifiers,
-                        cls.ClassName
-                    );
-                }
+            writer.WriteLine($"partial {cls.Symbol.DeclarationString()} {cls.Symbol.MinimalName()} {{");
+            writer.Indent++;
 
-                SafeCall(WriteParseBody);
-                SafeCall(WriteParseAttribute);
-                SafeCall(WriteSerializeBody);
-                SafeCall(WriteSerializeAttributes);
-                SafeCall(WriteSerialize);
-
-                void SafeCall(Action<IndentedTextWriter, ClassGenInfo> action) {
-                    try {
-                        using var savePoint = sourceCodeWriter.SavePoint();
-                        var w = savePoint.Writer.Writer;
-                        action.Invoke(w, cls);
-                    } catch (Exception ex) {
-                        var descriptor = new DiagnosticDescriptor(nameof(XmlGenerator),
-                            "Error",
-                            ex.ToString(),
-                            "Error",
-                            DiagnosticSeverity.Error,
-                            true);
-                        var diagnostic = Diagnostic.Create(descriptor, Location.None);
-                        context.ReportDiagnostic(diagnostic);
-                    }
-                }
+            if (cls.InheritedClassName is false) {
+                writer.WriteLine(
+                    "{0}ReadOnlySpan<char> IXmlSerialization.GetNodeName() => \"{1}\";",
+                    cls.AdditionalInheritanceMethodModifiers,
+                    cls.ClassName
+                );
             }
+
+            WriteParseBody(writer, cls);
+            WriteParseAttribute(writer, cls);
+            WriteSerializeBody(writer, cls);
+            WriteSerializeAttributes(writer, cls);
+            WriteSerialize(writer, cls);
+
+            writer.Indent--;
+            writer.WriteLine("}");
         }
 
-        var resultStr = sourceCodeWriter.ToString();
+        writer.WriteLine(
+            """
+file static class __HiddenInterfaceMethods {
+    public static ReadOnlySpan<char> GetNodeName<T>(this T t) where T : IXmlSerialization => t.GetNodeName();
+
+    public static bool ParseFullBody<T>(this T t, ref XmlReadBuffer buffer, ReadOnlySpan<char> bodySpan, ref int end, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseFullBody(ref buffer, bodySpan, ref end, resolver);
+
+    public static bool ParseSubBody<T>(this T t, ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseSubBody(ref buffer, hash, bodySpan, innerBodySpan, ref end, ref endInner, resolver);
+
+    public static bool ParseSubBody<T>(this T t, ref XmlReadBuffer buffer, ReadOnlySpan<char> nodeName, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseSubBody(ref buffer, nodeName, bodySpan, innerBodySpan, ref end, ref endInner, resolver);
+
+    public static bool ParseAttribute<T>(this T t, ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> value, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseAttribute(ref buffer, hash, value, resolver);
+
+    public static void SerializeBody<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.SerializeBody(ref buffer, resolver);
+
+    public static void SerializeAttributes<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.SerializeAttributes(ref buffer, resolver);
+
+    public static void Serialize<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.Serialize(ref buffer, resolver);
+}
+"""
+        );
+
+        var resultStr = writer.InnerWriter.ToString()!;
         return resultStr;
     }
 }

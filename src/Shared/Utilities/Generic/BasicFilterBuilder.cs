@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Utilities.Generic;
 
@@ -94,13 +93,13 @@ public static class BasicFilterBuilder {
 
 	internal static PropertyInfo TakeProperty<TModel, TProperty>(this Expression<Func<TModel, TProperty>> propertySelector) {
 		if (propertySelector is {
-				NodeType: ExpressionType.Lambda,
-				Body: MemberExpression {
-					NodeType: ExpressionType.MemberAccess,
-					Member: PropertyInfo property,
-					Type: { }
-				}
-			}) {
+			    NodeType: ExpressionType.Lambda,
+			    Body: MemberExpression {
+				    NodeType: ExpressionType.MemberAccess,
+				    Member: PropertyInfo property,
+				    Type: { }
+			    }
+		    }) {
 			return property;
 		}
 

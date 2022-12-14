@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Utilities.Generic;
 
@@ -8,13 +7,13 @@ public sealed class UpdateBuilder<T> where T : notnull, new() {
 
 	public UpdateBuilder<T> Set<TMember>(Expression<Func<T, TMember>> accessor, TMember value) {
 		if (accessor is {
-				NodeType: ExpressionType.Lambda,
-				Body: MemberExpression {
-					NodeType: ExpressionType.MemberAccess,
-					Member: PropertyInfo property,
-					Type: { } propertyType
-				}
-			}) {
+			    NodeType: ExpressionType.Lambda,
+			    Body: MemberExpression {
+				    NodeType: ExpressionType.MemberAccess,
+				    Member: PropertyInfo property,
+				    Type: { } propertyType
+			    }
+		    }) {
 			values[property] = (propertyType, value, false);
 			return this;
 		}
@@ -25,14 +24,14 @@ public sealed class UpdateBuilder<T> where T : notnull, new() {
 	public UpdateBuilder<T> SetWithUpdate<TMember>(Expression<Func<T, TMember>> accessor, Action<UpdateBuilder<TMember>> memberUpdateBuilder)
 		where TMember : notnull, new() {
 		if (accessor is {
-				NodeType: ExpressionType.Lambda,
-				Body: MemberExpression {
-					NodeType: ExpressionType.MemberAccess,
-					Member: PropertyInfo property,
-					Type: { } propertyType
-				}
-			}) {
-			var memberBuilder = UpdateBuilder.Create<TMember>();
+			    NodeType: ExpressionType.Lambda,
+			    Body: MemberExpression {
+				    NodeType: ExpressionType.MemberAccess,
+				    Member: PropertyInfo property,
+				    Type: { } propertyType
+			    }
+		    }) {
+			var memberBuilder = Update.Create<TMember>();
 			memberUpdateBuilder.Invoke(memberBuilder);
 			var memberUpdate = memberBuilder.Build();
 			values[property] = (propertyType, memberUpdate, true);
@@ -46,12 +45,12 @@ public sealed class UpdateBuilder<T> where T : notnull, new() {
 		// var s = "some string";
 		// .Full(x => new() { x.Name = s })
 		if (lambda is not {
-				NodeType: ExpressionType.Lambda,
-				Body: MemberInitExpression {
-					NodeType: ExpressionType.MemberInit,
-					Bindings: { Count: > 0 } bindings
-				}
-			}) {
+			    NodeType: ExpressionType.Lambda,
+			    Body: MemberInitExpression {
+				    NodeType: ExpressionType.MemberInit,
+				    Bindings: { Count: > 0 } bindings
+			    }
+		    }) {
 			return this;
 		}
 
@@ -59,10 +58,10 @@ public sealed class UpdateBuilder<T> where T : notnull, new() {
 
 		foreach (var b in bindings) {
 			if (b is MemberAssignment {
-					BindingType: MemberBindingType.Assignment,
-					Member: PropertyInfo property,
-					Expression: { } valueExpression
-				}) {
+				    BindingType: MemberBindingType.Assignment,
+				    Member: PropertyInfo property,
+				    Expression: { } valueExpression
+			    }) {
 				switch (valueExpression) {
 					case ConstantExpression ce:
 						// Any already calculated value can be used
@@ -90,10 +89,10 @@ public sealed class UpdateBuilder<T> where T : notnull, new() {
 						var stack = new Stack<MemberInfo>();
 						Expression e = me;
 						while (e is MemberExpression {
-								   Member: FieldInfo or PropertyInfo,
-								   Expression: { } and not ConstantExpression
-							   } current
-							  ) {
+							       Member: FieldInfo or PropertyInfo,
+							       Expression: { } and not ConstantExpression
+						       } current
+						      ) {
 							stack.Push(current.Member);
 							e = current.Expression;
 						}
@@ -138,8 +137,4 @@ public sealed class UpdateBuilder<T> where T : notnull, new() {
 	}
 
 	public Update<T> Build() => new(values);
-}
-
-public static class UpdateBuilder {
-	public static UpdateBuilder<T> Create<T>() where T : notnull, new() => new();
 }

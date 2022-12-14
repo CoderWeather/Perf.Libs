@@ -59,17 +59,17 @@ internal sealed class ScopedMediatorGenerator : IIncrementalGenerator {
 		var handlersForMediator = context.SyntaxProvider.CreateSyntaxProvider(
 				static (node, ct) => {
 					if (node is TypeDeclarationSyntax {
-							TypeParameterList: null,
-							BaseList.Types.Count: > 0,
-							RawKind: (int)SyntaxKind.ClassDeclaration or (int)SyntaxKind.RecordDeclaration
-						} t
+						    TypeParameterList: null,
+						    BaseList.Types.Count: > 0,
+						    RawKind: (int)SyntaxKind.ClassDeclaration or (int)SyntaxKind.RecordDeclaration
+					    } t
 					 && t.Modifiers.Any(SyntaxKind.SealedKeyword)) {
 						foreach (var bt in t.BaseList.Types) {
 							ct.ThrowIfCancellationRequested();
 							if (bt.Type is GenericNameSyntax {
-									TypeArgumentList.Arguments.Count: 1 or 2,
-									Identifier.Text: "IScopedRequestHandler" or "IScopedCommandHandler" or "IScopedQueryHandler"
-								}) {
+								    TypeArgumentList.Arguments.Count: 1 or 2,
+								    Identifier.Text: "IScopedRequestHandler" or "IScopedCommandHandler" or "IScopedQueryHandler"
+							    }) {
 								return true;
 							}
 						}
@@ -152,7 +152,7 @@ internal sealed class ScopedMediatorGenerator : IIncrementalGenerator {
 						}
 					}
 
-					return h.Any() ? h : default;
+					return h;
 				}
 			)
 		   .Where(x => x != default);
@@ -162,9 +162,6 @@ internal sealed class ScopedMediatorGenerator : IIncrementalGenerator {
 			static (context, tuple) => {
 				var (assembly, handlers) = tuple;
 				var ct = context.CancellationToken;
-				if (handlers.IsDefaultOrEmpty) {
-					return;
-				}
 
 				ct.ThrowIfCancellationRequested();
 				using var writer = new IndentedTextWriter(new StringWriter(), "	");

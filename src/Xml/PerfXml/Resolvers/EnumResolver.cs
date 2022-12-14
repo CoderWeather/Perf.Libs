@@ -4,11 +4,11 @@ namespace PerfXml.Resolvers;
 
 public sealed class EnumResolver : IXmlFormatterResolver {
     public static readonly EnumResolver Instance = new();
-    private EnumResolver() { }
+    EnumResolver() { }
 
     public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
-    private static class Cache<T> {
+    static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
 
         static Cache() {

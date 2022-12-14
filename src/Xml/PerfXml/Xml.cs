@@ -3,7 +3,7 @@
 namespace PerfXml;
 
 public static class Xml {
-    private static IXmlFormatterResolver defaultResolver = StandardResolver.Instance;
+    static IXmlFormatterResolver defaultResolver = StandardResolver.Instance;
 
     public static IXmlFormatterResolver DefaultResolver {
         get => defaultResolver;
@@ -18,10 +18,12 @@ public static class Xml {
         where T : IXmlSerialization =>
         XmlWriteBuffer.SerializeStatic(obj);
 
-    public static void Serialize<T>(T obj,
+    public static void Serialize<T>(
+        T obj,
         Span<char> span,
         out int charsWritten,
-        IXmlFormatterResolver? resolver = null)
+        IXmlFormatterResolver? resolver = null
+    )
         where T : IXmlSerialization {
         resolver ??= DefaultResolver;
         XmlWriteBuffer.SerializeStatic(obj, span, out charsWritten, resolver);

@@ -1,4 +1,3 @@
-using System.Reflection;
 using MessagePack;
 using MessagePack.Formatters;
 using Utilities.Generic;
@@ -10,7 +9,7 @@ public sealed class UpdateMessagePackResolver : IFormatterResolver {
 	public static readonly UpdateMessagePackResolver Instance = new();
 
 	public IMessagePackFormatter<T>? GetFormatter<T>() {
-		var t = typeof(T);
+		var t = Typeof<T>();
 
 		if (t.Name is "Update`1" && t.IsConstructedGenericType) {
 			var argType = t.GetGenericArguments()[0];
@@ -26,7 +25,7 @@ public sealed class UpdateMessagePackResolver : IFormatterResolver {
 		public static readonly IMessagePackFormatter<T>? Formatter;
 
 		static Cache() {
-			var updateModelType = typeof(T);
+			var updateModelType = Typeof<T>();
 			var t = updateModelType.GetGenericArguments()[0];
 
 			var msgPack = typeof(UpdateMessagePackFormatter<>).MakeGenericType(t)

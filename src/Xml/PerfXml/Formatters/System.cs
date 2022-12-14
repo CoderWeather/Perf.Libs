@@ -4,7 +4,7 @@ namespace PerfXml.Formatters;
 
 public sealed class ByteFormatter : IXmlFormatter<byte> {
     public static readonly ByteFormatter Instance = new();
-    private ByteFormatter() { }
+    ByteFormatter() { }
 
     public bool TryWriteTo(Span<char> span, byte value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -15,7 +15,7 @@ public sealed class ByteFormatter : IXmlFormatter<byte> {
 
 public sealed class Int16Formatter : IXmlFormatter<short> {
     public static readonly Int16Formatter Instance = new();
-    private Int16Formatter() { }
+    Int16Formatter() { }
 
     public bool TryWriteTo(Span<char> span, short value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -26,7 +26,7 @@ public sealed class Int16Formatter : IXmlFormatter<short> {
 
 public sealed class Int32Formatter : IXmlFormatter<int> {
     public static readonly Int32Formatter Instance = new();
-    private Int32Formatter() { }
+    Int32Formatter() { }
 
     public bool TryWriteTo(Span<char> span, int value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -36,7 +36,7 @@ public sealed class Int32Formatter : IXmlFormatter<int> {
 
 public sealed class UInt32Formatter : IXmlFormatter<uint> {
     public static readonly UInt32Formatter Instance = new();
-    private UInt32Formatter() { }
+    UInt32Formatter() { }
 
     public bool TryWriteTo(Span<char> span, uint value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -47,7 +47,7 @@ public sealed class UInt32Formatter : IXmlFormatter<uint> {
 
 public sealed class Int64Formatter : IXmlFormatter<long> {
     public static readonly Int64Formatter Instance = new();
-    private Int64Formatter() { }
+    Int64Formatter() { }
 
     public bool TryWriteTo(Span<char> span, long value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -58,7 +58,7 @@ public sealed class Int64Formatter : IXmlFormatter<long> {
 
 public sealed class DoubleFormatter : IXmlFormatter<double> {
     public static readonly DoubleFormatter Instance = new();
-    private DoubleFormatter() { }
+    DoubleFormatter() { }
 
     public bool TryWriteTo(Span<char> span, double value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -69,7 +69,7 @@ public sealed class DoubleFormatter : IXmlFormatter<double> {
 
 public sealed class DecimalFormatter : IXmlFormatter<decimal> {
     public static readonly DecimalFormatter Instance = new();
-    private DecimalFormatter() { }
+    DecimalFormatter() { }
 
     public bool TryWriteTo(Span<char> span, decimal value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten, provider: CultureInfo.InvariantCulture);
@@ -80,7 +80,7 @@ public sealed class DecimalFormatter : IXmlFormatter<decimal> {
 
 public sealed class StringFormatter : IXmlFormatter<string?> {
     public static readonly StringFormatter Instance = new();
-    private StringFormatter() { }
+    StringFormatter() { }
 
     public bool TryWriteTo(Span<char> span, string? value, out int charsWritten, IXmlFormatterResolver resolver) {
         if (value is null || span.Length < value.Length) {
@@ -98,7 +98,7 @@ public sealed class StringFormatter : IXmlFormatter<string?> {
 
 public sealed class CharFormatter : IXmlFormatter<char> {
     public static readonly CharFormatter Instance = new();
-    private CharFormatter() { }
+    CharFormatter() { }
 
     public bool TryWriteTo(Span<char> span, char value, out int charsWritten, IXmlFormatterResolver resolver) {
         if (span.Length < 1) {
@@ -116,7 +116,7 @@ public sealed class CharFormatter : IXmlFormatter<char> {
 
 public sealed class BooleanFormatter : IXmlFormatter<bool> {
     public static readonly BooleanFormatter Instance = new();
-    private BooleanFormatter() { }
+    BooleanFormatter() { }
 
     public bool TryWriteTo(Span<char> span, bool value, out int charsWritten, IXmlFormatterResolver resolver) {
         if (span.Length < 1) {
@@ -131,8 +131,8 @@ public sealed class BooleanFormatter : IXmlFormatter<bool> {
 
     public bool Parse(ReadOnlySpan<char> span, IXmlFormatterResolver resolver) {
         switch (span[0]) {
-            case '0': return false;
-            case '1': return true;
+        case '0': return false;
+        case '1': return true;
         }
 
         if (span.Equals("no", StringComparison.InvariantCultureIgnoreCase)) {
@@ -157,7 +157,7 @@ public sealed class BooleanFormatter : IXmlFormatter<bool> {
 
 public sealed class GuidFormatter : IXmlFormatter<Guid> {
     public static readonly GuidFormatter Instance = new();
-    private GuidFormatter() { }
+    GuidFormatter() { }
 
     public bool TryWriteTo(Span<char> span, Guid value, out int charsWritten, IXmlFormatterResolver resolver) =>
         value.TryFormat(span, out charsWritten);
@@ -167,7 +167,7 @@ public sealed class GuidFormatter : IXmlFormatter<Guid> {
 
 public sealed class DateTimeFormatter : IXmlFormatter<DateTime> {
     public static readonly DateTimeFormatter Instance = new();
-    private readonly string format;
+    readonly string format;
 
     public DateTimeFormatter(string format = "yyyy-MM-dd HH:mm:ss") {
         this.format = format;

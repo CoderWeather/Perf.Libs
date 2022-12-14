@@ -1,0 +1,19 @@
+<Project>
+
+    <Choose>
+        <When Condition="$(Configuration) == 'Debug' and $(TargetFramework) == 'net7.0'">
+            <PropertyGroup>
+                <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+                <CompilerGeneratedFilesOutputPath>$(MSBuildProjectDirectory)/obj/$(Configuration)/generated</CompilerGeneratedFilesOutputPath>
+            </PropertyGroup>
+            <ItemGroup>
+                <None Include="$(CompilerGeneratedFilesOutputPath)/**/*">
+                    <Link>_Source_Generation/%(RecursiveDir)/%(FileName)%(Extension)</Link>
+                    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+                    <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+                </None>
+            </ItemGroup>
+        </When>
+    </Choose>
+
+</Project>

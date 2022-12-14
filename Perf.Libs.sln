@@ -5,8 +5,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_globals", "_globals", "{2A1E6F4A-47BA-4B99-B6EB-D34C30B75DDF}"
 	ProjectSection(SolutionItems) = preProject
 		global.json = global.json
+		.editorconfig = .editorconfig
 		nuget-pack.sh = nuget-pack.sh
 		README.md = README.md
+		Directory.Build.targets = Directory.Build.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Xml", "Xml", "{F30F6269-7029-473C-BF71-2A77CFC46C8C}"
@@ -33,6 +35,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mediator", "src\Shared\Medi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "src\Shared\Utilities\Utilities.csproj", "{5FD80731-0C78-4214-AD21-2F3E68F2C408}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perf.SourceGeneration.Internal", "src\Shared\Perf.SourceGeneration.Internal\Perf.SourceGeneration.Internal.csproj", "{541BA462-12BD-45F9-B680-6C6E44DCE76A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A5F5E542-0A16-4C5C-B33C-8E0DE17AA3B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerfXml.Tests", "tests\PerfXml.Tests\PerfXml.Tests.csproj", "{7337D2B5-96FC-486C-850A-3AF2E8F202E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +59,8 @@ Global
 		{2A260FE2-723B-4737-9E38-89A501EBC0B5} = {AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A}
 		{C8A5F290-AD68-400D-8D36-2F16F6A304BA} = {AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A}
 		{5FD80731-0C78-4214-AD21-2F3E68F2C408} = {AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A}
+		{541BA462-12BD-45F9-B680-6C6E44DCE76A} = {AE8AE9FC-CD54-4660-A4AF-2CE70A5C4A0A}
+		{7337D2B5-96FC-486C-850A-3AF2E8F202E8} = {A5F5E542-0A16-4C5C-B33C-8E0DE17AA3B8}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{516175A8-D959-4438-9787-01611127C4C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -89,5 +99,13 @@ Global
 		{5FD80731-0C78-4214-AD21-2F3E68F2C408}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5FD80731-0C78-4214-AD21-2F3E68F2C408}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5FD80731-0C78-4214-AD21-2F3E68F2C408}.Release|Any CPU.Build.0 = Release|Any CPU
+		{541BA462-12BD-45F9-B680-6C6E44DCE76A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{541BA462-12BD-45F9-B680-6C6E44DCE76A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{541BA462-12BD-45F9-B680-6C6E44DCE76A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{541BA462-12BD-45F9-B680-6C6E44DCE76A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7337D2B5-96FC-486C-850A-3AF2E8F202E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7337D2B5-96FC-486C-850A-3AF2E8F202E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7337D2B5-96FC-486C-850A-3AF2E8F202E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7337D2B5-96FC-486C-850A-3AF2E8F202E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

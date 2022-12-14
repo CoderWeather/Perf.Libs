@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>preview</LangVersion>
+        <LangVersion>11</LangVersion>
         <IsRoslynComponent>true</IsRoslynComponent>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -21,6 +21,19 @@
         <PackageTags>xml c# perfxml sourcegen</PackageTags>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
     </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="System.Text" />
+        <Using Include="System.Globalization" />
+        <Using Include="System.Collections.Immutable" />
+        <Using Include="System.Collections.Concurrent" />
+        <Using Include="System.CodeDom.Compiler" />
+        <Using Include="Microsoft.CodeAnalysis" />
+        <Using Include="Microsoft.CodeAnalysis.Text" />
+        <Using Include="Microsoft.CodeAnalysis.CSharp" />
+        <Using Include="Microsoft.CodeAnalysis.CSharp.Syntax" />
+        <Using Include="PerfXml.Generator.Internal" />
+    </ItemGroup>
 
     <ItemGroup>
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

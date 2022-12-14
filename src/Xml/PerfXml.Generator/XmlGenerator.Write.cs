@@ -1,9 +1,7 @@
-﻿using PerfXml.Generator.Internal;
+﻿namespace PerfXml.Generator;
 
-namespace PerfXml.Generator;
-
-internal partial class XmlGenerator {
-    private static void WriteParseBody(IndentedTextWriter writer, ClassGenInfo cls) {
+partial class XmlGenerator {
+    static void WriteParseBody(IndentedTextWriter writer, ClassGenInfo cls) {
         var needsInlineBody = false;
         var needsSubBody = false;
 
@@ -21,7 +19,7 @@ internal partial class XmlGenerator {
 
         if (needsInlineBody) {
             writer.WriteLine(
-                $"public{cls.AdditionalInheritanceMethodModifiers} bool ParseFullBody(ref XmlReadBuffer buffer, ReadOnlySpan<char> bodySpan, ref int end, IXmlFormatterResolver resolver)"
+                $"{cls.AdditionalInheritanceMethodModifiers}bool IXmlSerialization.ParseFullBody(ref XmlReadBuffer buffer, ReadOnlySpan<char> bodySpan, ref int end, IXmlFormatterResolver resolver)"
             );
             using (NestedScope.Start(writer)) {
                 foreach (var body in cls.XmlBodies) {
@@ -32,7 +30,8 @@ internal partial class XmlGenerator {
                         );
                     } else {
                         throw new(
-                            $"Xml:WriteParseBodyMethods: how to inline body {body.OriginalType.IsNativeIntegerType}");
+                            $"Xml:WriteParseBodyMethods: how to inline body {body.OriginalType.IsNativeIntegerType}"
+                        );
                     }
                 }
 
@@ -56,7 +55,7 @@ internal partial class XmlGenerator {
         }
     }
 
-    private static void WriteParseSubBody(IndentedTextWriter writer, ClassGenInfo cls) {
+    static void WriteParseSubBody(IndentedTextWriter writer, ClassGenInfo cls) {
         var xmlBodies = cls.XmlBodies
            .Where(x => x is not PropertyGenInfo prop || prop.Symbol.IsReadOnly is false)
            .Where(x => x is not FieldGenInfo field || field.Symbol.IsReadOnly is false)
@@ -68,15 +67,14 @@ internal partial class XmlGenerator {
         }
 
         writer.WriteLine(
-            $"public{cls.AdditionalInheritanceMethodModifiers} bool ParseSubBody(ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver)"
+            $"{cls.AdditionalInheritanceMethodModifiers}bool IXmlSerialization.ParseSubBody(ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver)"
         );
-        using (NestedScope.Start(writer)) {
-            if (xmlBodies.Any() is false) {
-                writer.WriteLine("return default;");
-                NestedScope.CloseLast();
-                return;
-            }
+        if (xmlBodies.Any() is false) {
+            writer.WriteLine("  => default;");
+            return;
+        }
 
+        using (NestedScope.Start(writer)) {
             if (cls.InheritedFromSerializable) {
                 writer.WriteLine(
                     "if (base.ParseSubBody(ref buffer, hash, bodySpan, innerBodySpan, ref end, ref endInner, resolver)) return true;"
@@ -122,7 +120,7 @@ internal partial class XmlGenerator {
         }
     }
 
-    private static void WriteParseSubBodyByNames(IndentedTextWriter writer, ClassGenInfo cls) {
+    static void WriteParseSubBodyByNames(IndentedTextWriter writer, ClassGenInfo cls) {
         var xmlBodies = cls.XmlBodies
            .Where(x => x is not PropertyGenInfo prop || prop.Symbol.IsReadOnly is false)
            .Where(x => x is not FieldGenInfo field || field.Symbol.IsReadOnly is false)
@@ -130,15 +128,14 @@ internal partial class XmlGenerator {
            .ToArray();
 
         writer.WriteLine(
-            $"public{cls.AdditionalInheritanceMethodModifiers} bool ParseSubBody(ref XmlReadBuffer buffer, ReadOnlySpan<char> nodeName, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver)"
+            $"{cls.AdditionalInheritanceMethodModifiers}bool IXmlSerialization.ParseSubBody(ref XmlReadBuffer buffer, ReadOnlySpan<char> nodeName, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver)"
         );
-        using (NestedScope.Start(writer)) {
-            if (xmlBodies.Any() is false) {
-                writer.WriteLine("return default;");
-                NestedScope.CloseLast();
-                return;
-            }
+        if (xmlBodies.Any() is false) {
+            writer.WriteLine("  => default;");
+            return;
+        }
 
+        using (NestedScope.Start(writer)) {
             if (cls.InheritedFromSerializable) {
                 writer.WriteLine(
                     "if (base.ParseSubBody(ref buffer, hash, bodySpan, innerBodySpan, ref end, ref endInner, resolver)) return true;"
@@ -169,7 +166,7 @@ internal partial class XmlGenerator {
         }
     }
 
-    private static void WriteParseAttribute(IndentedTextWriter writer, ClassGenInfo cls) {
+    static void WriteParseAttribute(IndentedTextWriter writer, ClassGenInfo cls) {
         var xmlAttrs = cls.XmlAttributes
            .Where(x => x.XmlName is not null)
            .Where(x => x is not PropertyGenInfo prop || prop.Symbol.IsReadOnly is false)
@@ -181,15 +178,14 @@ internal partial class XmlGenerator {
         }
 
         writer.WriteLine(
-            $"public{cls.AdditionalInheritanceMethodModifiers} bool ParseAttribute(ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> value, IXmlFormatterResolver resolver)"
+            $"{cls.AdditionalInheritanceMethodModifiers}bool IXmlSerialization.ParseAttribute(ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> value, IXmlFormatterResolver resolver)"
         );
-        using (NestedScope.Start(writer)) {
-            if (xmlAttrs.Any() is false) {
-                writer.WriteLine("return default;");
-                NestedScope.CloseLast();
-                return;
-            }
+        if (xmlAttrs.Any() is false) {
+            writer.WriteLine("  => default;");
+            return;
+        }
 
+        using (NestedScope.Start(writer)) {
             if (cls.InheritedFromSerializable) {
                 writer.WriteLine("if (base.ParseAttribute(ref buffer, hash, value, resolver)) return true;");
             }
@@ -228,13 +224,13 @@ internal partial class XmlGenerator {
         }
     }
 
-    private static void WriteSerializeBody(IndentedTextWriter writer, ClassGenInfo cls) {
+    static void WriteSerializeBody(IndentedTextWriter writer, ClassGenInfo cls) {
         if (cls.XmlBodies.Any() is false && cls.InheritedFromSerializable) {
             return;
         }
 
         writer.WriteLine(
-            $"public{cls.AdditionalInheritanceMethodModifiers} void SerializeBody(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver)"
+            $"{cls.AdditionalInheritanceMethodModifiers}void IXmlSerialization.SerializeBody(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver)"
         );
         using (NestedScope.Start(writer)) {
             if (cls.XmlBodies.Any() is false) {
@@ -261,7 +257,7 @@ internal partial class XmlGenerator {
                         throw new("for xml body of type list<T>, T must be IXmlSerialization");
                     }
 
-                    writer.WriteLine($"foreach (var obj in this.{body.Symbol.Name})");
+                    writer.WriteLine($"foreach (IXmlSerialization obj in this.{body.Symbol.Name})");
                     using (NestedScope.Start(writer)) {
                         writer.WriteLine("obj.Serialize(ref buffer, resolver);");
                     }
@@ -269,7 +265,7 @@ internal partial class XmlGenerator {
                 // another IXmlSerialization
                 else if (body.OriginalType.IsPrimitive() is false) {
                     var nodeNameArg = body.XmlName is not null ? $", \"{body.XmlName}\"" : null;
-                    writer.WriteLine($"this.{body.Symbol.Name}.Serialize(ref buffer, resolver{nodeNameArg});");
+                    writer.WriteLine($"((IXmlSerialization)this.{body.Symbol.Name}).Serialize(ref buffer, resolver{nodeNameArg});");
                 } else {
                     NestedScope? nodeScope = null;
 
@@ -291,13 +287,15 @@ internal partial class XmlGenerator {
         }
     }
 
-    private static void WriteSerializeAttributes(IndentedTextWriter writer, ClassGenInfo cls) {
+    static void WriteSerializeAttributes(IndentedTextWriter writer, ClassGenInfo cls) {
         if (cls.XmlAttributes.Any() is false && cls.InheritedFromSerializable) {
             return;
         }
 
         writer.WriteLine(
-            $"public{cls.AdditionalInheritanceMethodModifiers} void SerializeAttributes(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver)");
+            $"{cls.AdditionalInheritanceMethodModifiers}void IXmlSerialization.SerializeAttributes(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver)"
+        );
+
         using (NestedScope.Start(writer)) {
             if (cls.InheritedFromSerializable) {
                 writer.WriteLine("base.SerializeAttributes(ref buffer, resolver);");
@@ -335,25 +333,25 @@ internal partial class XmlGenerator {
         }
     }
 
-    private static void WriteSerialize(IndentedTextWriter writer, ClassGenInfo cls) {
+    static void WriteSerialize(IndentedTextWriter writer, ClassGenInfo cls) {
         if (cls.InheritedFromSerializable) {
             return;
         }
 
         writer.WriteLine(
-            "public void Serialize(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver, ReadOnlySpan<char> nodeName = default)"
+            "void IXmlSerialization.Serialize(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver, ReadOnlySpan<char> nodeName)"
         );
         using (NestedScope.Start(writer)) {
             writer.WriteLines(
-                "var node = buffer.StartNodeHead(nodeName.IsEmpty ? GetNodeName() : nodeName);",
-                "SerializeAttributes(ref buffer, resolver);",
-                "SerializeBody(ref buffer, resolver);",
+                "var node = buffer.StartNodeHead(nodeName.IsEmpty ? ((IXmlSerialization)this).GetNodeName() : nodeName);",
+                "((IXmlSerialization)this).SerializeAttributes(ref buffer, resolver);",
+                "((IXmlSerialization)this).SerializeBody(ref buffer, resolver);",
                 "buffer.EndNode(ref node);"
             );
         }
     }
 
-    private static string GetPutAttributeAction(BaseMemberGenInfo m) {
+    static string GetPutAttributeAction(BaseMemberGenInfo m) {
         var type = m.Type;
         var name = m.Symbol.Name;
         string? preCheck = null;
@@ -387,7 +385,7 @@ internal partial class XmlGenerator {
         return $"{preCheck}{writerAction}";
     }
 
-    private static ulong HashName(ReadOnlySpan<char> name) {
+    static ulong HashName(ReadOnlySpan<char> name) {
         var hashedValue = 0x2AAAAAAAAAAAAB67ul;
         for (var i = 0; i < name.Length; i++) {
             hashedValue += name[i];

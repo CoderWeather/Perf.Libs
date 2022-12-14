@@ -18,4 +18,7 @@ public static class GlobalFunctions {
 
 	public static Expression<Func<T>> Expr<T>(Expression<Func<T>> lambda) => lambda;
 	public static Expression<Func<T, T>> Expr<T>(Expression<Func<T, T>> lambda) => lambda;
+
+	[Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static DateTime Now() => DateTimeOffset.UtcNow.DateTime;
 }

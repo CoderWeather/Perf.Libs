@@ -1,8 +1,6 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿namespace PerfXml.Generator;
 
-namespace PerfXml.Generator;
-
-internal sealed class ClassGenInfo {
+sealed class ClassGenInfo {
     public readonly INamedTypeSymbol Symbol;
     public readonly List<BaseMemberGenInfo> XmlAttributes = new();
     public readonly List<BaseMemberGenInfo> XmlBodies = new();
@@ -17,13 +15,13 @@ internal sealed class ClassGenInfo {
 
     public string? AdditionalInheritanceMethodModifiers =>
         InheritedFromSerializable
-            ? " override"
+            ? "override "
             : Symbol.IsSealed is false || Symbol.IsAbstract
-                ? " virtual"
+                ? "virtual "
                 : null;
 }
 
-internal abstract class BaseMemberGenInfo {
+abstract class BaseMemberGenInfo {
     public char? SplitChar;
     public bool TypeIsSerializable;
 
@@ -47,7 +45,7 @@ internal abstract class BaseMemberGenInfo {
         };
 }
 
-internal sealed class FieldGenInfo : BaseMemberGenInfo {
+sealed class FieldGenInfo : BaseMemberGenInfo {
     public FieldGenInfo(IFieldSymbol fieldSymbol) :
         base(fieldSymbol, fieldSymbol.Type) {
         Symbol = fieldSymbol;
@@ -56,7 +54,7 @@ internal sealed class FieldGenInfo : BaseMemberGenInfo {
     public new IFieldSymbol Symbol { get; }
 }
 
-internal sealed class PropertyGenInfo : BaseMemberGenInfo {
+sealed class PropertyGenInfo : BaseMemberGenInfo {
     public PropertyGenInfo(IPropertySymbol propertySymbol) :
         base(propertySymbol, propertySymbol.Type) {
         Symbol = propertySymbol;

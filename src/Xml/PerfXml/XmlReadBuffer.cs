@@ -1,7 +1,8 @@
+namespace PerfXml;
+
 using System.Diagnostics;
 using System.Net;
-
-namespace PerfXml;
+using static FileFunctions;
 
 public delegate bool UnsafeReadAction(Span<char> span, out uint charsWritten);
 
@@ -20,13 +21,13 @@ public ref struct XmlReadBuffer {
     // private CDataMode cdataMode;
 
     /// <summary>Current depth of calls to <see cref="ReadInto{T}"/></summary>
-    private int depth;
+    int depth;
 
     /// <summary>
     /// Maximum depth depth that calls to <see cref="ReadInto{T}"/> can happen before an exception will be thrown to
     /// protect the application
     /// </summary>
-    private const int MaxDepth = 50;
+    const int MaxDepth = 50;
 
     /// <summary>
     /// Parses XML node attributes
@@ -38,7 +39,8 @@ public ref struct XmlReadBuffer {
     /// <param name="resolver"></param>
     /// <exception cref="InvalidDataException">Unable to parse data</exception>
     /// <returns>Position within <param name="currSpan"/> which is at the end of the attribute list</returns>
-    private int DeserializeAttributes<T>(ReadOnlySpan<char> currSpan,
+    int DeserializeAttributes<T>(
+        ReadOnlySpan<char> currSpan,
         int closeBraceIdx,
         int position,
         T obj,
@@ -72,15 +74,17 @@ public ref struct XmlReadBuffer {
             var attributeValue = attributeValueSpan[..quoteEndIdx];
             var attributeValueDecoded = DecodeText(attributeValue);
 
-            var nameHash = IXmlSerialization.HashName(attributeName);
+            var nameHash = HashName(attributeName);
             var assigned = obj.ParseAttribute(ref this, nameHash, attributeValueDecoded, resolver);
             // if (abort)
             // 	return -1;
             if (!assigned) {
-                Debug.Print("[XmlReadBuffer]: unhandled attribute {0} on {1}. \"{2}\"",
+                Debug.Print(
+                    "[XmlReadBuffer]: unhandled attribute {0} on {1}. \"{2}\"",
                     attributeName.ToString(),
                     obj.GetType(),
-                    attributeValue.ToString());
+                    attributeValue.ToString()
+                );
             }
 
             position += attributeName.Length + attributeValue.Length + 2 + 1; // ='' -- 3 chars
@@ -96,7 +100,7 @@ public ref struct XmlReadBuffer {
     /// <returns>Position within <param name="span"/> that the node ends at</returns>
     /// <exception cref="InvalidDataException">Unable to parse data</exception>
     /// <exception cref="Exception">Internal error</exception>
-    private int ReadInto<T>(ReadOnlySpan<char> span, T obj, IXmlFormatterResolver? resolver = null)
+    int ReadInto<T>(ReadOnlySpan<char> span, T obj, IXmlFormatterResolver? resolver = null)
         where T : IXmlSerialization {
         resolver ??= Xml.DefaultResolver;
         depth++;
@@ -120,23 +124,23 @@ public ref struct XmlReadBuffer {
 
             if (currSpan.Length > 1) {
                 switch (currSpan[1]) {
-                    // no need to check length here.. name has to be at least 1 char lol
-                    case '/':
-                        // current block has ended
-                        depth--;
-                        return i + 2; // todo: hmm. this make caller responsible for aligning again
-                    case '?': {
-                        // skip xml declaration
-                        // e.g <?xml version='1.0'?>
+                // no need to check length here.. name has to be at least 1 char lol
+                case '/':
+                    // current block has ended
+                    depth--;
+                    return i + 2; // todo: hmm. this make caller responsible for aligning again
+                case '?': {
+                    // skip xml declaration
+                    // e.g <?xml version='1.0'?>
 
-                        var declarationEnd = currSpan.IndexOf(DeclarationEnd);
-                        if (declarationEnd == -1) {
-                            throw new InvalidDataException("where is declaration end");
-                        }
-
-                        i += declarationEnd + DeclarationEnd.Length;
-                        continue;
+                    var declarationEnd = currSpan.IndexOf(DeclarationEnd);
+                    if (declarationEnd == -1) {
+                        throw new InvalidDataException("where is declaration end");
                     }
+
+                    i += declarationEnd + DeclarationEnd.Length;
+                    continue;
+                }
                 }
 
                 if (currSpan.StartsWith(CommentStart)) {
@@ -208,7 +212,8 @@ public ref struct XmlReadBuffer {
 
                 if (afterAttrsChar != '>') {
                     throw new InvalidDataException(
-                        "char after attributes should have been the end of the node, but it isn't");
+                        "char after attributes should have been the end of the node, but it isn't"
+                    );
                 }
 
                 var bodySpan = currSpan[(closeBraceIdx + 1)..];
@@ -248,22 +253,26 @@ public ref struct XmlReadBuffer {
                 var endInnerIdx = unassignedIdx;
 
                 var innerBodySpan = currSpan[(closeBraceIdx + 1)..];
-                var nodeNameHash = IXmlSerialization.HashName(nodeName);
-                var parsedSub = obj.ParseSubBody(ref this,
+                var nodeNameHash = HashName(nodeName);
+                var parsedSub = obj.ParseSubBody(
+                    ref this,
                     nodeNameHash,
                     currSpan,
                     innerBodySpan,
                     ref endIdx,
                     ref endInnerIdx,
-                    resolver);
+                    resolver
+                );
                 if (parsedSub is false) {
-                    parsedSub = obj.ParseSubBody(ref this,
+                    parsedSub = obj.ParseSubBody(
+                        ref this,
                         nodeName,
                         currSpan,
                         innerBodySpan,
                         ref endIdx,
                         ref endInnerIdx,
-                        resolver);
+                        resolver
+                    );
                 }
 
                 if (parsedSub is false) {
@@ -311,7 +320,7 @@ public ref struct XmlReadBuffer {
         return f.Parse(span, resolver);
     }
 
-    private static ReadOnlySpan<char> DeserializeElementRawInnerText(ReadOnlySpan<char> span, out int endEndIdx) {
+    static ReadOnlySpan<char> DeserializeElementRawInnerText(ReadOnlySpan<char> span, out int endEndIdx) {
         endEndIdx = span.IndexOf('<'); // find start of next node
         if (endEndIdx == -1) {
             throw new InvalidDataException("unable to find end of text");
@@ -324,7 +333,7 @@ public ref struct XmlReadBuffer {
     /// <summary>Decode XML encoded text</summary>
     /// <param name="input"></param>
     /// <returns>Decoded text</returns>
-    private static ReadOnlySpan<char> DecodeText(ReadOnlySpan<char> input) {
+    static ReadOnlySpan<char> DecodeText(ReadOnlySpan<char> input) {
         var andIndex = input.IndexOf('&');
         if (andIndex == -1)
             // no need to decode :)
@@ -397,4 +406,19 @@ public ref struct XmlReadBuffer {
     public T Read<T>(ReadOnlySpan<char> span, IXmlFormatterResolver? resolver = null)
         where T : IXmlSerialization, new() =>
         Read<T>(span, out _);
+}
+
+file static class FileFunctions {
+    /// <summary>Calculate fast hash of attribute/node name</summary>
+    /// <param name="name">Name to hash</param>
+    /// <returns>Hashed value</returns>
+    public static ulong HashName(ReadOnlySpan<char> name) {
+        var hashedValue = 0x2AAAAAAAAAAAAB67ul;
+        for (var i = 0; i < name.Length; i++) {
+            hashedValue += name[i];
+            hashedValue *= 0x2AAAAAAAAAAAAB6Ful;
+        }
+
+        return hashedValue;
+    }
 }

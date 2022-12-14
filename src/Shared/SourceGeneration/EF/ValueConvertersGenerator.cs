@@ -32,15 +32,15 @@ internal sealed class ValueConvertersGenerator : IIncrementalGenerator {
 							var from = bt.TypeArguments[0];
 							var to = bt.TypeArguments[1];
 							return new(symbol, from, to);
-						case "Services.Shared.Infrastructure.EF.ValueObjectValueConverter":
+						case "ExpressMobile.Services.Shared.Infrastructure.EF.ValueObjectValueConverter":
 							var vo = bt.TypeArguments[0];
 							var key = bt.TypeArguments[1];
 							return new(symbol, vo, key);
-						case "Services.Shared.Infrastructure.EF.JsonValueConverter":
+						case "ExpressMobile.Services.Shared.Infrastructure.EF.JsonValueConverter":
 							var jsonFrom = bt.TypeArguments[0];
 							var strType = bt.BaseType!.TypeArguments[1];
 							return new(symbol, jsonFrom, strType);
-						case "Services.Shared.Infrastructure.EF.MessagePackValueConverter":
+						case "ExpressMobile.Services.Shared.Infrastructure.EF.MessagePackValueConverter":
 							var msgPackFrom = bt.TypeArguments[0];
 							var btArrayType = bt.BaseType!.TypeArguments[1];
 							return new(symbol, msgPackFrom, btArrayType);
@@ -71,7 +71,7 @@ internal sealed class ValueConvertersGenerator : IIncrementalGenerator {
 	private record struct Converter(INamedTypeSymbol Type, ITypeSymbol From, ITypeSymbol To);
 
 	private const string NpgsqlArrayConverterAttributeFullName =
-		"Services.Shared.Infrastructure.EF.SourceGeneration.NpgsqlArrayConverter";
+		"ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.NpgsqlArrayConverter";
 
 	private static string ProcessTypes(string containingNamespace, ImmutableArray<Converter> converters) {
 		using var writer = new IndentedTextWriter(new StringWriter(), "	");
@@ -83,7 +83,7 @@ internal sealed class ValueConvertersGenerator : IIncrementalGenerator {
 			"using Microsoft.EntityFrameworkCore;",
 			"using Microsoft.EntityFrameworkCore.Storage.ValueConversion;",
 			"using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;",
-			"using Utilities;"
+			"using ExpressMobile.Services.Shared.Utilities;"
 		);
 
 		writer.WriteLines(null, $"namespace {containingNamespace};", null);

@@ -3,10 +3,10 @@
 public sealed class StaticCompositeResolver : IXmlFormatterResolver {
     public static readonly StaticCompositeResolver Instance = new();
 
-    private readonly Dictionary<Type, IXmlFormatter> formatters = new();
-    private bool isStartedCaching;
-    private IXmlFormatterResolver[] resolvers = Array.Empty<IXmlFormatterResolver>();
-    private StaticCompositeResolver() { }
+    readonly Dictionary<Type, IXmlFormatter> formatters = new();
+    bool isStartedCaching;
+    IXmlFormatterResolver[] resolvers = Array.Empty<IXmlFormatterResolver>();
+    StaticCompositeResolver() { }
 
     public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
@@ -17,7 +17,7 @@ public sealed class StaticCompositeResolver : IXmlFormatterResolver {
 
         Instance.formatters.Clear();
         foreach (var f in formatters) {
-            Instance.formatters[f.Type().Type] = f;
+            Instance.formatters[f.Type()] = f;
         }
 
         return Instance;
@@ -40,7 +40,8 @@ public sealed class StaticCompositeResolver : IXmlFormatterResolver {
     public StaticCompositeResolver With(IXmlFormatter[] formatters, IXmlFormatterResolver[] resolvers) {
         if (Instance.isStartedCaching) {
             throw new InvalidOperationException(
-                "Cannot add new formatters or resolvers when resolver already being used");
+                "Cannot add new formatters or resolvers when resolver already being used"
+            );
         }
 
         WithFormatters(formatters);
@@ -52,7 +53,7 @@ public sealed class StaticCompositeResolver : IXmlFormatterResolver {
         Xml.DefaultResolver = Instance;
     }
 
-    private static class Cache<T> {
+    static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
 
         static Cache() {

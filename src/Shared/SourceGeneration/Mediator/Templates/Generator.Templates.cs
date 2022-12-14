@@ -3,7 +3,7 @@ namespace Perf.SourceGeneration.Mediator.Templates;
 internal static partial class Generator {
 	public static void WriteMediatorClass(IndentedTextWriter writer, Assembly assembly, ImmutableArray<Handler> handlers) {
 		var mt = assembly.Mediator;
-		writer.WriteLine($"partial class {mt.Name} : IMediator");
+		writer.WriteLine($"partial class {mt.Name}");
 		using (NestedScope.Start(writer)) {
 			writer.WriteLine(
 				$"public {mt.Name}(IServiceProvider serviceProvider)"

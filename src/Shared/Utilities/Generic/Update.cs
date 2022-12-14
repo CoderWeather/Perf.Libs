@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using System.Reflection;
 using FastExpressionCompiler;
 
 namespace Utilities.Generic;
@@ -10,7 +9,7 @@ public sealed class UpdateModelException : Exception {
 }
 
 public sealed class Update<T> where T : notnull, new() {
-	internal static readonly Dictionary<string, PropertyInfo> PropNameToProperties = typeof(T).GetProperties().ToDictionary(x => x.Name);
+	internal static readonly Dictionary<string, PropertyInfo> PropNameToProperties = Typeof<T>().GetProperties().ToDictionary(x => x.Name);
 
 	private readonly Dictionary<PropertyInfo, (Type Type, object? Value, bool InnerUpdate)> values;
 	internal readonly Dictionary<string, (string TypeFullName, object? Value, bool InnerUpdate)> SerializableValues;
@@ -59,13 +58,13 @@ public sealed class Update<T> where T : notnull, new() {
 
 	public bool TryGetValue<TMember>(Expression<Func<T, TMember>> accessor, out object? value) {
 		if (accessor is {
-				NodeType: ExpressionType.Lambda,
-				Body: MemberExpression {
-					NodeType: ExpressionType.MemberAccess,
-					Member: PropertyInfo property,
-					Type: { }
-				}
-			}
+			    NodeType: ExpressionType.Lambda,
+			    Body: MemberExpression {
+				    NodeType: ExpressionType.MemberAccess,
+				    Member: PropertyInfo property,
+				    Type: { }
+			    }
+		    }
 		 && values.TryGetValue(property, out var tuple)) {
 			value = tuple.Value;
 			return true;
@@ -113,7 +112,7 @@ public sealed class Update<T> where T : notnull, new() {
 		if (updateLambdaBody is null) {
 			_ = modelAccessor;
 			updateLambdaBody = Expression.MemberInit(
-				Expression.New(typeof(T)),
+				Expression.New(Typeof<T>()),
 				values.Select(
 					kv => {
 						var v = kv.Value;
@@ -137,7 +136,7 @@ public sealed class Update<T> where T : notnull, new() {
 
 	public Expression<Func<T, T>> GetUpdateLambda() {
 		if (updateLambda is null) {
-			var p = Expression.Parameter(typeof(T));
+			var p = Expression.Parameter(Typeof<T>());
 			updateLambda = Expression.Lambda<Func<T, T>>(GetUpdateLambdaBody(p), p);
 		}
 
@@ -147,6 +146,7 @@ public sealed class Update<T> where T : notnull, new() {
 
 public static class Update {
 	public static Update<T> Empty<T>() where T : notnull, new() => Update<T>.Empty;
+	public static UpdateBuilder<T> Create<T>() where T : notnull, new() => new();
 	public static (string Name, string Type)[] AccessibleProperties<T>() where T : notnull, new() => Cache<T>.AccessibleProperties;
 
 	[SuppressMessage("ReSharper", "StaticMemberInGenericType")]
@@ -167,7 +167,7 @@ public static class Update {
 			return func;
 		}
 
-		var parameter = Expression.Parameter(typeof(object), "from");
+		var parameter = Expression.Parameter(Typeof<object>(), "from");
 		var fromUpdateType = typeof(Update<>).MakeGenericType(from);
 		var lambda = Expression.Lambda<Func<object, object>>(
 			Expression.Convert(
@@ -175,7 +175,7 @@ public static class Update {
 					Expression.Convert(parameter, fromUpdateType),
 					fromUpdateType.GetMethod("Cast")!.MakeGenericMethod(to)
 				),
-				typeof(object)
+				Typeof<object>()
 			),
 			parameter
 		);
@@ -191,9 +191,9 @@ public static class Update {
 			return func;
 		}
 
-		var update = Expression.Parameter(typeof(object), "update");
+		var update = Expression.Parameter(Typeof<object>(), "update");
 		var updateType = typeof(Update<>).MakeGenericType(type);
-		var modelAccessor = Expression.Parameter(typeof(Expression), "modelAccessor");
+		var modelAccessor = Expression.Parameter(Typeof<Expression>(), "modelAccessor");
 		var method = updateType.GetMethod("GetUpdateLambdaBody", BindingFlags.NonPublic)!;
 
 		var lambda = Expression.Lambda<Func<object, Expression, Expression>>(
@@ -203,7 +203,7 @@ public static class Update {
 					method,
 					modelAccessor
 				),
-				typeof(Expression)
+				Typeof<Expression>()
 			),
 			update,
 			modelAccessor

@@ -1,13 +1,11 @@
-﻿using PerfXml.Internal;
-
-namespace PerfXml;
+﻿namespace PerfXml;
 
 public interface IXmlFormatter {
-    public TypeOf Type() => throw new InvalidOperationException();
+    internal Type Type() => throw new InvalidOperationException();
 }
 
 public interface IXmlFormatter<T> : IXmlFormatter {
-    TypeOf IXmlFormatter.Type() => TypeOf.Get<T>();
+    Type IXmlFormatter.Type() => typeof(T);
 
     bool TryWriteTo(Span<char> span, T value, out int charsWritten, IXmlFormatterResolver resolver);
 

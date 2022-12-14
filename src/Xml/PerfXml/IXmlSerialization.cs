@@ -6,14 +6,21 @@ namespace PerfXml;
 public interface IXmlSerialization {
     /// <summary>Gets the name of the node to be written</summary>
     /// <returns>Name of the node to be written</returns>
-    public ReadOnlySpan<char> GetNodeName();
+    /*#if NET7_0_OR_GREATER
+        public static abstract ReadOnlySpan<char> GetNodeName();
+    #else
+        public ReadOnlySpan<char> GetNodeName();
+    #endif*/
+    ReadOnlySpan<char> GetNodeName();
 
-    public bool ParseFullBody(ref XmlReadBuffer buffer,
+    bool ParseFullBody(
+        ref XmlReadBuffer buffer,
         ReadOnlySpan<char> bodySpan,
         ref int end,
-        IXmlFormatterResolver resolver);
+        IXmlFormatterResolver resolver
+    );
 
-    public bool ParseSubBody(
+    bool ParseSubBody(
         ref XmlReadBuffer buffer,
         ulong hash,
         ReadOnlySpan<char> bodySpan,
@@ -23,7 +30,7 @@ public interface IXmlSerialization {
         IXmlFormatterResolver resolver
     );
 
-    public bool ParseSubBody(
+    bool ParseSubBody(
         ref XmlReadBuffer buffer,
         ReadOnlySpan<char> nodeName,
         ReadOnlySpan<char> bodySpan,
@@ -33,29 +40,20 @@ public interface IXmlSerialization {
         IXmlFormatterResolver resolver
     );
 
-    public bool ParseAttribute(ref XmlReadBuffer buffer,
+    bool ParseAttribute(
+        ref XmlReadBuffer buffer,
         ulong hash,
         ReadOnlySpan<char> value,
-        IXmlFormatterResolver resolver);
+        IXmlFormatterResolver resolver
+    );
 
-    public void SerializeBody(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver);
+    void SerializeBody(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver);
 
-    public void SerializeAttributes(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver);
+    void SerializeAttributes(ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver);
 
-    public void Serialize(ref XmlWriteBuffer buffer,
+    void Serialize(
+        ref XmlWriteBuffer buffer,
         IXmlFormatterResolver resolver,
-        ReadOnlySpan<char> nodeName = default);
-
-    /// <summary>Calculate fast hash of attribute/node name</summary>
-    /// <param name="name">Name to hash</param>
-    /// <returns>Hashed value</returns>
-    public static ulong HashName(ReadOnlySpan<char> name) {
-        var hashedValue = 0x2AAAAAAAAAAAAB67ul;
-        for (var i = 0; i < name.Length; i++) {
-            hashedValue += name[i];
-            hashedValue *= 0x2AAAAAAAAAAAAB6Ful;
-        }
-
-        return hashedValue;
-    }
+        ReadOnlySpan<char> nodeName = default
+    );
 }

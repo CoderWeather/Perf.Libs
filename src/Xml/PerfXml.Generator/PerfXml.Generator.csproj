@@ -13,7 +13,7 @@
 
     <PropertyGroup>
         <PackageId>PerfXml.Generator</PackageId>
-        <Version>1.0.10</Version>
+        <Version>1.1.0</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Fast and low memory consumption C# XML serialization\deserialization engine with source generators.</Description>
         <RepositoryUrl>https://github.com/CoderWeather/PerfXml</RepositoryUrl>
@@ -41,7 +41,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

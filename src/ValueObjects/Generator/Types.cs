@@ -1,8 +1,8 @@
 namespace Perf.ValueObjects.Generator;
 
-internal record struct ValueObject(INamedTypeSymbol Type, ITypeSymbol KeyType, bool IsValidatable = false);
+record struct ValueObject(INamedTypeSymbol Type, ITypeSymbol KeyType, bool IsValidatable = false);
 
-internal sealed class TypePack {
+sealed class TypePack {
     public TypePack(INamedTypeSymbol type) {
         Symbol = type;
     }
@@ -15,7 +15,7 @@ internal sealed class TypePack {
     public bool AddExtensionMethod { get; set; }
 }
 
-internal abstract class BaseMemberPack {
+abstract class BaseMemberPack {
     protected BaseMemberPack(ISymbol symbol, ITypeSymbol type) {
         Symbol = symbol;
         Type = type;
@@ -28,7 +28,7 @@ internal abstract class BaseMemberPack {
     public bool IsKey { get; set; }
 }
 
-internal sealed class FieldPack : BaseMemberPack {
+sealed class FieldPack : BaseMemberPack {
     public FieldPack(IFieldSymbol fieldSymbol) :
         base(fieldSymbol, fieldSymbol.Type) {
         Symbol = fieldSymbol;
@@ -37,7 +37,7 @@ internal sealed class FieldPack : BaseMemberPack {
     public new IFieldSymbol Symbol { get; }
 }
 
-internal sealed class PropertyPack : BaseMemberPack {
+sealed class PropertyPack : BaseMemberPack {
     public PropertyPack(IPropertySymbol propertySymbol) :
         base(propertySymbol, propertySymbol.Type) {
         Symbol = propertySymbol;

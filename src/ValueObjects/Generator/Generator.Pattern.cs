@@ -1,7 +1,7 @@
 namespace Perf.ValueObjects.Generator;
 
 public sealed partial class ValueObjectGenerator {
-    private static void WriteConstructorForKeys(IndentedTextWriter writer, TypePack type) {
+    static void WriteConstructorForKeys(IndentedTextWriter writer, TypePack type) {
         var keys = type.Members
            .Where(m => m.IsKey)
            .ToArray();
@@ -15,7 +15,7 @@ public sealed partial class ValueObjectGenerator {
         }
     }
 
-    private static void WriteDeconstruct(IndentedTextWriter writer, TypePack type) {
+    static void WriteDeconstruct(IndentedTextWriter writer, TypePack type) {
         var keyMembers = type.Members.Where(x => x.IsKey).ToArray();
         writer.WriteLine(
             $"public void Deconstruct({string.Join(", ", keyMembers.Select(x => $"out {x.Type.Name} {x.Symbol.Name.ToLowerInvariant()}"))})"
@@ -29,7 +29,7 @@ public sealed partial class ValueObjectGenerator {
         }
     }
 
-    private static void WriteToString(IndentedTextWriter writer, TypePack type) {
+    static void WriteToString(IndentedTextWriter writer, TypePack type) {
         var singleKey = type.Members.SingleOrDefault(x => x.IsKey);
         if (singleKey is null) {
             return;
@@ -42,7 +42,7 @@ public sealed partial class ValueObjectGenerator {
         );
     }
 
-    private static void WriteCastSingleKeyMethods(IndentedTextWriter writer, TypePack type) {
+    static void WriteCastSingleKeyMethods(IndentedTextWriter writer, TypePack type) {
         var key = type.Members.Single(x => x.IsKey);
 
         writer.WriteLine($"public static implicit operator {key.Type.Name}({type.Symbol.Name} vo)");
@@ -94,7 +94,7 @@ public sealed partial class ValueObjectGenerator {
         }
     }
 
-    private static void WriteEqualityOperators(IndentedTextWriter writer, TypePack type) {
+    static void WriteEqualityOperators(IndentedTextWriter writer, TypePack type) {
         var key = type.Members.Single(x => x.IsKey);
         writer.WriteLines(
             $"public static bool operator ==({type.Symbol.MinimalName()} left, {key.OriginalType.MinimalName()} right) => left.{key.Symbol.Name} == right;",
@@ -104,7 +104,7 @@ public sealed partial class ValueObjectGenerator {
         );
     }
 
-    private static void WriteCastComplexKeyMethods(IndentedTextWriter writer, TypePack type) {
+    static void WriteCastComplexKeyMethods(IndentedTextWriter writer, TypePack type) {
         var keyMembers = type.Members
            .Where(x => x.IsKey)
            .ToArray();

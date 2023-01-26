@@ -1,6 +1,6 @@
 ﻿namespace Perf.ValueObjects.Generator.Internal;
 
-internal enum DeclarationKind {
+enum DeclarationKind {
     Unrecognized,
     Record,
     Class,
@@ -9,12 +9,12 @@ internal enum DeclarationKind {
     Interface
 }
 
-internal static class SymbolsExtensions {
-    #region Base Classes
+static class SymbolsExtensions {
+#region Base Classes
 
     public static bool HasBaseClass(this ITypeSymbol type) => type.BaseType?.Name is not "Object";
 
-    #endregion
+#endregion
 
     public static string MinimalName(this INamespaceSymbol ns, string ifResultEmpty = "Generated") {
         var assemblyName = ns.ContainingAssembly.Name;
@@ -22,7 +22,7 @@ internal static class SymbolsExtensions {
         return result.Length > 0 ? result : ifResultEmpty;
     }
 
-    #region Types
+#region Types
 
     public static bool IsPartial(this INamedTypeSymbol ts) {
         if (ts.DeclaringSyntaxReferences.IsDefaultOrEmpty) {
@@ -31,9 +31,9 @@ internal static class SymbolsExtensions {
 
         foreach (var sr in ts.DeclaringSyntaxReferences) {
             switch (sr.GetSyntax()) {
-                case ClassDeclarationSyntax c when c.Identifier.Text == ts.Name:     return c.Modifiers.Any(SyntaxKind.PartialKeyword);
-                case RecordDeclarationSyntax r when r.Identifier.Text == ts.Name:    return r.Modifiers.Any(SyntaxKind.PartialKeyword);
-                case InterfaceDeclarationSyntax i when i.Identifier.Text == ts.Name: return i.Modifiers.Any(SyntaxKind.PartialKeyword);
+            case ClassDeclarationSyntax c when c.Identifier.Text == ts.Name:     return c.Modifiers.Any(SyntaxKind.PartialKeyword);
+            case RecordDeclarationSyntax r when r.Identifier.Text == ts.Name:    return r.Modifiers.Any(SyntaxKind.PartialKeyword);
+            case InterfaceDeclarationSyntax i when i.Identifier.Text == ts.Name: return i.Modifiers.Any(SyntaxKind.PartialKeyword);
             }
         }
 
@@ -102,9 +102,9 @@ internal static class SymbolsExtensions {
 
     public static T? As<T>(this TypedConstant tc) => tc.Value is T v ? v : default;
 
-    #endregion
+#endregion
 
-    #region Attributes
+#region Attributes
 
     public static bool HasAttribute(this ISymbol? type, INamedTypeSymbol? attributeType) {
         return attributeType is not null
@@ -136,9 +136,9 @@ internal static class SymbolsExtensions {
     public static AttributeData GetAttribute(this ISymbol symbol, string typeFullPath) =>
         symbol.TryGetAttribute(typeFullPath) ?? throw new($"{typeFullPath} attribute not found for {symbol}");
 
-    #endregion
+#endregion
 
-    #region Ancestors
+#region Ancestors
 
     public static IEnumerable<INamedTypeSymbol> GetAllAncestors(this ITypeSymbol type) {
         if (type.IsPrimitive()) {
@@ -156,5 +156,5 @@ internal static class SymbolsExtensions {
     public static INamedTypeSymbol? FindOldestAncestor(this ITypeSymbol type, Func<ITypeSymbol?, bool> predicate) =>
         type.GetAllAncestors().LastOrDefault(predicate.Invoke);
 
-    #endregion
+#endregion
 }

@@ -1,12 +1,12 @@
 namespace Perf.ValueObjects.Generator.Internal;
 
-internal sealed class NestedScope : IDisposable {
-    private static readonly Stack<NestedScope> Stack = new();
+sealed class NestedScope : IDisposable {
+    static readonly Stack<NestedScope> Stack = new();
 
-    private readonly IndentedTextWriter writer;
-    private bool shouldCloseOnDispose = true;
+    readonly IndentedTextWriter writer;
+    bool shouldCloseOnDispose = true;
 
-    private NestedScope(IndentedTextWriter writer) {
+    NestedScope(IndentedTextWriter writer) {
         this.writer = writer;
     }
 
@@ -41,11 +41,11 @@ internal sealed class NestedScope : IDisposable {
 }
 
 /// <summary>Helper class for generating partial parts of nested types</summary>
-internal sealed class NestedClassScope : IDisposable {
-    private readonly List<string> containingClasses = new(0);
-    private readonly IndentedTextWriter writer;
+sealed class NestedClassScope : IDisposable {
+    readonly List<string> containingClasses = new(0);
+    readonly IndentedTextWriter writer;
 
-    private NestedClassScope(IndentedTextWriter writer, ISymbol classSymbol) {
+    NestedClassScope(IndentedTextWriter writer, ISymbol classSymbol) {
         this.writer = writer;
         var containingSymbol = classSymbol.ContainingSymbol;
         while (containingSymbol.StrictEquals(classSymbol.ContainingNamespace) is false) {
@@ -81,7 +81,7 @@ internal sealed class NestedClassScope : IDisposable {
         return scope;
     }
 
-    private static string TypeKindToStr(INamedTypeSymbol type) {
+    static string TypeKindToStr(INamedTypeSymbol type) {
         return type switch {
             { TypeKind: TypeKind.Class } => type.IsRecord
                 ? "record"
@@ -93,12 +93,13 @@ internal sealed class NestedClassScope : IDisposable {
         };
     }
 
-    private static string GetClsString(INamedTypeSymbol type) {
+    static string GetClsString(INamedTypeSymbol type) {
         // {public/private...} {ref} partial {class/struct} {name}
         var visibilityModifier = type.Accessibility();
         var refModifier = type.IsRefLikeType ? " ref" : null;
         const string format = "{0}{1} partial {2} {3}";
-        var str = string.Format(format,
+        var str = string.Format(
+            format,
             visibilityModifier,
             refModifier,
             TypeKindToStr(type),

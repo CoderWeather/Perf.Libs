@@ -2,10 +2,10 @@
 
 [Generator]
 public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
-    private const string ValueObjectAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject";
-    private const string KeyAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject+Key";
+    const string ValueObjectAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject";
+    const string KeyAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject+Key";
 
-    private const string ValidatableInterfaceMetadataName = "Perf.ValueObjects.IValidatableValueObject";
+    const string ValidatableInterfaceMetadataName = "Perf.ValueObjects.IValidatableValueObject";
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var valueObjectsByInterface = context.SyntaxProvider.CreateSyntaxProvider(
@@ -19,9 +19,9 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
                      && r.Modifiers.Any(SyntaxKind.ReadOnlyKeyword)) {
                         foreach (var i in r.BaseList.Types) {
                             if (i.Type is GenericNameSyntax {
-                                    Identifier.Text: "IValueObject" or "IValidatableValueObject",
-                                    TypeArgumentList.Arguments.Count: 1
-                                }) {
+                                Identifier.Text: "IValueObject" or "IValidatableValueObject",
+                                TypeArgumentList.Arguments.Count: 1
+                            }) {
                                 return true;
                             }
                         }
@@ -43,9 +43,9 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
                         var keyType = i.TypeArguments[0];
 
                         switch (i.FullPath()) {
-                            case "Perf.ValueObjects.IValueObject":            return new(symbol, keyType);
-                            case "Perf.ValueObjects.IValidatableValueObject": return new(symbol, keyType, true);
-                            default:                                          continue;
+                        case "Perf.ValueObjects.IValueObject":            return new(symbol, keyType);
+                        case "Perf.ValueObjects.IValidatableValueObject": return new(symbol, keyType, true);
+                        default:                                          continue;
                         }
                     }
 
@@ -54,7 +54,8 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
             )
            .Where(x => x != default);
 
-        context.RegisterSourceOutput(valueObjectsByInterface.Collect(),
+        context.RegisterSourceOutput(
+            valueObjectsByInterface.Collect(),
             static (context, types) => {
                 if (types.IsDefaultOrEmpty) {
                     return;
@@ -91,7 +92,7 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
         context.RegisterSourceOutput(valueObjects, CodeGeneration);
     }
 
-    private static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
+    static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
         if (node is RecordDeclarationSyntax rec) {
             var haveAttribute = rec.AttributeLists
                .Any(x => x.Attributes.Any(y => y.Name.ToString() is "ValueObject"));
@@ -108,7 +109,7 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
         return false;
     }
 
-    private static TypePack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
+    static TypePack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
         var valueObjectAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName(ValueObjectAttributeMetadataName);
         var keyAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName(KeyAttributeMetadataName)!;
         var validatableInterfaceType = context.SemanticModel.Compilation.GetTypeByMetadataName(ValidatableInterfaceMetadataName)!;
@@ -141,26 +142,34 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
 
         var fields = symbol.GetMembers()
            .OfType<IFieldSymbol>()
-           .Where(f => f is {
-                AssociatedSymbol: null,
-                IsConst: false,
-                IsStatic: false
-            })
-           .Select(f => new FieldPack(f) {
-                IsKey = f.GetAttributes()
-                   .Any(a => a.AttributeClass?.Equals(keyAttributeType, SymbolEqualityComparer.Default) ?? false)
-            })
+           .Where(
+                f => f is {
+                    AssociatedSymbol: null,
+                    IsConst: false,
+                    IsStatic: false
+                }
+            )
+           .Select(
+                f => new FieldPack(f) {
+                    IsKey = f.GetAttributes()
+                       .Any(a => a.AttributeClass?.Equals(keyAttributeType, SymbolEqualityComparer.Default) ?? false)
+                }
+            )
            .ToArray();
         var properties = symbol.GetMembers()
            .OfType<IPropertySymbol>()
-           .Where(p => p is {
-                IsStatic: false,
-                IsIndexer: false
-            })
-           .Select(p => new PropertyPack(p) {
-                IsKey = p.GetAttributes()
-                   .Any(a => a.AttributeClass?.Equals(keyAttributeType, SymbolEqualityComparer.Default) ?? false)
-            })
+           .Where(
+                p => p is {
+                    IsStatic: false,
+                    IsIndexer: false
+                }
+            )
+           .Select(
+                p => new PropertyPack(p) {
+                    IsKey = p.GetAttributes()
+                       .Any(a => a.AttributeClass?.Equals(keyAttributeType, SymbolEqualityComparer.Default) ?? false)
+                }
+            )
            .ToArray();
 
         if (fields.Length == 0 && properties.Length == 0) {
@@ -207,7 +216,7 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
         return pack;
     }
 
-    private static void CodeGeneration(SourceProductionContext context, ImmutableArray<TypePack> types) {
+    static void CodeGeneration(SourceProductionContext context, ImmutableArray<TypePack> types) {
         if (types.IsDefaultOrEmpty) {
             return;
         }
@@ -227,7 +236,7 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
         }
     }
 
-    private static string? ProcessTypes(string containingNamespace, TypePack[] types) {
+    static string? ProcessTypes(string containingNamespace, TypePack[] types) {
         var writer = new IndentedTextWriter(new StringWriter(), "    ");
 
         writer.WriteLines(
@@ -239,10 +248,11 @@ public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
         );
 
         var nsToImport = types
-           .SelectMany(x => x.Members
-               .Select(y => y.OriginalType.ContainingNamespace)
-               .Where(y => y.ToString() != containingNamespace && y.IsGlobalNamespace is false)
-               .Select(y => y.ToString())
+           .SelectMany(
+                x => x.Members
+                   .Select(y => y.OriginalType.ContainingNamespace)
+                   .Where(y => y.ToString() != containingNamespace && y.IsGlobalNamespace is false)
+                   .Select(y => y.ToString())
             )
            .Distinct();
 

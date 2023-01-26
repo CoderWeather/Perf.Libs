@@ -1,7 +1,7 @@
 ﻿namespace Perf.ValueObjects.Generator.Internal;
 
-internal static class Extensions {
-    private static readonly SymbolDisplayFormat FullPathFormat = new(
+static class Extensions {
+    static readonly SymbolDisplayFormat FullPathFormat = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
         genericsOptions: SymbolDisplayGenericsOptions.None
     );
@@ -84,13 +84,15 @@ internal static class Extensions {
         }
 
         var voInterface = ts.Interfaces
-           .FirstOrDefault(x => x is {
-                OriginalDefinition: {
-                    Name: "IValueObject" or "IValidatableValueObject",
-                    TypeParameters.Length: 1
-                },
-                TypeArguments.Length: 1
-            });
+           .FirstOrDefault(
+                x => x is {
+                    OriginalDefinition: {
+                        Name: "IValueObject" or "IValidatableValueObject",
+                        TypeParameters.Length: 1
+                    },
+                    TypeArguments.Length: 1
+                }
+            );
 
         if (voInterface is null) {
             return null;

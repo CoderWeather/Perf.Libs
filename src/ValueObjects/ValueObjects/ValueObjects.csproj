@@ -11,7 +11,7 @@
 
     <PropertyGroup>
         <PackageId>PerfValueObjects</PackageId>
-        <Version>1.1.1</Version>
+        <Version>1.1.2</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Simple source generator for type per value unique id types</Description>
         <RepositoryUrl>https://github.com/CoderWeather/Perf.ValueObjects</RepositoryUrl>

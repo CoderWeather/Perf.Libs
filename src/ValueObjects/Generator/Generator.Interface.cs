@@ -21,8 +21,8 @@ partial {1} {2} {{
 	public static implicit operator {3}({2} vo) => vo.Value;
 	public static explicit operator {2}({3} value) => new(value);
 	{4}
-	public override string ToString() => Value.ToString();
-	public override int GetHashCode() => Value.GetHashCode();
+	public override string ToString() => init ? Value.ToString() : """";
+	public override int GetHashCode() => init ? Value.GetHashCode() : 0;
 }}";
 
 	static void WriteBodyFromInterfaceDefinition(IndentedTextWriter writer, ValueObject vo) {

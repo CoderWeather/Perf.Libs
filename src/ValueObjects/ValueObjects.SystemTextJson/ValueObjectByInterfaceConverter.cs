@@ -9,14 +9,14 @@ namespace Perf.ValueObjects;
 
 public sealed class ValueObjectJsonConverterFactory : JsonConverterFactory {
 #if NET5_0_OR_GREATER
-	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
-    private static readonly Type ValueObjectInterface = typeof(IValueObject<>);
+    static readonly Type ValueObjectInterface = typeof(IValueObject<>);
 
 #if NET5_0_OR_GREATER
-	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)]
 #endif
-    private static readonly Type NullableType = typeof(Nullable<>);
+    static readonly Type NullableType = typeof(Nullable<>);
 
     public override bool CanConvert(Type typeToConvert) {
         if (typeToConvert.IsConstructedGenericType && typeToConvert.GetGenericTypeDefinition() == NullableType) {
@@ -39,7 +39,6 @@ public sealed class ValueObjectJsonConverterFactory : JsonConverterFactory {
            .First(x => x.IsGenericType && x.GetGenericTypeDefinition() == ValueObjectInterface);
         var innerType = i.GenericTypeArguments[0];
 
-
         var converterType = isNullable
             ? typeof(ValueObjectByInterfaceConverter<,>)
             : typeof(NullableValueObjectByInterfaceConverter<,>);
@@ -53,11 +52,11 @@ public sealed class ValueObjectJsonConverterFactory : JsonConverterFactory {
     }
 }
 
-internal sealed class ValueObjectByInterfaceConverter<TValueObject, TValueType> : JsonConverter<TValueObject>
+sealed class ValueObjectByInterfaceConverter<TValueObject, TValueType> : JsonConverter<TValueObject>
     where TValueObject : struct, IValueObject<TValueType> {
-    private ValueObjectByInterfaceConverter() { }
+    ValueObjectByInterfaceConverter() { }
 #if NET5_0_OR_GREATER
-	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
 #endif
     internal static readonly Type Type = typeof(ValueObjectByInterfaceConverter<,>);
 
@@ -75,11 +74,11 @@ internal sealed class ValueObjectByInterfaceConverter<TValueObject, TValueType> 
     }
 }
 
-internal sealed class NullableValueObjectByInterfaceConverter<TValueObject, TValueType> : JsonConverter<TValueObject?>
+sealed class NullableValueObjectByInterfaceConverter<TValueObject, TValueType> : JsonConverter<TValueObject?>
     where TValueObject : struct, IValueObject<TValueType> {
-    private NullableValueObjectByInterfaceConverter() { }
+    NullableValueObjectByInterfaceConverter() { }
 #if NET5_0_OR_GREATER
-	[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
 #endif
     internal static readonly Type Type = typeof(NullableValueObjectByInterfaceConverter<,>);
 
@@ -100,7 +99,7 @@ internal sealed class NullableValueObjectByInterfaceConverter<TValueObject, TVal
     }
 }
 
-internal static partial class JsonHelpers {
+static partial class JsonHelpers {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ReadOnlySpan<byte> GetSpan(this ref Utf8JsonReader reader) {
         return reader.HasValueSequence ? reader.ValueSequence.ToArray() : reader.ValueSpan;

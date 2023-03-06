@@ -343,9 +343,9 @@ partial class XmlGenerator {
         );
         using (NestedScope.Start(writer)) {
             writer.WriteLines(
-                "var node = buffer.StartNodeHead(nodeName.IsEmpty ? ((IXmlSerialization)this).GetNodeName() : nodeName);",
-                "((IXmlSerialization)this).SerializeAttributes(ref buffer, resolver);",
-                "((IXmlSerialization)this).SerializeBody(ref buffer, resolver);",
+                "var node = buffer.StartNodeHead(nodeName.IsEmpty ? this.GetNodeName() : nodeName);",
+                "this.SerializeAttributes(ref buffer, resolver);",
+                "this.SerializeBody(ref buffer, resolver);",
                 "buffer.EndNode(ref node);"
             );
         }

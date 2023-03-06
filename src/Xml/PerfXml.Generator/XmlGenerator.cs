@@ -281,22 +281,23 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
         }
 
         writer.WriteLine(
-            """
+            $$"""
 file static class __HiddenInterfaceMethods {
+    {{AggressiveInlining}}
     public static ReadOnlySpan<char> GetNodeName<T>(this T t) where T : IXmlSerialization => t.GetNodeName();
-
+    {{AggressiveInlining}}
     public static bool ParseFullBody<T>(this T t, ref XmlReadBuffer buffer, ReadOnlySpan<char> bodySpan, ref int end, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseFullBody(ref buffer, bodySpan, ref end, resolver);
-
+    {{AggressiveInlining}}
     public static bool ParseSubBody<T>(this T t, ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseSubBody(ref buffer, hash, bodySpan, innerBodySpan, ref end, ref endInner, resolver);
-
+    {{AggressiveInlining}}
     public static bool ParseSubBody<T>(this T t, ref XmlReadBuffer buffer, ReadOnlySpan<char> nodeName, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseSubBody(ref buffer, nodeName, bodySpan, innerBodySpan, ref end, ref endInner, resolver);
-
+    {{AggressiveInlining}}
     public static bool ParseAttribute<T>(this T t, ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> value, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseAttribute(ref buffer, hash, value, resolver);
-
+    {{AggressiveInlining}}
     public static void SerializeBody<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.SerializeBody(ref buffer, resolver);
-
+    {{AggressiveInlining}}
     public static void SerializeAttributes<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.SerializeAttributes(ref buffer, resolver);
-
+    {{AggressiveInlining}}
     public static void Serialize<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.Serialize(ref buffer, resolver);
 }
 """

@@ -12,7 +12,7 @@
 
     <PropertyGroup>
         <PackageId>PerfXml.Net6</PackageId>
-        <Version>1.1.0</Version>
+        <Version>1.1.1</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Fast and low memory consumption C# XML serialization\deserialization engine with source generators. Contains formatters for types which was included in .net 6</Description>
         <RepositoryUrl>https://github.com/CoderWeather/PerfXml</RepositoryUrl>
@@ -26,7 +26,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\PerfXml\PerfXml.csproj" />
+        <!--        <ProjectReference Include="..\PerfXml\PerfXml.csproj" />-->
+        <PackageReference Include="PerfXml" Version="1.1.0"/>
     </ItemGroup>
 
 </Project>

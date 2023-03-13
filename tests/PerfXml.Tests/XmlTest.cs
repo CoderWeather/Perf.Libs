@@ -50,6 +50,9 @@ sealed partial class GrpsModel : IXmlSerialization {
 sealed partial class QoSuse : IXmlSerialization {
     [XmlBody("rlblt")]
     public int Rlblt { get; set; }
+
+    [XmlField("field")]
+    public string? TestString { get; set; }
 }
 
 public static class Tst {

@@ -121,8 +121,9 @@ public ref struct XmlWriteBuffer {
         }
 
         int charsWritten;
-        while (resolver.TryWriteTo(WriteSpan, value, out charsWritten) is false)
+        while (resolver.TryWriteTo(WriteSpan, value, out charsWritten) is false) {
             Resize();
+        }
 
         currentOffset += charsWritten;
     }
@@ -167,8 +168,9 @@ public ref struct XmlWriteBuffer {
             return;
         }
 
-        while (chars.TryCopyTo(WriteSpan) is false)
+        while (chars.TryCopyTo(WriteSpan) is false) {
             Resize();
+        }
 
         currentOffset += chars.Length;
     }

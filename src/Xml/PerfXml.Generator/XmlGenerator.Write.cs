@@ -319,7 +319,7 @@ partial class XmlGenerator {
                         }
 
                         writer.WriteLines(
-                            $"buffer.PutAttribute(\"{field.XmlName}\", writer.BuiltSpan);",
+                            $"buffer.WriteAttribute(\"{field.XmlName}\", writer.BuiltSpan, resolver);",
                             "writer.Dispose();"
                         );
                     }
@@ -366,7 +366,7 @@ partial class XmlGenerator {
         }
 
         var writerAction = type.Name switch {
-            "String" => $"buffer.PutAttribute(\"{m.XmlName}\", {name});",
+            "String" => $"buffer.WriteAttribute(\"{m.XmlName}\", {name}, resolver);",
             "Byte"
                 or "Int16"
                 or "Int32"
@@ -379,7 +379,7 @@ partial class XmlGenerator {
                 or "Guid"
                 or "DateOnly"
                 or "TimeOnly"
-                or "DateTime" => $"buffer.PutAttributeValue(\"{m.XmlName}\", {name});",
+                or "DateTime" => $"buffer.WriteAttribute(\"{m.XmlName}\", {name}, resolver);",
             _ => throw new($"no attribute writer for type {type}")
         };
         return $"{preCheck}{writerAction}";

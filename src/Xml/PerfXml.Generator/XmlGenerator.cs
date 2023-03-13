@@ -223,7 +223,7 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
     }
 
     static void CodeGeneration(SourceProductionContext context, (Compilation, ImmutableArray<ClassGenInfo>) tuple) {
-        var (compilation, types) = tuple;
+        var (_, types) = tuple;
         if (types.IsDefaultOrEmpty) {
             return;
         }

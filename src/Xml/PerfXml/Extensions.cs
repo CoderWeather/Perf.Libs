@@ -6,9 +6,11 @@ public static class Extensions {
         Span<char> span,
         T value,
         out int charsWritten
-    ) =>
-        resolver.GetRequiredFormatter<T>().TryWriteTo(span, value, out charsWritten, resolver);
+    ) {
+        return resolver.GetRequiredFormatter<T>().TryWriteTo(span, value, out charsWritten, resolver);
+    }
 
-    public static T Parse<T>(this IXmlFormatterResolver resolver, ReadOnlySpan<char> span) =>
-        resolver.GetRequiredFormatter<T>().Parse(span, resolver);
+    public static T Parse<T>(this IXmlFormatterResolver resolver, ReadOnlySpan<char> span) {
+        return resolver.GetRequiredFormatter<T>().Parse(span, resolver);
+    }
 }

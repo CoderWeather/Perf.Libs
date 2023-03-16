@@ -33,3 +33,5 @@
 //
 //     public bool HasRemaining() => enumerator.CanMoveNext();
 // }
+
+

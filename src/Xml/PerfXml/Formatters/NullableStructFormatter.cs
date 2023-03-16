@@ -4,6 +4,8 @@ public sealed class NullableStructFormatter<T> : IXmlFormatter<T?>
     where T : struct {
     public static readonly NullableStructFormatter<T> Instance = new();
 
+#region IXmlFormatter<T?> Members
+
     public bool TryWriteTo(Span<char> span, T? value, out int charsWritten, IXmlFormatterResolver resolver) {
         if (value.HasValue) {
             return resolver.TryWriteTo(span, value.Value, out charsWritten);
@@ -21,4 +23,6 @@ public sealed class NullableStructFormatter<T> : IXmlFormatter<T?>
 
         return default;
     }
+
+#endregion
 }

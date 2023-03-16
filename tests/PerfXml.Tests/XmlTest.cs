@@ -2,11 +2,32 @@ using System.Text.Json;
 
 namespace PerfXml.Tests;
 
-public static class XmlTest {
-    public static void Work() {
-        const string xml = "<GPRS><Node>2</Node><PDP>10.34.161.129</PDP><QoSUse><rlblt>1</rlblt></QoSUse></GPRS>";
+using CommunityToolkit.HighPerformance.Buffers;
+using Xunit.Abstractions;
+
+public class XmlTest {
+    readonly ITestOutputHelper testOutputHelper;
+
+    public XmlTest(ITestOutputHelper testOutputHelper) {
+        this.testOutputHelper = testOutputHelper;
+    }
+
+    [Fact]
+    public void Work() {
+        // const string xml = "<GPRS><Node>2</Node><PDP>10.34.161.129</PDP><QoSUse><rlblt>1</rlblt></QoSUse></GPRS>";
+        var xml = """
+<?xml version="1.0" encoding="UTF-8"?>
+<GPRS Test="1234">
+    <Node>2</Node>
+    <PDP>10.34.161.129</PDP>
+    <QoSUse>
+        <rlblt>1</rlblt>
+    </QoSUse>
+</GPRS>
+""";
         var model = Xml.Deserialize<GrpsModel>(xml);
-        Console.WriteLine(
+        var serialized = Xml.Serialize(model);
+        testOutputHelper.WriteLine(
             JsonSerializer.Serialize(
                 model,
                 new JsonSerializerOptions() {
@@ -15,6 +36,22 @@ public static class XmlTest {
             )
         );
     }
+
+    [Fact]
+    public void Sbrf() {
+        var response = new TestResult() { Result = 0, Comment = null };
+        using var so = SpanOwner<char>.Allocate(1024);
+        // var xml = Xml.Serialize(response).ToString();
+        // _ = xml;
+        Xml.Serialize(response, so.Span, out var written);
+        var xml = so.Span.Slice(0, written).ToString();
+    }
+}
+
+[XmlCls("response")]
+sealed partial class TestResult : IXmlSerialization {
+    [XmlBody("result")] public int Result { get; set; }
+    [XmlBody("comment")] public string? Comment { get; set; }
 }
 /*
  <GPRS>
@@ -35,6 +72,9 @@ public static class XmlTest {
 
 [XmlCls("GRPS")]
 sealed partial class GrpsModel : IXmlSerialization {
+    [XmlField("Test")]
+    public string? TestStringAttribute { get; set; }
+
     [XmlBody("Node")]
     public int Node { get; set; }
 

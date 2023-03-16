@@ -48,7 +48,7 @@ public ref struct XmlReadBuffer {
     ) where T : IXmlSerialization {
         while (position < closeBraceIdx) {
             var spaceSpan = currSpan.Slice(position, closeBraceIdx - position);
-            if (spaceSpan[0] == ' ') {
+            if (spaceSpan[0] is ' ' or '\n' or '\t') {
                 position++;
                 continue;
             }
@@ -404,8 +404,9 @@ public ref struct XmlReadBuffer {
     /// <typeparam name="T">Type to parse</typeparam>
     /// <returns>The created instance</returns>
     public T Read<T>(ReadOnlySpan<char> span, IXmlFormatterResolver? resolver = null)
-        where T : IXmlSerialization, new() =>
-        Read<T>(span, out _);
+        where T : IXmlSerialization, new() {
+        return Read<T>(span, out _);
+    }
 }
 
 file static class FileFunctions {

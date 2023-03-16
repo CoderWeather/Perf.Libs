@@ -28,7 +28,9 @@ public ref struct XmlWriteBuffer {
     /// Create a new XmlWriteBuffer
     /// </summary>
     /// <returns>XmlWriteBuffer instance</returns>
-    public static XmlWriteBuffer Create() => new(0);
+    public static XmlWriteBuffer Create() {
+        return new(0);
+    }
 
     /// <summary>
     /// Actual XmlWriteBuffer constructor
@@ -246,9 +248,8 @@ public ref struct XmlWriteBuffer {
             throw new ArgumentNullException(nameof(obj));
         }
 
-        var writer = new XmlWriteBuffer {
-            CdataMode = cdataMode
-        };
+        var writer = Create();
+        writer.CdataMode = cdataMode;
         try {
             obj.Serialize(ref writer, resolver);
             var resultSpan = writer.ToSpan();
@@ -258,7 +259,6 @@ public ref struct XmlWriteBuffer {
             writer.Dispose();
         }
     }
-
 
     static readonly char[] EscapeChars = {
         '<', '>', '&'

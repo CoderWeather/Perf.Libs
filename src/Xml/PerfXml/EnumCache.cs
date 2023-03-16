@@ -2,12 +2,16 @@
 
 public static class EnumCache {
     public static string GetName<T>(T value)
-        where T : struct, Enum =>
-        Cache<T>.ByValue(value);
+        where T : struct, Enum {
+        return Cache<T>.ByValue(value);
+    }
 
     public static T ByName<T>(string s)
-        where T : struct, Enum =>
-        Cache<T>.ByName(s);
+        where T : struct, Enum {
+        return Cache<T>.ByName(s);
+    }
+
+#region Nested type: Cache
 
     static class Cache<T>
         where T : struct, Enum {
@@ -29,10 +33,11 @@ public static class EnumCache {
                 return name;
             }
 
-
             ByValues[value] = name = Enum.GetName(typeof(T), value)!;
             ByNames[name] = value;
             return name!;
         }
     }
+
+#endregion
 }

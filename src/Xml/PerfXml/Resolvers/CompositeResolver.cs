@@ -8,7 +8,13 @@ public sealed class StaticCompositeResolver : IXmlFormatterResolver {
     IXmlFormatterResolver[] resolvers = Array.Empty<IXmlFormatterResolver>();
     StaticCompositeResolver() { }
 
-    public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
+#region IXmlFormatterResolver Members
+
+    public IXmlFormatter<T>? GetFormatter<T>() {
+        return Cache<T>.Formatter;
+    }
+
+#endregion
 
     public StaticCompositeResolver WithFormatters(params IXmlFormatter[] formatters) {
         if (Instance.isStartedCaching) {
@@ -53,6 +59,8 @@ public sealed class StaticCompositeResolver : IXmlFormatterResolver {
         Xml.DefaultResolver = Instance;
     }
 
+#region Nested type: Cache
+
     static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
 
@@ -73,4 +81,6 @@ public sealed class StaticCompositeResolver : IXmlFormatterResolver {
             }
         }
     }
+
+#endregion
 }

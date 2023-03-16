@@ -17,12 +17,24 @@ public sealed class SystemResolver : IXmlFormatterResolver {
         { typeof(bool), BooleanFormatter.Instance },
         { typeof(string), StringFormatter.Instance },
         { typeof(Guid), GuidFormatter.Instance },
-        { typeof(DateTime), DateTimeFormatter.Instance }
+        { typeof(DateTime), DateTimeFormatter.Instance },
+#if NET6_0_OR_GREATER
+        { typeof(DateOnly), DateOnlyFormatter.Instance },
+        { typeof(TimeOnly), TimeOnlyFormatter.Instance },
+#endif
     };
 
     SystemResolver() { }
 
-    public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
+#region IXmlFormatterResolver Members
+
+    public IXmlFormatter<T>? GetFormatter<T>() {
+        return Cache<T>.Formatter;
+    }
+
+#endregion
+
+#region Nested type: Cache
 
     static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
@@ -33,4 +45,6 @@ public sealed class SystemResolver : IXmlFormatterResolver {
             }
         }
     }
+
+#endregion
 }

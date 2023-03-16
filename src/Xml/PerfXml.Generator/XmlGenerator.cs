@@ -108,8 +108,8 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
            .Where(
                 f => f is {
                     AssociatedSymbol: null,
-                    IsConst         : false,
-                    IsStatic        : false
+                    IsConst : false,
+                    IsStatic : false
                 }
             );
         foreach (var field in fields) {

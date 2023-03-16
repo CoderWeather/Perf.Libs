@@ -4,8 +4,13 @@ using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
 public static class EnumerableExtensions {
-    public static T[] AsArray<T>(this IEnumerable<T> enumerable) => enumerable as T[] ?? enumerable.ToArray();
-    public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T>? comparer = null) => new(enumerable, comparer);
+    public static T[] AsArray<T>(this IEnumerable<T> enumerable) {
+        return enumerable as T[] ?? enumerable.ToArray();
+    }
+
+    public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T>? comparer = null) {
+        return new(enumerable, comparer);
+    }
 
     public static IEnumerable<T> DistinctBy<T, TKey>(
         this IEnumerable<T> enumerable,
@@ -53,7 +58,9 @@ public static class EnumerableExtensions {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Span<T> Span<T>(this List<T> list) => ListCache<T>.GetItems(list).AsSpan().Slice(0, list.Count);
+    public static Span<T> Span<T>(this List<T> list) {
+        return ListCache<T>.GetItems(list).AsSpan().Slice(0, list.Count);
+    }
 
     static class ListCache<T> {
         public static readonly Func<List<T>, T[]> GetItems;

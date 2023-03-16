@@ -77,3 +77,5 @@
 //
 //     public bool CanMoveNext() => _isInitialized && _startNext <= _buffer.Length;
 // }
+
+

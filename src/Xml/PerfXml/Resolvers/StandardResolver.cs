@@ -4,7 +4,15 @@ public sealed class StandardResolver : IXmlFormatterResolver {
     public static readonly StandardResolver Instance = new();
     StandardResolver() { }
 
-    public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
+#region IXmlFormatterResolver Members
+
+    public IXmlFormatter<T>? GetFormatter<T>() {
+        return Cache<T>.Formatter;
+    }
+
+#endregion
+
+#region Nested type: Cache
 
     static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
@@ -15,4 +23,6 @@ public sealed class StandardResolver : IXmlFormatterResolver {
             Formatter ??= NullableStructFormatterResolver.Instance.GetFormatter<T>();
         }
     }
+
+#endregion
 }

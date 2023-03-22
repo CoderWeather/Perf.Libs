@@ -11,8 +11,6 @@ public static class EnumCache {
         return Cache<T>.ByName(s);
     }
 
-#region Nested type: Cache
-
     static class Cache<T>
         where T : struct, Enum {
         static readonly Dictionary<string, T> ByNames = new(StringComparer.InvariantCultureIgnoreCase);
@@ -38,6 +36,4 @@ public static class EnumCache {
             return name!;
         }
     }
-
-#endregion
 }

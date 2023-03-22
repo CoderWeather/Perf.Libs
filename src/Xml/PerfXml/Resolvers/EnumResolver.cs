@@ -6,15 +6,9 @@ public sealed class EnumResolver : IXmlFormatterResolver {
     public static readonly EnumResolver Instance = new();
     EnumResolver() { }
 
-#region IXmlFormatterResolver Members
-
     public IXmlFormatter<T>? GetFormatter<T>() {
         return Cache<T>.Formatter;
     }
-
-#endregion
-
-#region Nested type: Cache
 
     static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
@@ -29,6 +23,4 @@ public sealed class EnumResolver : IXmlFormatterResolver {
             Formatter ??= instance as IXmlFormatter<T>;
         }
     }
-
-#endregion
 }

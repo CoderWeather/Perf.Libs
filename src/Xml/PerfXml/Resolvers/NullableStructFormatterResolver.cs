@@ -8,15 +8,7 @@ public sealed class NullableStructFormatterResolver : IXmlFormatterResolver {
     static readonly Type NullableStructFormatterType = typeof(NullableStructFormatter<>);
     NullableStructFormatterResolver() { }
 
-#region IXmlFormatterResolver Members
-
-    public IXmlFormatter<T>? GetFormatter<T>() {
-        return Cache<T>.Formatter;
-    }
-
-#endregion
-
-#region Nested type: Cache
+    public IXmlFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
     static class Cache<T> {
         public static readonly IXmlFormatter<T>? Formatter;
@@ -34,6 +26,4 @@ public sealed class NullableStructFormatterResolver : IXmlFormatterResolver {
             Formatter = instance as IXmlFormatter<T>;
         }
     }
-
-#endregion
 }

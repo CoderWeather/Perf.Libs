@@ -11,10 +11,10 @@
 
     <PropertyGroup>
         <PackageId>PerfXml</PackageId>
-        <Version>1.1.2</Version>
+        <Version>1.1.3</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Fast and low memory consumption C# XML serialization\deserialization engine with source generators.</Description>
-        <RepositoryUrl>https://github.com/CoderWeather/PerfXml</RepositoryUrl>
+        <RepositoryUrl>https://github.com/CoderWeather/Perf.Libs</RepositoryUrl>
         <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
         <PackageTags>xml c# perfxml</PackageTags>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>

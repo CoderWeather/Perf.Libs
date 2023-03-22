@@ -124,11 +124,11 @@ public ref struct XmlReadBuffer {
 
             if (currSpan.Length > 1) {
                 switch (currSpan[1]) {
-                // no need to check length here.. name has to be at least 1 char lol
+                // no need to check length here.. name has to be at least 1 char
                 case '/':
                     // current block has ended
                     depth--;
-                    return i + 2; // todo: hmm. this make caller responsible for aligning again
+                    return i + 2;
                 case '?': {
                     // skip xml declaration
                     // e.g <?xml version='1.0'?>
@@ -192,10 +192,6 @@ public ref struct XmlReadBuffer {
                 if (spaceIdx != -1) {
                     afterAttrs = spaceIdx + 1; // skip space
                     afterAttrs = DeserializeAttributes(currSpan, closeBraceIdx, afterAttrs, obj, resolver);
-                    // if (abort) {
-                    // 	depth--;
-                    // 	return -1;
-                    // }
                 } else {
                     afterAttrs = closeBraceIdx;
                 }
@@ -354,7 +350,7 @@ public ref struct XmlReadBuffer {
     public ReadOnlySpan<char> DeserializeString(ReadOnlySpan<char> span, out int endEndIdx) {
         if (cdataMode == CDataMode.Off)
             return DeserializeElementRawInnerText(span, out endEndIdx);
-        // todo: CDATA cannot contain the string "]]>" anywhere in the XML document.
+        // CDATA cannot contain the string "]]>" anywhere in the XML document.
 
         if (!span.StartsWith(CDataStart))
             throw new InvalidDataException("invalid cdata start");

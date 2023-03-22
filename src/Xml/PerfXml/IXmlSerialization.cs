@@ -6,12 +6,11 @@ namespace PerfXml;
 public interface IXmlSerialization {
     /// <summary>Gets the name of the node to be written</summary>
     /// <returns>Name of the node to be written</returns>
-    /*#if NET7_0_OR_GREATER
-        public static abstract ReadOnlySpan<char> GetNodeName();
+    #if NET7_0_OR_GREATER
+        static abstract ReadOnlySpan<char> GetNodeName();
     #else
         public ReadOnlySpan<char> GetNodeName();
-    #endif*/
-    ReadOnlySpan<char> GetNodeName();
+    #endif
 
     bool ParseFullBody(
         ref XmlReadBuffer buffer,

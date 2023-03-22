@@ -81,40 +81,39 @@ partial class XmlGenerator {
                 );
             }
 
-            writer.WriteLine("switch (hash)");
-            using (NestedScope.Start(writer)) {
-                foreach (var body in xmlBodies) {
-                    var isList = body.OriginalType.IsList();
+            writer.WriteLine("switch (hash) {");
+            foreach (var body in xmlBodies) {
+                var isList = body.OriginalType.IsList();
 
-                    var nameToCheck = body.XmlName
-                     ?? throw new InvalidDataException($"no body name for {body.Symbol} in {cls.Symbol}");
+                var nameToCheck = body.XmlName
+                 ?? throw new InvalidDataException($"no body name for {body.Symbol} in {cls.Symbol}");
 
-                    writer.WriteLine($"case {HashName(new(nameToCheck.ToCharArray()))}:");
-                    using (NestedScope.Start(writer)) {
-                        if (body.TypeIsSerializable) {
-                            if (isList) {
-                                var typeToRead = ((INamedTypeSymbol)body.Type).OriginalDefinition.TypeArguments[0];
-                                writer.WriteLines(
-                                    $"this.{body.Symbol.Name} ??= new();",
-                                    $"this.{body.Symbol.Name}.Add(buffer.Read<{typeToRead}>(bodySpan, out end, resolver));"
-                                );
-                            } else {
-                                writer.WriteLines(
-                                    $"if (this.{body.Symbol.Name} is not null) throw new InvalidDataException(\"duplicate non-list body {body.Symbol.Name}\");",
-                                    $"this.{body.Symbol.Name} = buffer.Read<{body.Type.OriginalDefinition}>(bodySpan, out end, resolver);"
-                                );
-                            }
-                        } else {
-                            writer.WriteLines(
-                                "var nodeSpan = buffer.ReadNodeValue(innerBodySpan, out endInner);",
-                                $"this.{body.Symbol.Name} = resolver.Parse<{body.TypeName}>(nodeSpan);"
-                            );
-                        }
-
-                        writer.WriteLine("return true;");
+                writer.WriteLine($"case {HashName(new(nameToCheck.ToCharArray()))}: {{");
+                writer.Indent++;
+                if (body.TypeIsSerializable) {
+                    if (isList) {
+                        var typeToRead = ((INamedTypeSymbol)body.Type).OriginalDefinition.TypeArguments[0];
+                        writer.WriteLines(
+                            $"this.{body.Symbol.Name} ??= new();",
+                            $"this.{body.Symbol.Name}.Add(buffer.Read<{typeToRead}>(bodySpan, out end, resolver));"
+                        );
+                    } else {
+                        writer.WriteLines(
+                            $"if (this.{body.Symbol.Name} is not null) throw new InvalidDataException(\"duplicate non-list body {body.Symbol.Name}\");",
+                            $"this.{body.Symbol.Name} = buffer.Read<{body.Type.OriginalDefinition}>(bodySpan, out end, resolver);"
+                        );
                     }
+                } else {
+                    writer.WriteLines(
+                        "var nodeSpan = buffer.ReadNodeValue(innerBodySpan, out endInner);",
+                        $"this.{body.Symbol.Name} = resolver.Parse<{body.TypeName}>(nodeSpan);"
+                    );
                 }
+
+                writer.WriteLine("return true; }");
+                writer.Indent--;
             }
+            writer.WriteLine("}");
 
             writer.WriteLine("return false;");
         }
@@ -190,35 +189,34 @@ partial class XmlGenerator {
                 writer.WriteLine("if (base.ParseAttribute(ref buffer, hash, value, resolver)) return true;");
             }
 
-            writer.WriteLine("switch (hash)");
-            using (NestedScope.Start(writer)) {
-                foreach (var attr in xmlAttrs) {
-                    writer.WriteLine($"case {HashName(attr.XmlName!.ToCharArray())}:");
+            writer.WriteLine("switch (hash) {");
+            foreach (var attr in xmlAttrs) {
+                writer.WriteLine($"case {HashName(attr.XmlName!.ToCharArray())}: {{");
+                writer.Indent++;
+                if (attr.SplitChar is not null) {
+                    var namedType = (INamedTypeSymbol)attr.OriginalType;
+                    var typeToRead = namedType.TypeArguments[0].Name;
+
+                    writer.WriteLine($"var lst = new List<{typeToRead}>();");
+                    writer.WriteLine($"var reader = new StrReader(value, '{attr.SplitChar}');");
+
+                    writer.WriteLine("while (reader.HasRemaining())");
                     using (NestedScope.Start(writer)) {
-                        if (attr.SplitChar is not null) {
-                            var namedType = (INamedTypeSymbol)attr.OriginalType;
-                            var typeToRead = namedType.TypeArguments[0].Name;
-
-                            writer.WriteLine($"var lst = new List<{typeToRead}>();");
-                            writer.WriteLine($"var reader = new StrReader(value, '{attr.SplitChar}');");
-
-                            writer.WriteLine("while (reader.HasRemaining())");
-                            using (NestedScope.Start(writer)) {
-                                writer.WriteLines(
-                                    $"var val = reader.ReadAndParse<{attr.Type}()>;",
-                                    "lst.Add(val);"
-                                );
-                            }
-
-                            writer.WriteLine($"this.{attr.Symbol.Name} = lst;");
-                        } else {
-                            writer.WriteLine($"this.{attr.Symbol.Name} = resolver.Parse<{attr.TypeName}>(value);");
-                        }
-
-                        writer.WriteLine("return true;");
+                        writer.WriteLines(
+                            $"var val = reader.ReadAndParse<{attr.Type}()>;",
+                            "lst.Add(val);"
+                        );
                     }
+
+                    writer.WriteLine($"this.{attr.Symbol.Name} = lst;");
+                } else {
+                    writer.WriteLine($"this.{attr.Symbol.Name} = resolver.Parse<{attr.TypeName}>(value);");
                 }
+
+                writer.WriteLine("return true; }");
+                writer.Indent--;
             }
+            writer.WriteLine("}");
 
             writer.WriteLine("return false;");
         }
@@ -257,29 +255,19 @@ partial class XmlGenerator {
                         throw new("for xml body of type list<T>, T must be IXmlSerialization");
                     }
 
-                    writer.WriteLine($"foreach (IXmlSerialization obj in this.{body.Symbol.Name})");
-                    using (NestedScope.Start(writer)) {
-                        writer.WriteLine("obj.Serialize(ref buffer, resolver);");
-                    }
+                    writer.WriteLine($"foreach (IXmlSerialization obj in this.{body.Symbol.Name}) {{");
+                    writer.WriteLine("    obj.Serialize(ref buffer, resolver); }");
                 }
                 // another IXmlSerialization
                 else if (body.OriginalType.IsPrimitive() is false) {
                     var nodeNameArg = body.XmlName is not null ? $", \"{body.XmlName}\"" : null;
                     writer.WriteLine($"((IXmlSerialization)this.{body.Symbol.Name}).Serialize(ref buffer, resolver{nodeNameArg});");
                 } else {
-                    NestedScope? nodeScope = null;
-
-                    if (isCanBeNull is false) {
-                        nodeScope = NestedScope.Start(writer);
-                    }
-
                     writer.WriteLine(
                         body.XmlName is not null
                             ? $"buffer.WriteNodeValue(\"{body.XmlName}\", this.{body.Symbol.Name}, resolver);"
                             : $"buffer.Write(this.{body.Symbol.Name}, resolver);"
                     );
-
-                    nodeScope?.Close();
                 }
 
                 isNotNullScope?.Close();
@@ -324,8 +312,6 @@ partial class XmlGenerator {
                         );
                     }
                 } else {
-                    using (NestedScope.Start(writer)) { }
-
                     var writerAction = GetPutAttributeAction(field);
                     writer.WriteLine(writerAction);
                 }

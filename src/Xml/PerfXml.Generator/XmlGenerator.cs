@@ -9,19 +9,7 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
            .Select((nts, ct) => nts!)
            .Collect();
 
-        var models = context.SyntaxProvider
-           .CreateSyntaxProvider(
-                static (context, ct) => {
-                    //
-                    return false;
-                },
-                static (context, ct) => {
-                    return context.Node;
-                    //
-                }
-            );
-
-        context.RegisterSourceOutput(context.CompilationProvider.Combine(valueObjects), CodeGeneration);
+        context.RegisterSourceOutput(context.ParseOptionsProvider.Combine(valueObjects), CodeGeneration);
     }
 
     static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
@@ -222,12 +210,15 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
         }
     }
 
-    static void CodeGeneration(SourceProductionContext context, (Compilation, ImmutableArray<ClassGenInfo>) tuple) {
-        var (_, types) = tuple;
+    static void CodeGeneration(SourceProductionContext context, (ParseOptions, ImmutableArray<ClassGenInfo>) tuple) {
+        var (parseOptions, types) = tuple;
         if (types.IsDefaultOrEmpty) {
             return;
         }
-        // compilation.Options.
+
+        var isSharp11 = parseOptions is CSharpParseOptions {
+            LanguageVersion: LanguageVersion.CSharp11
+        };
 
         var typesGroupedByNamespace = types
            .ToLookup(x => x.Symbol.ContainingNamespace, SymbolEqualityComparer.Default);
@@ -235,7 +226,7 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
         foreach (var a in typesGroupedByNamespace) {
             var group = a.ToArray();
             var ns = a.Key!.ToString()!;
-            var sourceCode = ProcessClasses(context, ns, group);
+            var sourceCode = ProcessClasses(context, ns, group, isSharp11);
 
             context.AddSource($"{nameof(XmlGenerator)}_{ns}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
         }
@@ -244,7 +235,8 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
     static string ProcessClasses(
         SourceProductionContext context,
         string containingNamespace,
-        ClassGenInfo[] classes
+        ClassGenInfo[] classes,
+        bool isSharp11
     ) {
         using var writer = new IndentedTextWriter(new StringWriter(), "	");
         writer.WriteLines(
@@ -263,11 +255,19 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
             writer.Indent++;
 
             if (cls.InheritedClassName is false) {
-                writer.WriteLine(
-                    "{0}ReadOnlySpan<char> IXmlSerialization.GetNodeName() => \"{1}\";",
-                    cls.AdditionalInheritanceMethodModifiers,
-                    cls.ClassName
-                );
+                if (isSharp11) {
+                    writer.WriteLine(
+                        "static {0}ReadOnlySpan<char> IXmlSerialization.GetNodeName() => \"{1}\";",
+                        cls.AdditionalInheritanceMethodModifiers,
+                        cls.ClassName
+                    );
+                } else {
+                    writer.WriteLine(
+                        "{0}ReadOnlySpan<char> IXmlSerialization.GetNodeName() => \"{1}\";",
+                        cls.AdditionalInheritanceMethodModifiers,
+                        cls.ClassName
+                    );
+                }
             }
 
             WriteParseBody(writer, cls);
@@ -280,8 +280,17 @@ public sealed partial class XmlGenerator : IIncrementalGenerator {
             writer.WriteLine("}");
         }
 
-        writer.WriteLine(
-            $$"""
+        if (isSharp11) {
+            writer.WriteLine(HiddenInterfaceMethodsSharp11);
+        } else {
+            writer.WriteLine(HiddenInterfaceMethods);
+        }
+
+        var resultStr = writer.InnerWriter.ToString()!;
+        return resultStr;
+    }
+
+    const string HiddenInterfaceMethods = $$"""
 file static class __HiddenInterfaceMethods {
     {{AggressiveInlining}}
     public static ReadOnlySpan<char> GetNodeName<T>(this T t) where T : IXmlSerialization => t.GetNodeName();
@@ -300,10 +309,26 @@ file static class __HiddenInterfaceMethods {
     {{AggressiveInlining}}
     public static void Serialize<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.Serialize(ref buffer, resolver);
 }
-"""
-        );
+""";
 
-        var resultStr = writer.InnerWriter.ToString()!;
-        return resultStr;
-    }
+    const string HiddenInterfaceMethodsSharp11 = $$"""
+file static class __HiddenInterfaceMethods {
+    {{AggressiveInlining}}
+    public static ReadOnlySpan<char> GetNodeName<T>(this T _) where T : IXmlSerialization => T.GetNodeName();
+    {{AggressiveInlining}}
+    public static bool ParseFullBody<T>(this T t, ref XmlReadBuffer buffer, ReadOnlySpan<char> bodySpan, ref int end, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseFullBody(ref buffer, bodySpan, ref end, resolver);
+    {{AggressiveInlining}}
+    public static bool ParseSubBody<T>(this T t, ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseSubBody(ref buffer, hash, bodySpan, innerBodySpan, ref end, ref endInner, resolver);
+    {{AggressiveInlining}}
+    public static bool ParseSubBody<T>(this T t, ref XmlReadBuffer buffer, ReadOnlySpan<char> nodeName, ReadOnlySpan<char> bodySpan, ReadOnlySpan<char> innerBodySpan, ref int end, ref int endInner, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseSubBody(ref buffer, nodeName, bodySpan, innerBodySpan, ref end, ref endInner, resolver);
+    {{AggressiveInlining}}
+    public static bool ParseAttribute<T>(this T t, ref XmlReadBuffer buffer, ulong hash, ReadOnlySpan<char> value, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.ParseAttribute(ref buffer, hash, value, resolver);
+    {{AggressiveInlining}}
+    public static void SerializeBody<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.SerializeBody(ref buffer, resolver);
+    {{AggressiveInlining}}
+    public static void SerializeAttributes<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.SerializeAttributes(ref buffer, resolver);
+    {{AggressiveInlining}}
+    public static void Serialize<T>(this T t, ref XmlWriteBuffer buffer, IXmlFormatterResolver resolver) where T : IXmlSerialization => t.Serialize(ref buffer, resolver);
+}
+""";
 }

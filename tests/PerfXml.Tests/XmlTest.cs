@@ -37,6 +37,8 @@ public class XmlTest {
         );
     }
 
+    static ReadOnlySpan<char> TestFoo<T>(T _) where T : IXmlSerialization => T.GetNodeName();
+
     [Fact]
     public void Sbrf() {
         var response = new TestResult() { Result = 0, Comment = null };

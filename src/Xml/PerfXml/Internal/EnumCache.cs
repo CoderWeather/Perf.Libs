@@ -1,6 +1,6 @@
-﻿namespace PerfXml;
+﻿namespace PerfXml.Internal;
 
-public static class EnumCache {
+static class EnumCache {
     public static string GetName<T>(T value)
         where T : struct, Enum {
         return Cache<T>.ByValue(value);

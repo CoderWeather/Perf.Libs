@@ -1,5 +1,7 @@
 ﻿namespace PerfXml.Formatters;
 
+using Internal;
+
 public sealed class EnumFormatter<T> : IXmlFormatter<T>
     where T : struct, Enum {
     public static readonly EnumFormatter<T> Instance = new();

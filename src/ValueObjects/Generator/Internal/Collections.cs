@@ -1,6 +1,6 @@
 namespace Perf.ValueObjects.Generator.Internal;
 
-public static class EnumerableExtensions {
+static class EnumerableExtensions {
     public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T>? comparer = null) => new(enumerable, comparer);
 
     public static IEnumerable<T> DistinctBy<T, TKey>(

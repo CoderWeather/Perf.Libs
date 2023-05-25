@@ -6,7 +6,7 @@ partial class XmlGenerator {
         var needsSubBody = false;
 
         foreach (var body in cls.XmlBodies) {
-            if (body.OriginalType.IsPrimitive() && body.XmlName is null) {
+            if (body.Type.IsPrimitive() && body.XmlName is null) {
                 needsInlineBody = true;
             } else {
                 needsSubBody = true;
@@ -23,14 +23,14 @@ partial class XmlGenerator {
             );
             using (NestedScope.Start(writer)) {
                 foreach (var body in cls.XmlBodies) {
-                    if (body.OriginalType.Name == "String") {
+                    if (body.Type.Name == "String") {
                         writer.WriteLines(
                             "var nodeSpan = buffer.ReadNodeValue(innerBodySpan, out endInner);",
                             $"this.{body.Symbol.Name} = resolver.Parse<{body.TypeName}>(nodeSpan);"
                         );
                     } else {
                         throw new(
-                            $"Xml:WriteParseBodyMethods: how to inline body {body.OriginalType.IsNativeIntegerType}"
+                            $"Xml:WriteParseBodyMethods: how to inline body {body.Type.IsNativeIntegerType}"
                         );
                     }
                 }
@@ -59,7 +59,7 @@ partial class XmlGenerator {
         var xmlBodies = cls.XmlBodies
            .Where(x => x is not PropertyGenInfo prop || prop.Symbol.IsReadOnly is false)
            .Where(x => x is not FieldGenInfo field || field.Symbol.IsReadOnly is false)
-           .Where(x => x.OriginalType is not ITypeParameterSymbol)
+           .Where(x => x.Type is not ITypeParameterSymbol)
            .ToArray();
 
         if (xmlBodies.Any() is false && cls.InheritedFromSerializable) {
@@ -83,7 +83,7 @@ partial class XmlGenerator {
 
             writer.WriteLine("switch (hash) {");
             foreach (var body in xmlBodies) {
-                var isList = body.OriginalType.IsList();
+                var isList = body.Type.IsList();
 
                 var nameToCheck = body.XmlName
                  ?? throw new InvalidDataException($"no body name for {body.Symbol} in {cls.Symbol}");
@@ -92,7 +92,7 @@ partial class XmlGenerator {
                 writer.Indent++;
                 if (body.TypeIsSerializable) {
                     if (isList) {
-                        var typeToRead = ((INamedTypeSymbol)body.Type).OriginalDefinition.TypeArguments[0];
+                        var typeToRead = ((INamedTypeSymbol)body.Type).TypeArguments[0];
                         writer.WriteLines(
                             $"this.{body.Symbol.Name} ??= new();",
                             $"this.{body.Symbol.Name}.Add(buffer.Read<{typeToRead}>(bodySpan, out end, resolver));"
@@ -100,7 +100,7 @@ partial class XmlGenerator {
                     } else {
                         writer.WriteLines(
                             $"if (this.{body.Symbol.Name} is not null) throw new InvalidDataException(\"duplicate non-list body {body.Symbol.Name}\");",
-                            $"this.{body.Symbol.Name} = buffer.Read<{body.Type.OriginalDefinition}>(bodySpan, out end, resolver);"
+                            $"this.{body.Symbol.Name} = buffer.Read<{body.Type}>(bodySpan, out end, resolver);"
                         );
                     }
                 } else {
@@ -123,7 +123,7 @@ partial class XmlGenerator {
         var xmlBodies = cls.XmlBodies
            .Where(x => x is not PropertyGenInfo prop || prop.Symbol.IsReadOnly is false)
            .Where(x => x is not FieldGenInfo field || field.Symbol.IsReadOnly is false)
-           .Where(x => x.OriginalType is ITypeParameterSymbol)
+           .Where(x => x.Type is ITypeParameterSymbol)
            .ToArray();
 
         writer.WriteLine(
@@ -155,7 +155,7 @@ partial class XmlGenerator {
                 using (NestedScope.Start(writer)) {
                     writer.WriteLines(
                         $"if (this.{body.Symbol.Name} is not null) throw new InvalidDataException(\"duplicate non-list body this.{body.Symbol.Name}\");",
-                        $"this.{body.Symbol.Name} = buffer.Read<{body.OriginalType}>(bodySpan, out end, resolver);",
+                        $"this.{body.Symbol.Name} = buffer.Read<{body.Type}>(bodySpan, out end, resolver);",
                         "return true;"
                     );
                 }
@@ -194,7 +194,7 @@ partial class XmlGenerator {
                 writer.WriteLine($"case {HashName(attr.XmlName!.ToCharArray())}: {{");
                 writer.Indent++;
                 if (attr.SplitChar is not null) {
-                    var namedType = (INamedTypeSymbol)attr.OriginalType;
+                    var namedType = (INamedTypeSymbol)attr.Type;
                     var typeToRead = namedType.TypeArguments[0].Name;
 
                     writer.WriteLine($"var lst = new List<{typeToRead}>();");
@@ -242,7 +242,7 @@ partial class XmlGenerator {
             }
 
             foreach (var body in cls.XmlBodies) {
-                var isCanBeNull = body.OriginalType.IsReferenceType || body.Type.IsValueNullable();
+                var isCanBeNull = body.Type.IsReferenceType || body.Type.IsValueNullable();
 
                 NestedScope? isNotNullScope = null;
                 if (isCanBeNull) {
@@ -250,8 +250,8 @@ partial class XmlGenerator {
                     isNotNullScope = NestedScope.Start(writer);
                 }
 
-                if (body.OriginalType.IsList()) {
-                    if (body.OriginalType.IsPrimitive() || body.TypeIsSerializable is false) {
+                if (body.Type.IsList()) {
+                    if (body.Type.IsPrimitive() || body.TypeIsSerializable is false) {
                         throw new("for xml body of type list<T>, T must be IXmlSerialization");
                     }
 
@@ -259,7 +259,7 @@ partial class XmlGenerator {
                     writer.WriteLine("    obj.Serialize(ref buffer, resolver); }");
                 }
                 // another IXmlSerialization
-                else if (body.OriginalType.IsPrimitive() is false) {
+                else if (body.Type.IsPrimitive() is false) {
                     var nodeNameArg = body.XmlName is not null ? $", \"{body.XmlName}\"" : null;
                     writer.WriteLine($"((IXmlSerialization)this.{body.Symbol.Name}).Serialize(ref buffer, resolver{nodeNameArg});");
                 } else {

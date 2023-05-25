@@ -1,7 +1,7 @@
 ﻿namespace Perf.ValueObjects.Generator;
 
 [Generator]
-public sealed partial class ValueObjectGenerator : IIncrementalGenerator {
+sealed partial class ValueObjectGenerator : IIncrementalGenerator {
     const string ValueObjectAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject";
     const string KeyAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject+Key";
 

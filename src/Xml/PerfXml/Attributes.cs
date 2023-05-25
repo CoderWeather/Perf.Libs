@@ -10,10 +10,10 @@ public sealed class XmlClsAttribute : Attribute {
 }
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-public sealed class XmlFieldAttribute : Attribute {
+public sealed class XmlAttributeAttribute : Attribute {
     public readonly string Name;
 
-    public XmlFieldAttribute(string name) {
+    public XmlAttributeAttribute(string name) {
         Name = name;
     }
 }
@@ -30,14 +30,5 @@ public sealed class XmlBodyAttribute : Attribute {
 
     public XmlBodyAttribute(bool takeNameFromType) {
         TakeNameFromType = takeNameFromType;
-    }
-}
-
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-public sealed class XmlSplitStrAttribute : Attribute {
-    public readonly char SplitOn;
-
-    public XmlSplitStrAttribute(char splitOn = ',') {
-        SplitOn = splitOn;
     }
 }

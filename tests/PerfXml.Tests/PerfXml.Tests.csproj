@@ -32,7 +32,6 @@
         <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />
         <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />
         <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />
-        <ProjectReference Include="..\..\src\Xml\PerfXml.Net6\PerfXml.Net6.csproj" />
         <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />
     </ItemGroup>
 

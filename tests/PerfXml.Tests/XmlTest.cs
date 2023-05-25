@@ -74,18 +74,21 @@ sealed partial class TestResult : IXmlSerialization {
 
 [XmlCls("GRPS")]
 sealed partial class GrpsModel : IXmlSerialization {
-    [XmlField("Test")]
-    public string? TestStringAttribute { get; set; }
+    // [XmlField("Test")]
+    // public string? TestStringAttribute { get; set; }
+    //
+    // [XmlBody("Node")]
+    // public int Node { get; set; }
+    //
+    // [XmlBody("PDP")]
+    // public string Pdp { get; set; } = default!;
+    //
+    // // [XmlBody("qqq")]
+    // [XmlBody(true)]
+    // public QoSuse QoSuse { get; set; } = default!;
 
-    [XmlBody("Node")]
-    public int Node { get; set; }
-
-    [XmlBody("PDP")]
-    public string Pdp { get; set; } = default!;
-
-    // [XmlBody("qqq")]
     [XmlBody(true)]
-    public QoSuse QoSuse { get; set; } = default!;
+    public List<QoSuse> QoSuseList { get; set; } = new();
 }
 
 [XmlCls("QoSUse")]

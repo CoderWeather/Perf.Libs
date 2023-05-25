@@ -1,6 +1,6 @@
 namespace Perf.ValueObjects.Generator;
 
-public sealed partial class ValueObjectGenerator {
+partial class ValueObjectGenerator {
     static void WriteConstructorForKeys(IndentedTextWriter writer, TypePack type) {
         var keys = type.Members
            .Where(m => m.IsKey)

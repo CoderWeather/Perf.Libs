@@ -30,13 +30,9 @@ static class Extensions {
         genericsOptions: SymbolDisplayGenericsOptions.None
     );
 
-    public static string FullPath(this ITypeSymbol type) {
-        return type.ToDisplayString(FullPathFormat);
-    }
+    public static string FullPath(this ITypeSymbol type) => type.ToDisplayString(FullPathFormat);
 
-    public static string MinimalName(this ITypeSymbol type) {
-        return type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-    }
+    public static string MinimalName(this ITypeSymbol type) => type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
     public static bool HaveRecordAsDtoAttribute(this ITypeSymbol type) {
         var attrs = type.GetAttributes();
@@ -109,7 +105,6 @@ static class Extensions {
         return args[index].As<T>();
     }
 
-    public static INamedTypeSymbol? TryGetType(this ref GeneratorSyntaxContext gsc, string fullyQualifiedMetadataName) {
-        return gsc.SemanticModel.Compilation.GetTypeByMetadataName(fullyQualifiedMetadataName);
-    }
+    public static INamedTypeSymbol? TryGetType(this ref GeneratorSyntaxContext gsc, string fullyQualifiedMetadataName) =>
+        gsc.SemanticModel.Compilation.GetTypeByMetadataName(fullyQualifiedMetadataName);
 }

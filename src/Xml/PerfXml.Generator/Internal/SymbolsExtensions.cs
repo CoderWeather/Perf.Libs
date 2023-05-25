@@ -28,8 +28,8 @@ static class SymbolsExtensions {
         return false;
     }
 
-    public static string Accessibility(this ITypeSymbol type) {
-        return type.DeclaredAccessibility switch {
+    public static string Accessibility(this ITypeSymbol type) =>
+        type.DeclaredAccessibility switch {
             Microsoft.CodeAnalysis.Accessibility.Public               => "public",
             Microsoft.CodeAnalysis.Accessibility.Internal             => "internal",
             Microsoft.CodeAnalysis.Accessibility.Protected            => "protected",
@@ -37,10 +37,9 @@ static class SymbolsExtensions {
             Microsoft.CodeAnalysis.Accessibility.Private              => "private",
             _                                                         => throw new ArgumentOutOfRangeException(nameof(type.DeclaredAccessibility))
         };
-    }
 
-    public static string DeclarationString(this ITypeSymbol ts) {
-        return ts is INamedTypeSymbol
+    public static string DeclarationString(this ITypeSymbol ts) =>
+        ts is INamedTypeSymbol
             ? ts switch {
                 { IsRecord : true, IsReferenceType: true } => "record",
                 { IsReferenceType: true }                  => "class",
@@ -50,10 +49,9 @@ static class SymbolsExtensions {
                 _                                          => throw new ArgumentOutOfRangeException(nameof(ts))
             }
             : throw new();
-    }
 
-    public static DeclarationKind DeclarationType(this ITypeSymbol ts) {
-        return ts switch {
+    public static DeclarationKind DeclarationType(this ITypeSymbol ts) =>
+        ts switch {
             { IsRecord : true, IsReferenceType: true } => DeclarationKind.Record,
             { IsReferenceType: true }                  => DeclarationKind.Class,
             { IsRecord : true, IsValueType: true }     => DeclarationKind.RecordStruct,
@@ -61,62 +59,69 @@ static class SymbolsExtensions {
             { TypeKind : TypeKind.Interface }          => DeclarationKind.Interface,
             _                                          => DeclarationKind.Unrecognized
         };
+
+    public static bool IsEmptyType(this INamedTypeSymbol nt) {
+        var constructors = nt.InstanceConstructors;
+
+        if (nt.IsRecord && constructors.All(x => x.Parameters.Length >= 1)) {
+            return false;
+        }
+
+        return nt.HaveInstancePropertiesOrFields() is false;
     }
 
     public static bool HaveInstancePropertiesOrFields(this INamedTypeSymbol nt) {
-        return nt.GetMembers().Any(x => x is IPropertySymbol { IsStatic: false, GetMethod: not null, SetMethod: not null } or IFieldSymbol);
+        return nt.GetMembers()
+           .Any(
+                x => x is
+                    IPropertySymbol {
+                        IsStatic: false, GetMethod: not null, SetMethod: not null, IsIndexer: false
+                    }
+                    or IFieldSymbol {
+                        IsStatic: false, IsConst: false
+                    }
+            );
     }
 
-    public static bool StrictEquals<T>(this T s, T other) where T : ISymbol {
-        return s.Equals(other, SymbolEqualityComparer.Default);
-    }
+    public static bool StrictEquals<T>(this T s, T other) where T : ISymbol => s.Equals(other, SymbolEqualityComparer.Default);
 
-    public static bool StrictEqualsNullable<T>(this T ts, T other) where T : ISymbol {
-        return ts.Equals(other, SymbolEqualityComparer.IncludeNullability);
-    }
+    public static bool StrictEqualsNullable<T>(this T ts, T other) where T : ISymbol => ts.Equals(other, SymbolEqualityComparer.IncludeNullability);
 
-    public static bool IsPrimitive(this ITypeSymbol type) {
-        return type.IsValueType
-         || type.IsValueNullable()
-         || type.IsEnum()
-         || type.Name is "String";
-    }
+    public static bool IsPrimitive(this ITypeSymbol type) =>
+        type.IsValueType
+     || type.IsValueNullable()
+     || type.IsEnum()
+     || type.Name is "String";
 
-    public static bool IsString(this ITypeSymbol type) {
-        return type.Name is "String";
-    }
+    public static bool IsString(this ITypeSymbol type) => type.Name is "String";
 
     public static bool IsList(this ITypeSymbol type) {
-        return type.Name is "List";
+        if (type is not INamedTypeSymbol nt) {
+            return false;
+        }
+        nt = nt.IsDefinition ? nt : nt.OriginalDefinition;
+        return nt is { Name: "List", IsUnboundGenericType: false };
     }
 
-    public static bool IsValueNullable(this ITypeSymbol type) {
-        return type is INamedTypeSymbol {
-            OriginalDefinition.Name: "Nullable", IsValueType: true
+    public static bool IsValueNullable(this ITypeSymbol type) =>
+        type is INamedTypeSymbol {
+            OriginalDefinition.Name: "Nullable"
         };
-    }
 
-    public static bool IsEnum(this ITypeSymbol type) {
-        return type.IsValueType && type.TypeKind is TypeKind.Enum;
-    }
+    public static bool IsEnum(this ITypeSymbol type) => type.IsValueType && type.TypeKind is TypeKind.Enum;
 
-    public static ITypeSymbol? IfValueNullableGetInnerType(this ITypeSymbol type) {
-        return type.IsValueNullable() && type is INamedTypeSymbol nt
+    public static ITypeSymbol? IfValueNullableGetInnerType(this ITypeSymbol type) =>
+        type.IsValueNullable() && type is INamedTypeSymbol nt
             ? nt.TypeArguments[0]
             : null;
-    }
 
-    public static T? As<T>(this TypedConstant tc) {
-        return tc.Value is T v ? v : default;
-    }
+    public static T? As<T>(this TypedConstant tc) => tc.Value is T v ? v : default;
 
 #endregion
 
 #region Base Classes
 
-    public static bool HasBaseClass(this ITypeSymbol type) {
-        return type.BaseType?.Name is not "Object";
-    }
+    public static bool HasBaseClass(this ITypeSymbol type) => type.BaseType?.Name is not "Object";
 
 #endregion
 
@@ -146,13 +151,11 @@ static class SymbolsExtensions {
         return symbol.GetAttributes().Where(x => x.AttributeClass?.FullPath().Equals(typeFullPath) is true);
     }
 
-    public static AttributeData GetAttribute(this ISymbol type, INamedTypeSymbol attribute) {
-        return type.TryGetAttribute(attribute) ?? throw new($"{attribute} attribute not found for {type}");
-    }
+    public static AttributeData GetAttribute(this ISymbol type, INamedTypeSymbol attribute) =>
+        type.TryGetAttribute(attribute) ?? throw new($"{attribute} attribute not found for {type}");
 
-    public static AttributeData GetAttribute(this ISymbol symbol, string typeFullPath) {
-        return symbol.TryGetAttribute(typeFullPath) ?? throw new($"{typeFullPath} attribute not found for {symbol}");
-    }
+    public static AttributeData GetAttribute(this ISymbol symbol, string typeFullPath) =>
+        symbol.TryGetAttribute(typeFullPath) ?? throw new($"{typeFullPath} attribute not found for {symbol}");
 
 #endregion
 
@@ -165,15 +168,14 @@ static class SymbolsExtensions {
 
         var baseType = type.BaseType;
 
-        while (baseType is not null && baseType.Name is not "object") {
+        while (baseType is not null && baseType.Name is not "object" && baseType.TypeKind is TypeKind.Class) {
             yield return baseType;
             baseType = baseType.BaseType;
         }
     }
 
-    public static INamedTypeSymbol? FindOldestAncestor(this ITypeSymbol type, Func<ITypeSymbol?, bool> predicate) {
-        return type.GetAllAncestors().LastOrDefault(predicate.Invoke);
-    }
+    public static INamedTypeSymbol? FindOldestAncestor(this ITypeSymbol type, Func<ITypeSymbol?, bool> predicate) =>
+        type.GetAllAncestors().LastOrDefault(predicate.Invoke);
 
 #endregion
 

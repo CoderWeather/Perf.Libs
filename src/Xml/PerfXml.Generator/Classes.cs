@@ -30,11 +30,9 @@ abstract class BaseMemberGenInfo {
     protected BaseMemberGenInfo(ISymbol symbol, ITypeSymbol type) {
         Symbol = symbol;
         Type = type;
-        OriginalType = Type.IsDefinition ? Type : Type.OriginalDefinition;
     }
 
     public ISymbol Symbol { get; }
-    public ITypeSymbol OriginalType { get; }
     public ITypeSymbol Type { get; }
 
     public string TypeName =>

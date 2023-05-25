@@ -59,4 +59,16 @@ static class SyntaxExtensions {
 
         return false;
     }
+
+    public static AttributeSyntax? TryGetAttribute(this SyntaxList<AttributeListSyntax> attributesList, string name) {
+        foreach (var list in attributesList) {
+            foreach (var attribute in list.Attributes) {
+                if (attribute.Name.ToString().Equals(name, StringComparison.Ordinal)) {
+                    return attribute;
+                }
+            }
+        }
+
+        return null;
+    }
 }

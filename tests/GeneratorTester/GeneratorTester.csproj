@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="_*.cs" />
+        <None Include="_*.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />
+        <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />
+        <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />
+        <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />
+    </ItemGroup>
+
+</Project>

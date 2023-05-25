@@ -1,6 +1,6 @@
 namespace Perf.ValueObjects.Generator;
 
-public partial class ValueObjectGenerator {
+partial class ValueObjectGenerator {
 	const string ValueObjectFromValidatableInterfacePattern = @"
 partial {1} {2} {{
 	public {2}() {{

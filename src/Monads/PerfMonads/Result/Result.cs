@@ -39,7 +39,7 @@ public enum ResultState : byte {
 file sealed class ResultMonad_DebugView<TOk, TError> where TOk : notnull where TError : notnull {
     public ResultMonad_DebugView(Result<TOk, TError> result) {
         this.State = result.State;
-        this.Value = this.State > 0 ? result.IsOk ? result.Ok : result.Error : null;
+        this.Value = this.State > 0 ? result.IsOk ? result.Ok : result.Error : "Uninitialized";
     }
 
     public ResultState State { get; }
@@ -47,14 +47,14 @@ file sealed class ResultMonad_DebugView<TOk, TError> where TOk : notnull where T
 }
 
 [DebuggerTypeProxy(typeof(ResultMonad_DebugView<,>))]
-[DebuggerDisplay("{state > 0 ? (IsOk ? \"Ok: \" + ok.ToString() : $\"Error: \" + error.ToString()) : \"Empty\"}")]
+[DebuggerDisplay("{state > 0 ? (IsOk ? \"Ok: \" + ok.ToString() : $\"Error: \" + error.ToString()) : \"Uninitialized\"}")]
 [JsonConverter(typeof(MonadResultJsonConverterFactory))]
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct Result<TOk, TError> : IResultMonad<TOk, TError, ResultState>, IEquatable<Result<TOk, TError>>
     where TOk : notnull
     where TError : notnull {
     public Result() {
-        state = 0;
+        state = ResultState.Uninitialized;
         ok = default!;
         error = default!;
     }

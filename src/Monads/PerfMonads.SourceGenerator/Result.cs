@@ -116,178 +116,113 @@ sealed class ResultMonadGenerator : IIncrementalGenerator {
 
         namespace {4};
 
-        using System.Threading.Tasks;
-        using Perf.Monads.Result;
-
         file sealed class {0}_DebugView{6} {{
             public {0}_DebugView({3} result) {{
-                this.result = result;
-                this.Init = (bool?)InitField.GetValue(this.result) ?? false;
+                this.State = result.State;
+                this.Value = this.State > 0 ? result.IsOk ? result.Ok : result.Error : "Uninitialized";
             }}
         
-            readonly Result<{1}, {2}> result;
-            static readonly global::System.Reflection.FieldInfo InitField = typeof(Result<{1}, {2}>)
-                .GetField("init", global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.NonPublic)!;
-        
-            public bool Init {{ get; }}
-            public bool IsOk => Init && result.IsOk;
-            public bool IsError => Init && result.IsError;
-            public {1} Ok => Init && result.IsOk ? result.Ok : default!;
-            public {2} Error => Init && result.IsError ? result.Error : default!;
+            public global::Perf.Monads.Result.ResultState State {{ get; }}
+            public object? Value {{ get; }}
         }}
 
         [global::System.Diagnostics.DebuggerTypeProxy(typeof({0}_DebugView{7}))]
-        [global::System.Diagnostics.DebuggerDisplay("{{init ? (isOk ? \"Ok: \" + ok.ToString() : $\"Error: \" + error.ToString()) : \"Empty\"}}")]
+        [global::System.Diagnostics.DebuggerDisplay("{{state > 0 ? (IsOk ? \"Ok: \" + ok.ToString() : $\"Error: \" + error.ToString()) : \"Uninitialized\"}}")]
         [global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Auto)]
-        readonly partial struct {3} : IEquatable<{3}>, IEquatable<Result<{1}, {2}>> {{
-            public {0}() => (ok, error, init, isOk) = (default!, default!, false, false);
-            public {0}({1} ok) => (this.ok, error, init, isOk) = (ok, default!, true, true);
-            public {0}(Result.Ok<{1}> ok) => (this.ok, error, init, isOk) = (ok.Value, default!, true, true);
-            public {0}({2} error) => (ok, this.error, init, isOk) = (default!, error, true, false);
-            public {0}(Result.Error<{2}> error) => (ok, this.error, init, isOk) = (default!, error.Value, true, false);
-            private readonly bool init;
-            private readonly bool isOk;
+        readonly partial struct {3} : global::System.IEquatable<{3}>, global::System.IEquatable<global::Perf.Monads.Result.Result<{1}, {2}>> {{
+            public {0}() {{
+                state = global::Perf.Monads.Result.ResultState.Uninitialized;
+                ok = default!;
+                error = default!;
+            }}
+            public {0}({1} ok) {{
+                state = global::Perf.Monads.Result.ResultState.Ok;
+                this.ok = ok;
+                error = default!;
+            }}
+            public {0}({2} error) {{
+                state = global::Perf.Monads.Result.ResultState.Error;
+                ok = default!;
+                this.error = error;
+            }}
+            public {0}(global::Perf.Monads.Result.Result.Ok<{1}> ok) : this(ok: ok.Value) {{ }}
+            public {0}(global::Perf.Monads.Result.Result.Error<{2}> error) : this(error: error.Value) {{ }}
+            
+            private readonly global::Perf.Monads.Result.ResultState state;
             private readonly {1} ok;
             private readonly {2} error;
-            [global::System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-            public {1} Ok => init ? isOk ? ok : throw new InvalidOperationException($"Cannot access Ok. {5} is Error") : throw new InvalidOperationException($"{5} is Empty");
-            [global::System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-            public {2} Error => init ? isOk is false ? error : throw new InvalidOperationException($"Cannot access Error. {5} is Ok") : throw new InvalidOperationException($"{5} is Empty");
-            [global::System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-            public bool IsOk => init ? isOk : throw new InvalidOperationException($"{5} is Empty");
-            [global::System.Diagnostics.DebuggerBrowsableAttribute(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-            public bool IsError => init ? isOk is false : throw new InvalidOperationException($"{5} is Empty");
+            
+            private static readonly string UninitializedException = $"{5} is Unitialized";
+            private static readonly string ErrorAccessException = $"Cannot access Error. {5} is Ok";
+            private static readonly string OkAccessException = $"Cannot access Ok. {5} is Error";
+            
+            [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+            public {1} Ok =>
+                state switch {{
+                    global::Perf.Monads.Result.ResultState.Uninitialized => throw new global::System.InvalidOperationException(UninitializedException),
+                    global::Perf.Monads.Result.ResultState.Ok            => ok,
+                    global::Perf.Monads.Result.ResultState.Error         => throw new global::System.InvalidOperationException(ErrorAccessException),
+                    _                                                    => throw new global::System.ArgumentOutOfRangeException()
+                }};
+            [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+            public {2} Error =>
+                state switch {{
+                    global::Perf.Monads.Result.ResultState.Uninitialized => throw new global::System.InvalidOperationException(UninitializedException),
+                    global::Perf.Monads.Result.ResultState.Ok            => throw new global::System.InvalidOperationException(OkAccessException),
+                    global::Perf.Monads.Result.ResultState.Error         => error,
+                    _                                                    => throw new global::System.ArgumentOutOfRangeException()
+                }};
+            public bool IsOk => state is global::Perf.Monads.Result.ResultState.Ok;
+            public global::Perf.Monads.Result.ResultState State => state;
         // Operators
             public static implicit operator {3}({1} ok) => new(ok: ok);
-            public static implicit operator {3}(Result.Ok<{1}> ok) => new(ok: ok.Value);
+            public static implicit operator {3}(global::Perf.Monads.Result.Result.Ok<{1}> ok) => new(ok: ok.Value);
             public static implicit operator {3}({2} error) => new(error: error);
-            public static implicit operator {3}(Result.Error<{2}> error) => new(error: error.Value);
-            public static implicit operator Result<{1}, {2}>({3} m) => m.IsOk ? new(ok: m.ok) : new(error: m.error);
-            public static implicit operator {3}(Result<{1}, {2}> r) => r.IsOk ? new(ok: r.Ok) : new(error: r.Error);
+            public static implicit operator {3}(global::Perf.Monads.Result.Result.Error<{2}> error) => new(error: error.Value);
+            public static implicit operator global::Perf.Monads.Result.Result<{1}, {2}>({3} m) => m.IsOk ? new(ok: m.ok) : new(error: m.error);
+            public static implicit operator {3}(global::Perf.Monads.Result.Result<{1}, {2}> r) => r.IsOk ? new(ok: r.Ok) : new(error: r.Error);
             public static implicit operator bool({3} monad) => monad.IsOk;
 
         // Equality
-            public bool Equals({3} other) =>
-                IsOk && other.IsOk && EqualityComparer<{1}>.Default.Equals(ok, other.ok)
-             || IsOk is false && other.IsOk is false && EqualityComparer<{2}>.Default.Equals(error, other.error);
-            public bool Equals(Result<{1}, {2}> other) => other.Equals((Result<{1}, {2}>)this);
+            public bool Equals({3} other) {{
+                if (state != other.state) {{
+                    return false;
+                }}
+            
+                if (state is global::Perf.Monads.Result.ResultState.Ok) {{
+                    return EqualityComparer<{1}>.Default.Equals(ok, other.ok);
+                }}
+            
+                if (state is global::Perf.Monads.Result.ResultState.Error) {{
+                    return EqualityComparer<{2}>.Default.Equals(error, other.error);
+                }}
+            
+                throw new InvalidOperationException("Cannot compare different states");
+            }}
+            public bool Equals(global::Perf.Monads.Result.Result<{1}, {2}> other) => other.Equals((global::Perf.Monads.Result.Result<{1}, {2}>)this);
             public override bool Equals(object? obj) => obj is {3} other && Equals(other);
-            public override int GetHashCode() => IsOk ? ok.GetHashCode() : error.GetHashCode();
+            public override int GetHashCode() =>
+                state switch {{
+                    global::Perf.Monads.Result.ResultState.Ok    => ok.GetHashCode(),
+                    global::Perf.Monads.Result.ResultState.Error => error.GetHashCode(),
+                    _                                            => 0
+                }};
 
         // Map
-            public Result<TNewOk, {2}> Map<TNewOk>(Func<{1}, TNewOk> mapOk) where TNewOk : notnull => IsOk ? mapOk(ok) : error;
-            public async ValueTask<Result<TNewOk, {2}>> Map<TNewOk>(Func<{1}, ValueTask<TNewOk>> mapOk) where TNewOk : notnull => IsOk ? await mapOk(ok) : error;
+            public global::Perf.Monads.Result.Result<TNewOk, {2}> Map<TNewOk>(Func<{1}, TNewOk> mapOk) where TNewOk : notnull => IsOk ? mapOk(ok) : error;
+            public async ValueTask<global::Perf.Monads.Result.Result<TNewOk, {2}>> Map<TNewOk>(Func<{1}, global::System.Threading.Tasks.ValueTask<TNewOk>> mapOk) where TNewOk : notnull => IsOk ? await mapOk(ok) : error;
         
-            public Result<{1}, TNewError> MapError<TNewError>(Func<{2}, TNewError> mapError) where TNewError : notnull => IsOk ? ok : mapError(error);
-            public async ValueTask<Result<{1}, TNewError>> MapError<TNewError>(Func<{2}, ValueTask<TNewError>> mapError) where TNewError : notnull => IsOk ? ok : await mapError(error);
+            public global::Perf.Monads.Result.Result<{1}, TNewError> MapError<TNewError>(Func<{2}, TNewError> mapError) where TNewError : notnull => IsOk ? ok : mapError(error);
+            public async ValueTask<global::Perf.Monads.Result.Result<{1}, TNewError>> MapError<TNewError>(Func<{2}, global::System.Threading.Tasks.ValueTask<TNewError>> mapError) where TNewError : notnull => IsOk ? ok : await mapError(error);
         
-            public Result<TNewOk, TNewError> Map<TNewOk, TNewError>(
+            public global::Perf.Monads.Result.Result<TNewOk, TNewError> Map<TNewOk, TNewError>(
                 Func<{1}, TNewOk> mapOk,
                 Func<{2}, TNewError> mapError
             ) where TNewOk : notnull where TNewError : notnull => IsOk ? mapOk(ok) : mapError(error);
-            public async ValueTask<Result<TNewOk, TNewError>> Map<TNewOk, TNewError>(
+            public async ValueTask<global::Perf.Monads.Result.Result<TNewOk, TNewError>> Map<TNewOk, TNewError>(
                 Func<{1}, ValueTask<TNewOk>> mapOk,
                 Func<{2}, ValueTask<TNewError>> mapError
             ) where TNewOk : notnull where TNewError : notnull => IsOk ? await mapOk(ok) : await mapError(error);
-            
-            public Result() {
-            state = 0;
-            ok = default!;
-            error = default!;
-        }
-        
-        public Result(TOk ok) {
-            state = ResultState.Ok;
-            this.ok = ok;
-            error = default!;
-        }
-        
-        public Result(TError error) {
-            state = ResultState.Error;
-            ok = default!;
-            this.error = error;
-        }
-        
-        public Result(Result.Ok<TOk> ok) : this(ok: ok.Value) { }
-        public Result(Result.Error<TError> error) : this(error: error.Value) { }
-        private readonly ResultState state;
-        private readonly TOk ok;
-        private readonly TError error;
-        private static readonly string UninitializedException = $"Result<{typeof(TOk).Name}, {typeof(TError).Name}> is Unitialized";
-        private static readonly string ErrorAccessException = $"Cannot access Error. Result<{typeof(TOk).Name}, {typeof(TError).Name}> is Ok";
-        private static readonly string OkAccessException = $"Cannot access Ok. Result<{typeof(TOk).Name}, {typeof(TError).Name}> is Error";
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        public TOk Ok =>
-            state switch {
-                ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                ResultState.Ok            => ok,
-                ResultState.Error         => throw new InvalidOperationException(ErrorAccessException),
-                _                         => throw new ArgumentOutOfRangeException()
-            };
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        public TError Error =>
-            state switch {
-                ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                ResultState.Ok            => throw new InvalidOperationException(OkAccessException),
-                ResultState.Error         => error,
-                _                         => throw new ArgumentOutOfRangeException()
-            };
-        public bool IsOk => state is ResultState.Ok;
-        public ResultState State => state;
-        public static implicit operator Result<TOk, TError>(TOk ok) => new(ok);
-        public static implicit operator Result<TOk, TError>(Result.Ok<TOk> ok) => new(ok.Value);
-        public static implicit operator Result<TOk, TError>(TError error) => new(error);
-        public static implicit operator Result<TOk, TError>(Result.Error<TError> error) => new(error.Value);
-        
-        public bool Equals(Result<TOk, TError> other) {
-            if (state != other.state) {
-                return false;
-            }
-        
-            if (state is ResultState.Ok) {
-                return EqualityComparer<TOk>.Default.Equals(ok, other.ok);
-            }
-        
-            if (state is ResultState.Error) {
-                return EqualityComparer<TError>.Default.Equals(error, other.error);
-            }
-        
-            throw new InvalidOperationException();
-        }
-        
-        public override bool Equals(object? obj) => obj is Result<TOk, TError> other && Equals(other);
-        
-        public override int GetHashCode() =>
-            state switch {
-                ResultState.Ok    => ok.GetHashCode(),
-                ResultState.Error => error.GetHashCode(),
-                _                 => 0
-            };
-        
-        // Map
-        public Result<TNewOk, TNewError> Map<TNewOk, TNewError>(
-            Func<TOk, TNewOk> mapOk,
-            Func<TError, TNewError> mapError
-        ) where TNewOk : notnull where TNewError : notnull {
-            return IsOk ? mapOk(ok) : mapError(error);
-        }
-        
-        public async ValueTask<Result<TNewOk, TNewError>> Map<TNewOk, TNewError>(
-            Func<TOk, ValueTask<TNewOk>> mapOk,
-            Func<TError, ValueTask<TNewError>> mapError
-        ) where TNewOk : notnull where TNewError : notnull {
-            return IsOk ? await mapOk(ok) : await mapError(error);
-        }
-        
-        public Result<TNewOk, TError> Map<TNewOk>(Func<TOk, TNewOk> mapOk) where TNewOk : notnull => IsOk ? mapOk(ok) : error;
-        
-        public async ValueTask<Result<TNewOk, TError>> Map<TNewOk>(Func<TOk, ValueTask<TNewOk>> mapOk) where TNewOk : notnull =>
-            IsOk ? await mapOk(ok) : error;
-        
-        public Result<TOk, TNewError> MapError<TNewError>(Func<TError, TNewError> mapError) where TNewError : notnull => IsOk ? ok : mapError(error);
-        
-        public async ValueTask<Result<TOk, TNewError>> MapError<TNewError>(Func<TError, ValueTask<TNewError>> mapError) where TNewError : notnull =>
-            IsOk ? ok : await mapError(error);
         }}
         """;
 }

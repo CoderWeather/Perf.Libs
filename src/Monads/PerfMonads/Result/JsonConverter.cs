@@ -1,13 +1,10 @@
 namespace Perf.Monads.Result;
 
-using System.Diagnostics.CodeAnalysis;
+
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
-[JsonSerializable(typeof(Result<int, Uri>))]
-public sealed partial class TestJsonContext : JsonSerializerContext;
 
 public sealed class MonadResultJsonConverterFactory : JsonConverterFactory {
     public static readonly MonadResultJsonConverterFactory Instance = new();
@@ -21,7 +18,7 @@ public sealed class MonadResultJsonConverterFactory : JsonConverterFactory {
     private static readonly Dictionary<Type, JsonConverter> Converters = new();
 
 #if NET7_0_OR_GREATER
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)]
 #endif
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         if (Converters.TryGetValue(typeToConvert, out var converter)) {
@@ -57,7 +54,7 @@ sealed class MonadResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRes
 
     public override TResult Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         if (reader.TokenType is not JsonTokenType.StartObject) {
-            throw new JsonException($"Expected {JsonTokenType.StartObject} at {reader.Position.GetInteger()} but got '{reader.TokenType}'");
+            throw new JsonException($"Expected {JsonTokenType.StartObject} but got '{reader.TokenType}'");
         }
         reader.Read();
 
@@ -74,7 +71,7 @@ sealed class MonadResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRes
             // return value;
         }
 
-        throw new JsonException($"Expected 'ok' or 'error' at {reader.Position.GetInteger()} but got '{reader.GetString()}'");
+        throw new JsonException($"Expected 'ok' or 'error' but got '{reader.GetString()}'");
     }
 }
 
@@ -98,7 +95,7 @@ public sealed class MonadResultJsonConverter<TOk, TError> : JsonConverter<Result
 
     public override Result<TOk, TError> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         if (reader.TokenType is not JsonTokenType.StartObject) {
-            throw new JsonException($"Expected {JsonTokenType.StartObject} at {reader.Position.GetInteger()} but got '{reader.TokenType}'");
+            throw new JsonException($"Expected {JsonTokenType.StartObject} but got '{reader.TokenType}'");
         }
         reader.Read();
 
@@ -113,6 +110,6 @@ public sealed class MonadResultJsonConverter<TOk, TError> : JsonConverter<Result
             return value;
         }
 
-        throw new JsonException($"Expected 'ok' or 'error' at {reader.Position.GetInteger()} but got '{reader.GetString()}'");
+        throw new JsonException($"Expected 'ok' or 'error' but got '{reader.GetString()}'");
     }
 }

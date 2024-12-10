@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -13,14 +13,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />
-        <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />
-        <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />
-        <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />
+        <!--        <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />-->
+        <!--        <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />-->
+        <!--        <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />-->
+        <!--        <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />-->
+        <ProjectReference Include="..\..\src\Monads\PerfMonads\PerfMonads.csproj" AotCompatibility="true" />
+        <ProjectReference Include="..\..\src\Monads\PerfMonads.SourceGenerator\PerfMonads.SourceGenerator.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 
 </Project>

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1;net7.0</TargetFrameworks>
-        <LangVersion>11</LangVersion>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyName>PerfXml</AssemblyName>
@@ -11,7 +11,7 @@
 
     <PropertyGroup>
         <PackageId>PerfXml</PackageId>
-        <Version>1.1.4</Version>
+        <Version>1.1.5</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Fast and low memory consumption C# XML serialization\deserialization engine with source generators.</Description>
         <RepositoryUrl>https://github.com/CoderWeather/Perf.Libs</RepositoryUrl>

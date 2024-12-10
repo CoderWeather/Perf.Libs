@@ -46,9 +46,6 @@ internal sealed class ResultJsonConverter<TResult, TOk, TError> : JsonConverter<
 		}
 	}
 
-	// WARNING. Works only if fields count of origin Result monad and generated are same
-	// because of StructLayout(Auto). For each usage of generic struct type.
-	// Compiler will create own memory type layout in relation to size of generic fields for ok,error values
 	public override TResult Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
 		var result = JsonSerializer.Deserialize<ResultContainer<TOk, TError>>(ref reader, options);
 		if (result == default) {

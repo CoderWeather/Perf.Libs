@@ -2,18 +2,20 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>11</LangVersion>
+        <LangVersion>latest</LangVersion>
         <IsRoslynComponent>true</IsRoslynComponent>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyName>Perf.ValueObjects.Generator</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
         <IncludeBuildOutput>false</IncludeBuildOutput>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <NoWarn>NU5128</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup>
         <PackageId>PerfValueObjects.Generator</PackageId>
-        <Version>1.1.2.1</Version>
+        <Version>1.1.3</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Simple source generator for type per value unique id types</Description>
         <RepositoryUrl>https://github.com/CoderWeather/Perf.ValueObjects</RepositoryUrl>
@@ -43,7 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.2.0" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" PrivateAssets="all" />
     </ItemGroup>
 
 </Project>

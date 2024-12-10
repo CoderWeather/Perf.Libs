@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net7.0</TargetFrameworks>
-        <LangVersion>preview</LangVersion>
+        <TargetFrameworks>netstandard2.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyName>Perf.ValueObjects</AssemblyName>
@@ -11,7 +11,7 @@
 
     <PropertyGroup>
         <PackageId>PerfValueObjects</PackageId>
-        <Version>1.1.2</Version>
+        <Version>1.1.3</Version>
         <Authors>Ilya Pogodin</Authors>
         <Description>Simple source generator for type per value unique id types</Description>
         <RepositoryUrl>https://github.com/CoderWeather/Perf.ValueObjects</RepositoryUrl>

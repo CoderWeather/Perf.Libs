@@ -55,7 +55,7 @@ public sealed class ValueObjectJsonConverterFactory : JsonConverterFactory {
 sealed class ValueObjectByInterfaceConverter<TValueObject, TValueType> : JsonConverter<TValueObject>
     where TValueObject : struct, IValueObject<TValueType> {
     ValueObjectByInterfaceConverter() { }
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
 #endif
     internal static readonly Type Type = typeof(ValueObjectByInterfaceConverter<,>);

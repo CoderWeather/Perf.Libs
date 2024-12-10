@@ -10,12 +10,27 @@
         <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     </PropertyGroup>
     
-<!--    <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">-->
-<!--        <DefineConstants>$(DefineConstants);CUSTOM_TAG</DefineConstants>-->
-<!--    </PropertyGroup>-->
-    
     <ItemGroup>
-      <PackageReference Include="System.Text.Json" Version="9.0.0" />
+        <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackageId>PerfMonads</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>coderweather</Authors>
+        <Description>Struct based monad implementation for C#.</Description>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <RepositoryUrl>https://github.com/CoderWeather/Perf.Libs</RepositoryUrl>
+        <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+        <PackageTags>result functional monad csharp c# perf</PackageTags>
+    </PropertyGroup>
+
+    <!--    <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">-->
+    <!--        <DefineConstants>$(DefineConstants);CUSTOM_TAG</DefineConstants>-->
+    <!--    </PropertyGroup>-->
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="9.0.0" />
     </ItemGroup>
 
 </Project>

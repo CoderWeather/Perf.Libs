@@ -15,6 +15,22 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackageId>PerfMonads.Generator</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>coderweather</Authors>
+        <Description>Struct based monad implementation for C#.</Description>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <RepositoryUrl>https://github.com/CoderWeather/Perf.Libs</RepositoryUrl>
+        <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+        <PackageTags>result functional monad csharp c# perf sourcegen</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -21,7 +21,7 @@
 
     <PropertyGroup>
         <PackageId>PerfMonads.Generator</PackageId>
-        <Version>1.0.0</Version>
+        <Version>1.0.0.1</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based monad implementation for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -31,11 +31,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
         <PackageReference Include="PolySharp" Version="1.15.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

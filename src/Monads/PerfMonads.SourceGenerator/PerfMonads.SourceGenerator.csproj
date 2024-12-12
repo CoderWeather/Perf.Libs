@@ -21,7 +21,7 @@
 
     <PropertyGroup>
         <PackageId>PerfMonads.Generator</PackageId>
-        <Version>1.0.0.2</Version>
+        <Version>1.0.1</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based monad implementation for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -32,6 +32,9 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" PrivateAssets="all" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
     </ItemGroup>
 

@@ -16,7 +16,7 @@
 
     <PropertyGroup>
         <PackageId>PerfMonads</PackageId>
-        <Version>1.0.0.1</Version>
+        <Version>1.0.1</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based monad implementation for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -24,12 +24,8 @@
         <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
         <PackageTags>result functional monad csharp c# perf</PackageTags>
     </PropertyGroup>
-
-    <!--    <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">-->
-    <!--        <DefineConstants>$(DefineConstants);CUSTOM_TAG</DefineConstants>-->
-    <!--    </PropertyGroup>-->
-
-    <ItemGroup>
+    
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="System.Text.Json" Version="9.0.0" />
     </ItemGroup>
 

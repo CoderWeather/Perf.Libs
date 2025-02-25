@@ -1,6 +1,7 @@
 namespace Perf.Monads;
 
 public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>, IComparable {
+    public static Unit Value => default;
     public bool Equals(Unit other) => true;
     public int CompareTo(Unit other) => 0;
     public int CompareTo(object? obj) => 0;

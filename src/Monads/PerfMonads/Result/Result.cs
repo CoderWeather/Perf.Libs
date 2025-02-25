@@ -212,4 +212,7 @@ public static class GlobalMonadResultFunctions {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result.Error<T> Error<T>(T error) where T : notnull => new(error);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Result.Error<Unit> Error() => default;
 }

@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using global::MessagePack;
 using global::MessagePack.Formatters;
-using Option;
 
 public sealed class OptionHolderFormatterResolver : IFormatterResolver {
     public static readonly OptionHolderFormatterResolver Instance = new();
@@ -34,7 +33,8 @@ public sealed class OptionHolderFormatterResolver : IFormatterResolver {
 }
 
 sealed class OptionHolderFormatter<TOption, TValue> : IMessagePackFormatter<TOption>
-    where TOption : struct, IOptionHolder<TValue> {
+    where TOption : struct, IOptionHolder<TValue>
+    where TValue : notnull {
     private OptionHolderFormatter() { }
     public static readonly OptionHolderFormatter<TOption, TValue> Instance = new();
 

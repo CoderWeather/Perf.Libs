@@ -4,8 +4,14 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using global::MessagePack;
 using global::MessagePack.Formatters;
-using Result;
 
+#if NET7_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+
+#if NET7_0_OR_GREATER
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
 public sealed class ResultHolderFormatterResolver : IFormatterResolver {
     public static readonly ResultHolderFormatterResolver Instance = new();
 
@@ -34,8 +40,13 @@ public sealed class ResultHolderFormatterResolver : IFormatterResolver {
     }
 }
 
+#if NET7_0_OR_GREATER
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
 sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter<TResult>
-    where TResult : struct, IResultHolder<TOk, TError> {
+    where TResult : struct, IResultHolder<TOk, TError>
+    where TOk : notnull
+    where TError : notnull {
     private HolderResultFormatter() { }
     public static readonly HolderResultFormatter<TResult, TOk, TError> Instance = new();
 

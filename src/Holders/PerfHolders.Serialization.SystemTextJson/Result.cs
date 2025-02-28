@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Result;
 
 #if NET7_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -44,7 +43,9 @@ public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
 }
 
 sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TResult>
-    where TResult : struct, IResultHolder<TOk, TError> {
+    where TResult : struct, IResultHolder<TOk, TError>
+    where TOk : notnull
+    where TError : notnull {
     private HolderResultJsonConverter() { }
     public static readonly HolderResultJsonConverter<TResult, TOk, TError> Instance = new();
 

@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Option;
 
 #if NET7_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -42,7 +41,8 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
 }
 
 sealed class HolderOptionJsonConverter<TOption, TValue> : JsonConverter<TOption>
-    where TOption : struct, IOptionHolder<TValue> {
+    where TOption : struct, IOptionHolder<TValue>
+    where TValue : notnull {
     private HolderOptionJsonConverter() { }
     public static readonly HolderOptionJsonConverter<TOption, TValue> Instance = new();
 

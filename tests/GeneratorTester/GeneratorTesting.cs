@@ -18,8 +18,8 @@ public static class GeneratorTesting {
            .Select(x => x.GetName())
            .Concat(Assembly.GetExecutingAssembly().GetReferencedAssemblies())
            .Append(Assembly.GetExecutingAssembly().GetName())
-           .DistinctBy(x => x.FullName)
-           .Select(x => Assembly.Load(x))
+           // .DistinctBy(x => x.FullName)
+           .Select(Assembly.Load)
            .Select(a => MetadataReference.CreateFromFile(a.Location))
            .Cast<MetadataReference>()
            .ToArray();

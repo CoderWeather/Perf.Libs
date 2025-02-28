@@ -2,9 +2,10 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;net9.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -21,8 +23,10 @@
         <!--        <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />-->
         <!--        <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />-->
         <!--        <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />-->
-        <ProjectReference Include="..\..\src\Monads\PerfMonads\PerfMonads.csproj" AotCompatibility="true" />
-        <ProjectReference Include="..\..\src\Monads\PerfMonads.SourceGenerator\PerfMonads.SourceGenerator.csproj" OutputItemType="Analyzer" />
+        <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.MessagePack\PerfHolders.Serialization.MessagePack.csproj" />
+        <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.SystemTextJson\PerfHolders.Serialization.SystemTextJson.csproj" />
+        <ProjectReference Include="..\..\src\Holders\PerfHolders\PerfHolders.csproj" AotCompatibility="true" />
+        <ProjectReference Include="..\..\src\Holders\PerfHolders.SourceGenerator\PerfHolders.SourceGenerator.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 
 </Project>

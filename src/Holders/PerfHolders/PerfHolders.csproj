@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net7.0;net8.0;net9.0</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Perf.Holders</AssemblyName>
+        <RootNamespace>$(AssemblyName)</RootNamespace>
+        <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackageId>PerfHolders</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>coderweather</Authors>
+        <Description>Struct based value holders for C#.</Description>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <RepositoryUrl>https://github.com/CoderWeather/Perf.Libs</RepositoryUrl>
+        <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+        <PackageTags>result option holder valueobject csharp c# perf</PackageTags>
+    </PropertyGroup>
+
+</Project>

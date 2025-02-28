@@ -1,4 +1,4 @@
-namespace Perf.Monads.Generator;
+namespace Perf.Holders.Generator;
 
 using Microsoft.CodeAnalysis;
 

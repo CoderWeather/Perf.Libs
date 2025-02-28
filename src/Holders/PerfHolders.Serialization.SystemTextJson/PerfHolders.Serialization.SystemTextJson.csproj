@@ -5,27 +5,31 @@
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>Perf.Monads</AssemblyName>
+        <AssemblyName>Perf.Holders.Serialization.SystemTextJson</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
         <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
     </ItemGroup>
 
     <PropertyGroup>
-        <PackageId>PerfMonads</PackageId>
-        <Version>1.0.2.1</Version>
+        <PackageId>PerfHolders.Serialization.SystemTextJson</PackageId>
+        <Version>1.0.0</Version>
         <Authors>coderweather</Authors>
-        <Description>Struct based monad implementation for C#.</Description>
+        <Description>Struct based value holders for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <RepositoryUrl>https://github.com/CoderWeather/Perf.Libs</RepositoryUrl>
         <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
-        <PackageTags>result functional monad csharp c# perf</PackageTags>
+        <PackageTags>result option holder valueobject csharp c# perf</PackageTags>
     </PropertyGroup>
-    
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+
+    <ItemGroup>
+        <PackageReference Include="PerfHolders" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net7.0' or '$(TargetFramework)' == 'net8.0'">
         <PackageReference Include="System.Text.Json" Version="9.0.2" />
     </ItemGroup>
 

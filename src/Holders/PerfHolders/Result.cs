@@ -1,3 +1,5 @@
+// ReSharper disable UnusedMember.Global
+
 namespace Perf.Holders;
 
 using System.Diagnostics;
@@ -6,12 +8,12 @@ using System.Runtime.InteropServices;
 
 file sealed class ResultHolder_DebugView<TOk, TError> where TOk : notnull where TError : notnull {
     public ResultHolder_DebugView(Result<TOk, TError> result) {
-        this.State = result.State;
-        this.Value = State switch {
+        State = result.State;
+        Value = State switch {
             ResultState.Ok            => result.Ok,
             ResultState.Error         => result.Error,
             ResultState.Uninitialized => "Uninitialized",
-            _                         => "!!!State is incorrent"
+            _                         => "!!!State is incorrect"
         };
     }
 
@@ -113,11 +115,10 @@ public readonly struct Result<TOk, TError> :
             _                                                                          => throw new ArgumentOutOfRangeException(nameof(state))
         };
 
-    public bool Equals(TOk? v) => IsOk && EqualityComparer<TOk?>.Default.Equals(ok, v);
-    public bool Equals(Result.Ok<TOk> v) => IsOk && EqualityComparer<TOk>.Default.Equals(ok, v.Value);
-    public bool Equals(TError? er) => IsOk is false && EqualityComparer<TError?>.Default.Equals(error, er);
-    public bool Equals(Result.Error<TError> er) => IsOk is false && EqualityComparer<TError>.Default.Equals(error, er.Value);
-    
+    public bool Equals(TOk? v) => IsOk && EqualityComparer<TOk?>.Default.Equals(x: ok, y: v);
+    public bool Equals(Result.Ok<TOk> v) => IsOk && EqualityComparer<TOk>.Default.Equals(x: ok, y: v.Value);
+    public bool Equals(TError? er) => IsOk is false && EqualityComparer<TError?>.Default.Equals(x: error, y: er);
+    public bool Equals(Result.Error<TError> er) => IsOk is false && EqualityComparer<TError>.Default.Equals(x: error, y: er.Value);
 
     public override int GetHashCode() =>
         state switch {
@@ -140,7 +141,7 @@ public readonly struct Result<TOk, TError> :
             ResultState.Ok            => $"Ok={ok}",
             ResultState.Error         => $"Error={error}",
             ResultState.Uninitialized => "Uninitialized",
-            _                         => "!!!State is incorrent"
+            _                         => "!!! Incorrect State !!!"
         };
 
     // Map
@@ -214,10 +215,9 @@ public static class Result {
 
         public bool Equals(Ok<T> other) =>
             (state, other.state) switch {
-                (ElState.Initialized, ElState.Initialized) => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) =>
-                    throw new InvalidOperationException(UninitializedException),
-                _ => throw new ArgumentOutOfRangeException(nameof(state))
+                (ElState.Initialized, ElState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
+                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) => throw new InvalidOperationException(UninitializedException),
+                _                                                        => throw new ArgumentOutOfRangeException(nameof(state))
             };
 
         public override bool Equals(object? obj) => obj is Ok<T> other && Equals(other);
@@ -259,10 +259,9 @@ public static class Result {
 
         public bool Equals(Error<T> other) =>
             (state, other.state) switch {
-                (ElState.Initialized, ElState.Initialized) => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) =>
-                    throw new InvalidOperationException(UninitializedException),
-                _ => throw new ArgumentOutOfRangeException(nameof(state))
+                (ElState.Initialized, ElState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
+                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) => throw new InvalidOperationException(UninitializedException),
+                _                                                        => throw new ArgumentOutOfRangeException(nameof(state))
             };
 
         public override bool Equals(object? obj) => obj is Error<T> other && Equals(other);

@@ -12,12 +12,14 @@ readonly record struct BasicHolderContextInfo(
         if (PatternValues == null! || other.PatternValues == null!) {
             return false;
         }
+
         if (other.PatternValues.Count != PatternValues.Count) {
             return false;
         }
+
         if (MinimalNameWithGenericMetadata == null!
-         || other.MinimalNameWithGenericMetadata == null!
-         || MinimalNameWithGenericMetadata.Equals(other.MinimalNameWithGenericMetadata) is false) {
+            || other.MinimalNameWithGenericMetadata == null!
+            || MinimalNameWithGenericMetadata.Equals(other.MinimalNameWithGenericMetadata) is false) {
             return false;
         }
 
@@ -37,12 +39,14 @@ readonly record struct BasicHolderContextInfo(
         if (MinimalNameWithGenericMetadata == null!) {
             return 0;
         }
+
         HashCode hc = default;
         hc.Add(MinimalNameWithGenericMetadata);
         foreach (var p in PatternValues) {
             hc.Add(p.Key);
             hc.Add(p.Value);
         }
+
         return hc.ToHashCode();
     }
 }

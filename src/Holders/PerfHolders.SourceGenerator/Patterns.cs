@@ -14,10 +14,10 @@ static class Patterns {
                     {ResultStateQualified}.Ok            => result.Ok,
                     {ResultStateQualified}.Error         => result.Error,
                     {ResultStateQualified}.Uninitialized => "Uninitialized",
-                    _ => "!!!State is incorrent"
+                    _ => "!!! Incorrect State !!!"
                 };
             }
-        
+
             public {ResultStateQualified} State { get; }
             public object? Value { get; }
         }
@@ -47,11 +47,11 @@ static class Patterns {
             }
             public {ResultName}(global::Perf.Holders.Result.Ok<{OkQualified}> ok) : this(ok: ok.Value) { }
             public {ResultName}(global::Perf.Holders.Result.Error<{ErrorQualified}> error) : this(error: error.Value) { }
-        
+
             private readonly {ResultStateQualified} state;
             private readonly {OkQualified} ok;
             private readonly {ErrorQualified} error;
-        
+
             private static readonly string UninitializedException = $"{ResultTypeofString} is Unitialized";
             private static readonly string ErrorAccessException =   $"Cannot access Error. {ResultTypeofString} is Ok";
             private static readonly string OkAccessException =      $"Cannot access Ok. {ResultTypeofString} is Error";
@@ -106,7 +106,7 @@ static class Patterns {
             }
 
         // Equality
-            public override bool Equals(object? obj) => 
+            public override bool Equals(object? obj) =>
                 (obj is {ResultShort} other && Equals(other)) 
                     || (obj is global::Perf.Holders.Result<{OkQualified}, {ErrorQualified}> result && Equals(result));
             public bool Equals(global::Perf.Holders.Result<{OkQualified}, {ErrorQualified}> other) => other.Equals((global::Perf.Holders.Result<{OkQualified}, {ErrorQualified}>)this);
@@ -149,7 +149,7 @@ static class Patterns {
                     {ResultStateQualified}.Ok            => $"Ok={ok}",
                     {ResultStateQualified}.Error         => $"Error={error}",
                     {ResultStateQualified}.Uninitialized => "Uninitialized",
-                    _ => "!!!State is incorrent" 
+                    _ => "!!! Incorrect State !!!" 
                 };
 
         // Map
@@ -159,14 +159,14 @@ static class Patterns {
             public async ValueTask<global::Perf.Holders.Result<TNewOk, {ErrorQualified}>> Map<TNewOk>(Func<{OkQualified}, global::System.Threading.Tasks.ValueTask<TNewOk>> mapOk)
                 where TNewOk : notnull
                 => IsOk ? await mapOk(ok) : error;
-        
+
             public global::Perf.Holders.Result<{OkQualified}, TNewError> MapError<TNewError>(Func<{ErrorQualified}, TNewError> mapError)
                 where TNewError : notnull
                 => IsOk ? ok : mapError(error);
             public async ValueTask<global::Perf.Holders.Result<{OkQualified}, TNewError>> MapError<TNewError>(Func<{ErrorQualified}, global::System.Threading.Tasks.ValueTask<TNewError>> mapError)
                 where TNewError : notnull
                 => IsOk ? ok : await mapError(error);
-        
+
             public global::Perf.Holders.Result<TNewOk, TNewError> Map<TNewOk, TNewError>(
                 Func<{OkQualified}, TNewOk> mapOk,
                 Func<{ErrorQualified}, TNewError> mapError
@@ -192,10 +192,10 @@ static class Patterns {
                 this.Value = State switch {
                     {OptionStateQualified}.Some => opt.Some,
                     {OptionStateQualified}.None => "None",
-                    _ => "!!!State is incorrent"
+                    _ => "!!! Incorrect State !!!"
                 };
             }
-        
+
             public {OptionStateQualified} State { get; }
             public object? Value { get; }
         }
@@ -240,7 +240,7 @@ static class Patterns {
 
             public {OptionStateQualified} State => state;
         // Operators
-            public static implicit operator {OptionShort}({SomeQualified> some) => new(some);
+            public static implicit operator {OptionShort}({SomeQualified} some) => new(some);
             public static implicit operator {OptionShort}(global::Perf.Holders.Option.Some<{SomeQualified}> some) => new(some.Value);
             public static implicit operator {OptionShort}(global::Perf.Holders.Option.None _) => default;
             public static implicit operator bool({OptionShort} option) => option.IsSome;
@@ -256,7 +256,7 @@ static class Patterns {
             public static bool operator !=({OptionShort} left, global::Perf.Holders.Option.Some<{SomeQualified}> right) => left.Equals(right) is false;
 
         // Equality
-            public override bool Equals(object? obj) => 
+            public override bool Equals(object? obj) =>
                 (obj is {OptionShort} other && Equals(other)) 
                     || (obj is global::Perf.Holders.Option<{SomeQualified}> o && Equals(o));
             public bool Equals({OptionShort} other) =>
@@ -286,7 +286,7 @@ static class Patterns {
                 state switch {
                     {OptionStateQualified}.Some => $"Some={some}",
                     {OptionStateQualified}.None => "None",
-                    _ => "!!!State is incorrent" 
+                    _ => "!!! Incorrect State !!!" 
                 };
 
         // Map

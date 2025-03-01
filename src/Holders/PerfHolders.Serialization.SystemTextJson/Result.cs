@@ -15,13 +15,12 @@ using System.Diagnostics.CodeAnalysis;
 public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
     public static readonly ResultHolderJsonConverterFactory Instance = new();
 
-    public override bool CanConvert(Type typeToConvert) {
-        return typeToConvert.IsGenericTypeDefinition is false
-         && typeToConvert.IsValueType
-         && typeToConvert.GetInterface("IResultHolder`2") is not null;
-    }
+    public override bool CanConvert(Type typeToConvert) =>
+        typeToConvert.IsGenericTypeDefinition is false
+        && typeToConvert.IsValueType
+        && typeToConvert.GetInterface("IResultHolder`2") is not null;
 
-    private static readonly ConcurrentDictionary<Type, JsonConverter> Converters = new();
+    static readonly ConcurrentDictionary<Type, JsonConverter> Converters = new();
 
 #if NET7_0_OR_GREATER
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
@@ -46,7 +45,7 @@ sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
     where TResult : struct, IResultHolder<TOk, TError>
     where TOk : notnull
     where TError : notnull {
-    private HolderResultJsonConverter() { }
+    HolderResultJsonConverter() { }
     public static readonly HolderResultJsonConverter<TResult, TOk, TError> Instance = new();
 
     public override void Write(Utf8JsonWriter writer, TResult value, JsonSerializerOptions options) {
@@ -58,6 +57,7 @@ sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
             writer.WritePropertyName("error");
             JsonSerializer.Serialize(writer, value.Error, options);
         }
+
         writer.WriteEndObject();
     }
 
@@ -65,6 +65,7 @@ sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
         if (reader.TokenType is not JsonTokenType.StartObject) {
             throw new JsonException($"Expected '{JsonTokenType.StartObject}' but got '{reader.TokenType}'");
         }
+
         reader.Read();
 
         if (reader.ValueSpan.SequenceEqual("ok"u8)) {
@@ -72,6 +73,7 @@ sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
             reader.Read();
             return DynamicCast.Cast<TOk, TResult>(ref value);
         }
+
         if (reader.ValueSpan.SequenceEqual("error"u8)) {
             var value = JsonSerializer.Deserialize<TError>(ref reader, options)!;
             reader.Read();

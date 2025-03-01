@@ -10,10 +10,11 @@ using Microsoft.CodeAnalysis.Text;
 public sealed class OptionHolderGenerator : IIncrementalGenerator {
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var types = context.SyntaxProvider.CreateSyntaxProvider(
-            static (node, ct) => {
+            static (node, _) => {
                 if (node is not StructDeclarationSyntax {
-                    BaseList.Types.Count: > 0
-                } s) {
+                        BaseList.Types.Count: > 0,
+                        TypeParameterList: null
+                    } s) {
                     return false;
                 }
 
@@ -22,23 +23,22 @@ public sealed class OptionHolderGenerator : IIncrementalGenerator {
                 }
 
                 foreach (var bt in s.BaseList.Types) {
-                    if (bt is SimpleBaseTypeSyntax {
-                        Type: QualifiedNameSyntax {
-                            Right: GenericNameSyntax {
-                                Identifier.Text: "IOptionHolder",
+                    switch (bt) {
+                        case SimpleBaseTypeSyntax {
+                            Type: QualifiedNameSyntax {
+                                Right: GenericNameSyntax {
+                                    Identifier.Text : "IOptionHolder",
+                                    TypeArgumentList.Arguments.Count: 1
+                                }
+                            }
+                        }:
+                        case {
+                            Type: GenericNameSyntax {
+                                Identifier.Text : "IOptionHolder",
                                 TypeArgumentList.Arguments.Count: 1
                             }
-                        }
-                    }) {
-                        return true;
-                    }
-                    if (bt is {
-                        Type: GenericNameSyntax {
-                            Identifier.Text : "IOptionHolder",
-                            TypeArgumentList.Arguments.Count: 1
-                        }
-                    }) {
-                        return true;
+                        }:
+                            return true;
                     }
                 }
 
@@ -46,14 +46,14 @@ public sealed class OptionHolderGenerator : IIncrementalGenerator {
             },
             static (context, ct) => {
                 var syntax = (StructDeclarationSyntax)context.Node;
-                if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } symbol) {
+                if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } option) {
                     return default;
                 }
 
                 INamedTypeSymbol marker = null!;
-                foreach (var i in symbol.Interfaces) {
+                foreach (var i in option.Interfaces) {
                     if (i.FullPath() is Constants.OptionInterfaceFullName) {
-                        if (marker != null) {
+                        if (marker is not null) {
                             return default;
                         }
 
@@ -64,35 +64,30 @@ public sealed class OptionHolderGenerator : IIncrementalGenerator {
                 var arg = marker.TypeArguments[0];
 
                 var patternValues = new Dictionary<string, string?>(16) {
-                    ["Namespace"] = symbol.ContainingNamespace.ToDisplayString(),
-                    ["OptionName"] = symbol.Name,
-                    ["OptionShort"] = symbol.MinimalName(),
-                    ["OptionTypeofString"] = symbol.TypeArguments switch {
-                        []      => symbol.Name,
-                        [var t] => $"{symbol.Name}<{{typeof({t.MinimalName()}).Name}}>",
-                        _       => null
+                    ["Namespace"] = option.ContainingNamespace.ToDisplayString(),
+                    ["OptionName"] = option.Name,
+                    ["OptionShort"] = option.MinimalName(),
+                    ["OptionTypeofString"] = option.TypeArguments switch {
+                        [ ]       => option.Name,
+                        [ var t ] => $"{option.Name}<{{typeof({t.MinimalName()}).Name}}>",
+                        _         => null
                     },
-                    ["TypeArguments"] = symbol.TypeArguments switch {
-                        [ITypeParameterSymbol t1] => $"<{t1.Name}>",
-                        [{ } t1]                  => $"<{t1.MinimalName()}>",
-                        _                         => null
+                    ["TypeArguments"] = option.TypeArguments switch {
+                        [ { } t1 ] => $"<{t1.MinimalName()}>",
+                        _          => null
                     },
-                    ["OpenTypeArguments"] = symbol.TypeArguments.Length switch {
-                        1 => "<>",
-                        _ => null
-                    },
+                    ["OpenTypeArguments"] = null, // TODO remove. Option cannot be generic
+                    ["SomeQualified"] = arg.GlobalName(),
                     ["SomeQualifiedForEquals"] = arg switch {
-                        ITypeParameterSymbol t    => t.Name,
-                        { IsReferenceType: true } => $"{arg.GlobalName()}?",
+                        { IsReferenceType: true } => $"{arg.GlobalName()}?", // TODO check c# nullable support
                         _                         => arg.GlobalName()
                     },
-                    ["SomeQualified"] = arg is ITypeParameterSymbol ? arg.Name : arg.GlobalName(),
                     ["OptionStateQualified"] = "global::Perf.Holders.OptionState",
                     ["SharedOptionQualified"] = "global::Perf.Holders.Option"
                 };
 
                 return new BasicHolderContextInfo(
-                    MinimalNameWithGenericMetadata: MinimalNameWithGenericMetadata(symbol),
+                    MinimalNameWithGenericMetadata: MinimalNameWithGenericMetadata(option),
                     PatternValues: patternValues
                 );
             }
@@ -100,8 +95,7 @@ public sealed class OptionHolderGenerator : IIncrementalGenerator {
         var filtered = types.Where(static x => x != default);
 
         var compInfo = context.CompilationProvider
-           .Select(
-                static (c, _) => {
+            .Select(static (c, _) => {
                     LanguageVersion? langVersion = c is CSharpCompilation comp ? comp.LanguageVersion : null;
                     return new CompInfo(langVersion);
                 }

@@ -14,10 +14,6 @@
         <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
-    </ItemGroup>
-
     <PropertyGroup>
         <PackageId>PerfHolders</PackageId>
         <Version>1.1.0</Version>
@@ -28,5 +24,10 @@
         <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
         <PackageTags>result option holder valueobject csharp c# perf</PackageTags>
     </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
+        <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
+    </ItemGroup>
 
 </Project>

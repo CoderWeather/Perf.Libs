@@ -17,8 +17,8 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
 
     public override bool CanConvert(Type typeToConvert) =>
         typeToConvert.IsGenericTypeDefinition is false
-     && typeToConvert.IsValueType
-     && typeToConvert.GetInterface("IOptionHolder`1") is not null;
+        && typeToConvert.IsValueType
+        && typeToConvert.GetInterface("IOptionHolder`1") is not null;
 
     static readonly ConcurrentDictionary<Type, JsonConverter> Converters = new();
 
@@ -43,7 +43,7 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
 sealed class HolderOptionJsonConverter<TOption, TValue> : JsonConverter<TOption>
     where TOption : struct, IOptionHolder<TValue>
     where TValue : notnull {
-    private HolderOptionJsonConverter() { }
+    HolderOptionJsonConverter() { }
     public static readonly HolderOptionJsonConverter<TOption, TValue> Instance = new();
 
     public override void Write(Utf8JsonWriter writer, TOption value, JsonSerializerOptions options) {

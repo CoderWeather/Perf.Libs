@@ -7,6 +7,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>Perf.Holders.Generator</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
+        <NoWarn>RS2000,RS2008</NoWarn>
 
         <IsRoslynComponent>true</IsRoslynComponent>
         <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -17,6 +18,8 @@
     <ItemGroup>
         <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="Properties/*.json" Pack="false" />
+        <None Update="Properties\launchSettings.json" Pack="false" />
     </ItemGroup>
 
     <PropertyGroup>

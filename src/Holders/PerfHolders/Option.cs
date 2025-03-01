@@ -1,3 +1,5 @@
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedParameter.Global
 
 namespace Perf.Holders;
@@ -7,11 +9,11 @@ using System.Runtime.InteropServices;
 
 file sealed class OptionHolder_DebugView<T> where T : notnull {
     public OptionHolder_DebugView(Option<T> option) {
-        this.State = option.State;
-        this.Value = State switch {
+        State = option.State;
+        Value = State switch {
             OptionState.Some => option.Some,
             OptionState.None => "None",
-            _                => "!!!State is incorrent"
+            _                => "!!! Incorrect State !!!"
         };
     }
 
@@ -107,13 +109,12 @@ public readonly struct Option<T> :
         state switch {
             OptionState.Some => $"Some={some}",
             OptionState.None => "None",
-            _                => "!!!State is incorrent"
+            _                => "!!! Incorrect State !!!"
         };
 
     public Option<TNew> Map<TNew>(Func<T, TNew> map) where TNew : notnull => IsSome ? map(some) : default(Option<TNew>);
 
-    public async ValueTask<Option<TNew>> Map<TNew>(Func<T, ValueTask<TNew>> map) where TNew : notnull =>
-        IsSome ? await map(some) : default(Option<TNew>);
+    public async ValueTask<Option<TNew>> Map<TNew>(Func<T, ValueTask<TNew>> map) where TNew : notnull => IsSome ? await map(some) : default(Option<TNew>);
 }
 
 public static class Option {

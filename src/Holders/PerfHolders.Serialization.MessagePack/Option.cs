@@ -12,9 +12,7 @@ public sealed class OptionHolderFormatterResolver : IFormatterResolver {
 
     public IMessagePackFormatter<T>? GetFormatter<T>() {
         var t = typeof(T);
-        if (t.IsGenericTypeDefinition
-         || t.IsValueType is false
-         || t.GetInterface("IOptionHolder`1") is null) {
+        if (t.IsGenericTypeDefinition || t.IsValueType is false || t.GetInterface("IOptionHolder`1") is not { } i) {
             return null;
         }
 
@@ -22,7 +20,6 @@ public sealed class OptionHolderFormatterResolver : IFormatterResolver {
             return (IMessagePackFormatter<T>)formatter;
         }
 
-        var i = t.GetInterface("IOptionHolder`1")!;
         var arg1 = i.GenericTypeArguments[0];
 
         var t2 = typeof(OptionHolderFormatter<,>).MakeGenericType(t, arg1);
@@ -35,7 +32,7 @@ public sealed class OptionHolderFormatterResolver : IFormatterResolver {
 sealed class OptionHolderFormatter<TOption, TValue> : IMessagePackFormatter<TOption>
     where TOption : struct, IOptionHolder<TValue>
     where TValue : notnull {
-    private OptionHolderFormatter() { }
+    OptionHolderFormatter() { }
     public static readonly OptionHolderFormatter<TOption, TValue> Instance = new();
 
     public void Serialize(ref MessagePackWriter writer, TOption value, MessagePackSerializerOptions options) {

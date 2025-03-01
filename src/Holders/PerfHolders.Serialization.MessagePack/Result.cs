@@ -19,9 +19,7 @@ public sealed class ResultHolderFormatterResolver : IFormatterResolver {
 
     public IMessagePackFormatter<T>? GetFormatter<T>() {
         var t = typeof(T);
-        if (t.IsGenericTypeDefinition
-         || t.IsValueType is false
-         || t.GetInterface("IResultHolder`2") is null) {
+        if (t.IsGenericTypeDefinition || t.IsValueType is false || t.GetInterface("IResultHolder`2") is not { } i) {
             return null;
         }
 
@@ -29,7 +27,6 @@ public sealed class ResultHolderFormatterResolver : IFormatterResolver {
             return (IMessagePackFormatter<T>)formatter;
         }
 
-        var i = t.GetInterface("IResultHolder`2")!;
         var arg1 = i.GenericTypeArguments[0];
         var arg2 = i.GenericTypeArguments[1];
 
@@ -47,7 +44,7 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
     where TResult : struct, IResultHolder<TOk, TError>
     where TOk : notnull
     where TError : notnull {
-    private HolderResultFormatter() { }
+    HolderResultFormatter() { }
     public static readonly HolderResultFormatter<TResult, TOk, TError> Instance = new();
 
     public void Serialize(ref MessagePackWriter writer, TResult value, MessagePackSerializerOptions options) {
@@ -74,15 +71,17 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
         }
 
         var key = reader.ReadByte();
-        if (key is 1) {
-            var value = MessagePackSerializer.Deserialize<TOk>(ref reader, options);
-            return DynamicCast.Cast<TOk, TResult>(ref value);
+        switch (key) {
+            case 1: {
+                var value = MessagePackSerializer.Deserialize<TOk>(ref reader, options);
+                return DynamicCast.Cast<TOk, TResult>(ref value);
+            }
+            case 2: {
+                var value = MessagePackSerializer.Deserialize<TError>(ref reader, options);
+                return DynamicCast.Cast<TError, TResult>(ref value);
+            }
+            default:
+                throw new MessagePackSerializationException($"Expected key 1 or 2 but got '{key}'");
         }
-        if (key is 2) {
-            var value = MessagePackSerializer.Deserialize<TError>(ref reader, options);
-            return DynamicCast.Cast<TError, TResult>(ref value);
-        }
-
-        throw new MessagePackSerializationException($"Expected key 1 or 2 but got '{key}'");
     }
 }

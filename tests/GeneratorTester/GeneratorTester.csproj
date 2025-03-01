@@ -16,11 +16,12 @@
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+        <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
-        <!--        <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />-->
-        <!--        <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />-->
+        <ProjectReference Include="..\..\src\ValueObjects\ValueObjects\ValueObjects.csproj" />
+        <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />
         <!--        <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />-->
         <!--        <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />-->
         <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.MessagePack\PerfHolders.Serialization.MessagePack.csproj" />

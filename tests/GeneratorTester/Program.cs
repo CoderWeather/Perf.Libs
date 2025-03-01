@@ -1,13 +1,15 @@
-﻿using System.Runtime.CompilerServices;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using GeneratorTester;
-using Perf.Holders;
-using static Perf.Holders.GlobalHolderResultFunctions;
+﻿
 
 // GeneratorTesting.Test<ResultHolderGenerator>("/Users/coderweather/src/own_projects/Perf.Libs/tests/GeneratorTester/_Test_HoldersGenerator.cs");
 
-// Nullable<int>
-// HashCode
+var s = "Name";
+var p = "dfgdfgdggfd{NameQualified}".AsSpan();
+
+var entry = p.IndexOf('{');
+var t = p[(entry + 1)..];
+if (t.StartsWith(s.AsSpan())) {
+    _ = t;
+}
+
 Console.WriteLine("END");
 

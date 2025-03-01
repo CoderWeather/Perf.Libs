@@ -2,128 +2,128 @@
 
 [Generator]
 internal sealed class ValueConvertersGenerator : IIncrementalGenerator {
-	public void Initialize(IncrementalGeneratorInitializationContext context) {
-		var convertersToRegister = context.SyntaxProvider.CreateSyntaxProvider(
-				static (node, ct) => {
-					if (node is ClassDeclarationSyntax { BaseList.Types.Count: > 0 } cls && cls.Identifier.Text.EndsWith("Converter")) {
-						if (cls.Modifiers.Any(SyntaxKind.AbstractKeyword)) {
-							return false;
-						}
+    public void Initialize(IncrementalGeneratorInitializationContext context) {
+        var convertersToRegister = context.SyntaxProvider.CreateSyntaxProvider(
+                static (node, _) => {
+                    if (node is ClassDeclarationSyntax { BaseList.Types.Count: > 0 } cls && cls.Identifier.Text.EndsWith("Converter")) {
+                        if (cls.Modifiers.Any(SyntaxKind.AbstractKeyword)) {
+                            return false;
+                        }
 
-						foreach (var bt in cls.BaseList.Types) {
-							if (bt.Type is GenericNameSyntax gs && gs.Identifier.Text.EndsWith("ValueConverter")) {
-								return true;
-							}
-						}
-					}
+                        foreach (var bt in cls.BaseList.Types) {
+                            if (bt.Type is GenericNameSyntax gs && gs.Identifier.Text.EndsWith("ValueConverter")) {
+                                return true;
+                            }
+                        }
+                    }
 
-					return false;
-				},
-				static (context, ct) => {
-					var syntax = (ClassDeclarationSyntax)context.Node;
-					if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { BaseType: not null } symbol) {
-						return default;
-					}
+                    return false;
+                },
+                static (context, ct) => {
+                    var syntax = (ClassDeclarationSyntax)context.Node;
+                    if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { BaseType: not null } symbol) {
+                        return default;
+                    }
 
-					var bt = symbol.BaseType!;
+                    var bt = symbol.BaseType!;
 
-					switch (bt.FullPath()) {
-						case "Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter":
-							var from = bt.TypeArguments[0];
-							var to = bt.TypeArguments[1];
-							return new(symbol, from, to);
-						case "ExpressMobile.Services.Shared.Infrastructure.EF.ValueObjectValueConverter":
-							var vo = bt.TypeArguments[0];
-							var key = bt.TypeArguments[1];
-							return new(symbol, vo, key);
-						case "ExpressMobile.Services.Shared.Infrastructure.EF.JsonValueConverter":
-							var jsonFrom = bt.TypeArguments[0];
-							var strType = bt.BaseType!.TypeArguments[1];
-							return new(symbol, jsonFrom, strType);
-						case "ExpressMobile.Services.Shared.Infrastructure.EF.MessagePackValueConverter":
-							var msgPackFrom = bt.TypeArguments[0];
-							var btArrayType = bt.BaseType!.TypeArguments[1];
-							return new(symbol, msgPackFrom, btArrayType);
-					}
+                    switch (bt.FullPath()) {
+                    case "Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter":
+                        var from = bt.TypeArguments[0];
+                        var to = bt.TypeArguments[1];
+                        return new(symbol, from, to);
+                    case "ExpressMobile.Services.Shared.Infrastructure.EF.ValueObjectValueConverter":
+                        var vo = bt.TypeArguments[0];
+                        var key = bt.TypeArguments[1];
+                        return new(symbol, vo, key);
+                    case "ExpressMobile.Services.Shared.Infrastructure.EF.JsonValueConverter":
+                        var jsonFrom = bt.TypeArguments[0];
+                        var strType = bt.BaseType!.TypeArguments[1];
+                        return new(symbol, jsonFrom, strType);
+                    case "ExpressMobile.Services.Shared.Infrastructure.EF.MessagePackValueConverter":
+                        var msgPackFrom = bt.TypeArguments[0];
+                        var btArrayType = bt.BaseType!.TypeArguments[1];
+                        return new(symbol, msgPackFrom, btArrayType);
+                    }
 
-					return default(Converter);
-				}
-			)
-		   .Where(x => x != default);
+                    return default(Converter);
+                }
+            )
+           .Where(x => x != default);
 
-		context.RegisterSourceOutput(
-			context.CompilationProvider.Combine(convertersToRegister.Collect()),
-			static (context, tuple) => {
-				var (compilation, converters) = tuple;
-				if (converters.IsDefaultOrEmpty) {
-					return;
-				}
+        context.RegisterSourceOutput(
+            context.CompilationProvider.Combine(convertersToRegister.Collect()),
+            static (context, tuple) => {
+                var (compilation, converters) = tuple;
+                if (converters.IsDefaultOrEmpty) {
+                    return;
+                }
 
-				var rootNamespace = compilation.Assembly.Name;
+                var rootNamespace = compilation.Assembly.Name;
 
-				var sourceCode = ProcessTypes(rootNamespace, converters);
-				context.CancellationToken.ThrowIfCancellationRequested();
-				context.AddSource($"{rootNamespace}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
-			}
-		);
-	}
+                var sourceCode = ProcessTypes(rootNamespace, converters);
+                context.CancellationToken.ThrowIfCancellationRequested();
+                context.AddSource($"{rootNamespace}.g.cs", SourceText.From(sourceCode, Encoding.UTF8));
+            }
+        );
+    }
 
-	private record struct Converter(INamedTypeSymbol Type, ITypeSymbol From, ITypeSymbol To);
+    private record struct Converter(INamedTypeSymbol Type, ITypeSymbol From, ITypeSymbol To);
 
-	private const string NpgsqlArrayConverterAttributeFullName =
-		"ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.NpgsqlArrayConverter";
+    private const string NpgsqlArrayConverterAttributeFullName =
+        "ExpressMobile.Services.Shared.Infrastructure.EF.SourceGeneration.NpgsqlArrayConverter";
 
-	private static string ProcessTypes(string containingNamespace, ImmutableArray<Converter> converters) {
-		using var writer = new IndentedTextWriter(new StringWriter(), "	");
+    private static string ProcessTypes(string containingNamespace, ImmutableArray<Converter> converters) {
+        using var writer = new IndentedTextWriter(new StringWriter(), "	");
 
-		writer.WriteLines(
-			"// <auto-generated />",
-			"using System.Text.Json;",
-			"using System.Linq.Expressions;",
-			"using Microsoft.EntityFrameworkCore;",
-			"using Microsoft.EntityFrameworkCore.Storage.ValueConversion;",
-			"using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;",
-			"using ExpressMobile.Services.Shared.Utilities;"
-		);
+        writer.WriteLines(
+            "// <auto-generated />",
+            "using System.Text.Json;",
+            "using System.Linq.Expressions;",
+            "using Microsoft.EntityFrameworkCore;",
+            "using Microsoft.EntityFrameworkCore.Storage.ValueConversion;",
+            "using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.ValueConversion;",
+            "using ExpressMobile.Services.Shared.Utilities;"
+        );
 
-		writer.WriteLines(null, $"namespace {containingNamespace};", null);
+        writer.WriteLines(null, $"namespace {containingNamespace};", null);
 
-		writer.WriteLine("internal static class __GeneratedConvertersRegistration");
-		using (NestedScope.Start(writer)) {
-			writer.WriteLine(
-				"public static ModelConfigurationBuilder RegisterGeneratedValueConverters(this ModelConfigurationBuilder builder)"
-			);
-			using (NestedScope.Start(writer)) {
-				foreach (var t in converters) {
-					writer.WriteLine(
-						$"builder.Properties<{t.From.GlobalName()}>(mb => mb.HaveConversion<{t.Type.GlobalName()}>());"
-					);
-					if (t.Type.HasAttribute(NpgsqlArrayConverterAttributeFullName)) {
-						writer.WriteLine(
-							$"builder.Properties<{t.From.GlobalName()}[]>(mb => mb.HaveConversion<Array_{t.Type.Name}>());"
-						);
-					}
-				}
+        writer.WriteLine("internal static class __GeneratedConvertersRegistration");
+        using (NestedScope.Start(writer)) {
+            writer.WriteLine(
+                "public static ModelConfigurationBuilder RegisterGeneratedValueConverters(this ModelConfigurationBuilder builder)"
+            );
+            using (NestedScope.Start(writer)) {
+                foreach (var t in converters) {
+                    writer.WriteLine(
+                        $"builder.Properties<{t.From.GlobalName()}>(mb => mb.HaveConversion<{t.Type.GlobalName()}>());"
+                    );
+                    if (t.Type.HasAttribute(NpgsqlArrayConverterAttributeFullName)) {
+                        writer.WriteLine(
+                            $"builder.Properties<{t.From.GlobalName()}[]>(mb => mb.HaveConversion<Array_{t.Type.Name}>());"
+                        );
+                    }
+                }
 
-				writer.WriteLine("return builder;");
-			}
-		}
+                writer.WriteLine("return builder;");
+            }
+        }
 
-		writer.WriteLine();
-		foreach (var c in converters) {
-			if (c.Type.HasAttribute(NpgsqlArrayConverterAttributeFullName)) {
-				writer.WriteLine(
-					$"{c.Type.Accessibility()} sealed class Array_{c.Type.Name} : NpgsqlArrayConverter<{c.From.GlobalName()}[], {c.To.GlobalName()}[]>"
-				);
-				using (NestedScope.Start(writer)) {
-					writer.WriteLines(
-						$"public Array_{c.Type.Name}() : base(new {c.Type.GlobalName()}()) {{ }}"
-					);
-				}
-			}
-		}
+        writer.WriteLine();
+        foreach (var c in converters) {
+            if (c.Type.HasAttribute(NpgsqlArrayConverterAttributeFullName)) {
+                writer.WriteLine(
+                    $"{c.Type.Accessibility()} sealed class Array_{c.Type.Name} : NpgsqlArrayConverter<{c.From.GlobalName()}[], {c.To.GlobalName()}[]>"
+                );
+                using (NestedScope.Start(writer)) {
+                    writer.WriteLines(
+                        $"public Array_{c.Type.Name}() : base(new {c.Type.GlobalName()}()) {{ }}"
+                    );
+                }
+            }
+        }
 
-		var resultSourceCode = writer.InnerWriter.ToString();
-		return resultSourceCode;
-	}
+        var resultSourceCode = writer.InnerWriter.ToString();
+        return resultSourceCode;
+    }
 }

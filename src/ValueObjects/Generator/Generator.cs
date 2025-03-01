@@ -1,302 +1,303 @@
-﻿namespace Perf.ValueObjects.Generator;
+// ReSharper disable NotAccessedPositionalProperty.Local
+
+namespace Perf.ValueObjects.Generator;
 
 [Generator]
-sealed partial class ValueObjectGenerator : IIncrementalGenerator {
-    const string ValueObjectAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject";
-    const string KeyAttributeMetadataName = "Perf.ValueObjects.Attributes.ValueObject+Key";
+sealed class ValueObjectGenerator : IIncrementalGenerator {
+    const string GeneralFullPath = "Perf.ValueObjects.IValueObject";
+    const string ValidatableFullPath = "Perf.ValueObjects.IValidatableValueObject";
 
-    const string ValidatableInterfaceMetadataName = "Perf.ValueObjects.IValidatableValueObject";
+    enum ValueObjectType { Undefined = 0, General = 1, Validatable = 2 }
+
+    readonly record struct ObjectInfo(
+        string FullName,
+        ValueObjectType ContractType,
+        Dictionary<string, string?> PatternValues
+    ) {
+        public bool Equals(ObjectInfo other) {
+            if (ContractType != other.ContractType) {
+                return false;
+            }
+
+            if (FullName.AsSpan().SequenceEqual(other.FullName.AsSpan()) is false) {
+                return false;
+            }
+
+            var values = PatternValues;
+            var otherValues = other.PatternValues;
+            if (values == null! || otherValues == null!) {
+                return false;
+            }
+
+            if (values.Count != otherValues.Count) {
+                return false;
+            }
+
+            foreach (var p in values) {
+                var k = p.Key;
+                var value = p.Value;
+                if (otherValues.TryGetValue(k, out var otherValue) is false || value.AsSpan().SequenceEqual(otherValue.AsSpan()) is false) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode() {
+            HashCode hc = default;
+            hc.Add(ContractType);
+            foreach (var p in PatternValues) {
+                hc.Add(p.Key);
+                hc.Add(p.Value);
+            }
+
+            return hc.ToHashCode();
+        }
+    }
+
+    readonly record struct CompInfo(LanguageVersion? Version);
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
-        var valueObjectsByInterface = context.SyntaxProvider.CreateSyntaxProvider(
-                static (node, ct) => {
-                    if (node is TypeDeclarationSyntax {
-                            BaseList.Types.Count: > 0,
-                            TypeParameterList: null,
-                            RawKind: (int)SyntaxKind.RecordStructDeclaration or (int)SyntaxKind.StructDeclaration
-                        } r
-                     && r.Modifiers.Any(SyntaxKind.PartialKeyword)
-                     && r.Modifiers.Any(SyntaxKind.ReadOnlyKeyword)) {
-                        foreach (var i in r.BaseList.Types) {
-                            if (i.Type is GenericNameSyntax {
+        var types = context.SyntaxProvider.CreateSyntaxProvider(
+            static (node, _) => {
+                if (node is not TypeDeclarationSyntax {
+                        Modifiers.Count: > 0,
+                        BaseList.Types.Count: > 0,
+                        TypeParameterList: null
+                    } tds
+                    || tds.Modifiers.Any(SyntaxKind.PartialKeyword) is false
+                    || tds.Modifiers.Any(SyntaxKind.RefKeyword)
+                ) {
+                    return false;
+                }
+
+                // for classic record keyword=record, class=class
+                // for record struct keyword=record and only in RecordDeclarationSyntax additional keyword=struct
+                if (node is not StructDeclarationSyntax and not RecordDeclarationSyntax { ClassOrStructKeyword.RawKind: (int)SyntaxKind.StructKeyword }) {
+                    return false;
+                }
+
+                foreach (var bt in tds.BaseList.Types) {
+                    switch (bt) {
+                        case SimpleBaseTypeSyntax {
+                            Type: QualifiedNameSyntax {
+                                Right: GenericNameSyntax {
+                                    Identifier.Text: "IValueObject" or "IValidatableValueObject",
+                                    TypeArgumentList.Arguments.Count: 1
+                                }
+                            }
+                        }:
+                        case {
+                            Type: GenericNameSyntax {
                                 Identifier.Text: "IValueObject" or "IValidatableValueObject",
                                 TypeArgumentList.Arguments.Count: 1
-                            }) {
-                                return true;
                             }
-                        }
+                        }:
+                            return true;
                     }
-
-                    return false;
-                },
-                static (context, ct) => {
-                    var syntax = (TypeDeclarationSyntax)context.Node;
-                    if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } symbol) {
-                        return default;
-                    }
-
-                    foreach (var i in symbol.Interfaces) {
-                        if (i.TypeParameters.Length is not 1) {
-                            continue;
-                        }
-
-                        var keyType = i.TypeArguments[0];
-
-                        switch (i.FullPath()) {
-                        case "Perf.ValueObjects.IValueObject":            return new(symbol, keyType);
-                        case "Perf.ValueObjects.IValidatableValueObject": return new(symbol, keyType, true);
-                        default:                                          continue;
-                        }
-                    }
-
-                    return default(ValueObject);
                 }
-            )
-           .Where(x => x != default);
+
+                return false;
+            },
+            static (context, ct) => {
+                var syntax = (TypeDeclarationSyntax)context.Node;
+                if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } symbol) {
+                    return null;
+                }
+
+                INamedTypeSymbol marker = null!;
+                ValueObjectType type = default;
+                foreach (var i in symbol.Interfaces) {
+                    switch (i.FullPath().AsSpan()) {
+                        case GeneralFullPath:
+                            type = ValueObjectType.General;
+                            break;
+                        case ValidatableFullPath:
+                            type = ValueObjectType.Validatable;
+                            break;
+                        default: continue;
+                    }
+
+                    if (marker is not null) {
+                        return null;
+                    }
+
+                    marker = i;
+                }
+
+                if (type == default) {
+                    return null;
+                }
+
+                var arg = marker.TypeArguments[0];
+
+                var ns = symbol.ContainingNamespace.ToDisplayString();
+                var typeName = symbol.Name;
+                var qualifiedArg = arg.GlobalName();
+                var qualifiedArgForEquals = arg switch {
+                    { IsReferenceType: true } => $"{qualifiedArg}?", // TODO check c# nullable support
+                    _                         => qualifiedArg
+                };
+                var typeKeyword = symbol switch {
+                    { IsValueType: true, IsRecord: true } => "record struct",
+                    { IsValueType: true }                 => "struct",
+                    _                                     => throw new InvalidOperationException($"Unsupported object type: {symbol.GlobalName()}")
+                };
+                var argHashCodeAccess = arg switch {
+                    { IsReferenceType: true } => "value?.GetHashCode() ?? 0",
+                    { IsValueType: true }     => "value.GetHashCode()",
+                    _                         => throw new InvalidOperationException($"Unsupported object type: {symbol.GlobalName()}")
+                };
+                var argToStringAccess = arg switch {
+                    { IsReferenceType: true } => "value?.ToString()",
+                    { IsValueType: true }     => "value.ToString()",
+                    _                         => throw new InvalidOperationException($"Unsupported object type: {symbol.GlobalName()}")
+                };
+
+                return (ObjectInfo?)new ObjectInfo(
+                    FullName: symbol.FullPath(),
+                    ContractType: type,
+                    PatternValues: new Dictionary<string, string?> {
+                        ["Namespace"] = ns,
+                        ["TypeKeyword"] = typeKeyword,
+                        ["Name"] = typeName,
+                        ["QualifiedValue"] = qualifiedArg,
+                        ["QualifiedValueForEquals"] = qualifiedArgForEquals,
+                        ["ValueHashCodeAccess"] = argHashCodeAccess,
+                        ["ValueToStringAccess"] = argToStringAccess
+                    }
+                );
+            }
+        );
+
+        var filtered = types
+            .Where(x => x != null)
+            .Select((x, _) => x!.Value);
+
+        var compInfo = context.CompilationProvider
+            .Select(static (c, _) => {
+                    LanguageVersion? langVersion = c is CSharpCompilation comp ? comp.LanguageVersion : null;
+                    return new CompInfo(langVersion);
+                }
+            );
+
+        var typesWithCompInfo = filtered.Combine(compInfo);
 
         context.RegisterSourceOutput(
-            valueObjectsByInterface.Collect(),
-            static (context, types) => {
-                if (types.IsDefaultOrEmpty) {
-                    return;
-                }
+            typesWithCompInfo,
+            static (context, source) => {
+                var (objInfo, compInfo) = source;
 
-                foreach (var t in types) {
-                    var writer = new IndentedTextWriter(new StringWriter(), "    ");
+                objInfo.PatternValues["DebugViewVisibility"] = compInfo.Version is >= LanguageVersion.CSharp11
+                    ? "file "
+                    : "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n";
 
-                    writer.WriteLines(
-                        "// <auto-generated />",
-                        "using System.Runtime.InteropServices;",
-                        "using Perf.ValueObjects;",
-                        "using Perf.ValueObjects.Attributes;",
-                        null
-                    );
-                    writer.WriteLine($"namespace {t.Type.ContainingNamespace.ToDisplayString()};");
-                    writer.WriteLine();
-                    WriteBodyFromInterfaceDefinition(writer, t);
-
-                    var sourceCode = writer.InnerWriter.ToString()!;
-                    var source = SourceText.From(sourceCode, Encoding.UTF8);
-
-                    context.AddSource($"{t.Type.Name}.g.cs", source);
-                }
-            }
-        );
-
-        var valueObjects = context.SyntaxProvider
-           .CreateSyntaxProvider(SyntaxFilter, SyntaxTransform)
-           .Where(x => x is not null)
-           .Select((nts, ct) => nts!)
-           .Collect();
-
-        context.RegisterSourceOutput(valueObjects, CodeGeneration);
-    }
-
-    static bool SyntaxFilter(SyntaxNode node, CancellationToken ct) {
-        if (node is RecordDeclarationSyntax rec) {
-            var haveAttribute = rec.AttributeLists
-               .Any(x => x.Attributes.Any(y => y.Name.ToString() is "ValueObject"));
-            var recordStructDeclaration = rec.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword);
-            var havePartialKeyword = rec.Modifiers.Any(SyntaxKind.PartialKeyword);
-            var haveAbstractKeyword = rec.Modifiers.Any(SyntaxKind.AbstractKeyword);
-
-            return haveAttribute
-             && recordStructDeclaration
-             && havePartialKeyword
-             && haveAbstractKeyword is false;
-        }
-
-        return false;
-    }
-
-    static TypePack? SyntaxTransform(GeneratorSyntaxContext context, CancellationToken ct) {
-        var valueObjectAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName(ValueObjectAttributeMetadataName);
-        var keyAttributeType = context.SemanticModel.Compilation.GetTypeByMetadataName(KeyAttributeMetadataName)!;
-        var validatableInterfaceType = context.SemanticModel.Compilation.GetTypeByMetadataName(ValidatableInterfaceMetadataName)!;
-
-        if (valueObjectAttributeType is null) {
-            return null;
-        }
-
-        var symbol = context.Node is RecordDeclarationSyntax rec
-            ? context.SemanticModel.GetDeclaredSymbol(rec, ct)
-            : null;
-
-        if (symbol is null) {
-            return null;
-        }
-
-        TypePack pack;
-        if (symbol.TryGetAttribute(valueObjectAttributeType) is { } attributeData) {
-            pack = new(symbol) {
-                AddEqualityOperators = attributeData.NamedArguments
-                   .FirstOrDefault(x => x.Key is "AddEqualityOperators")
-                   .Value.Value is true,
-                AddExtensionMethod = attributeData.NamedArguments
-                   .FirstOrDefault(x => x.Key is "AddExtensionMethod")
-                   .Value.Value is true
-            };
-        } else {
-            return null;
-        }
-
-        var fields = symbol.GetMembers()
-           .OfType<IFieldSymbol>()
-           .Where(
-                f => f is {
-                    AssociatedSymbol: null,
-                    IsConst: false,
-                    IsStatic: false
-                }
-            )
-           .Select(
-                f => new FieldPack(f) {
-                    IsKey = f.GetAttributes()
-                       .Any(a => a.AttributeClass?.Equals(keyAttributeType, SymbolEqualityComparer.Default) ?? false)
-                }
-            )
-           .ToArray();
-        var properties = symbol.GetMembers()
-           .OfType<IPropertySymbol>()
-           .Where(
-                p => p is {
-                    IsStatic: false,
-                    IsIndexer: false
-                }
-            )
-           .Select(
-                p => new PropertyPack(p) {
-                    IsKey = p.GetAttributes()
-                       .Any(a => a.AttributeClass?.Equals(keyAttributeType, SymbolEqualityComparer.Default) ?? false)
-                }
-            )
-           .ToArray();
-
-        if (fields.Length == 0 && properties.Length == 0) {
-            return null;
-        }
-
-        pack.Members.AddRange(fields);
-        pack.Members.AddRange(properties);
-
-        if (pack.Members.Any(x => x.IsKey) is false) {
-            foreach (var m in pack.Members) {
-                m.IsKey = true;
-            }
-        }
-
-        if (pack.Symbol.Interfaces.Any(x => x.Equals(validatableInterfaceType, SymbolEqualityComparer.Default))) {
-            pack.ImplementsValidatable = true;
-        }
-
-        var typeConstructors = pack.Symbol.InstanceConstructors;
-        var possibleKeyConstructor = typeConstructors
-           .FirstOrDefault(x => x.Parameters.Length == pack.Members.Count(y => y.IsKey));
-
-        if (possibleKeyConstructor is not null) {
-            if (possibleKeyConstructor.Parameters.Length is 1
-             && pack.Members.SingleOrDefault(x => x.IsKey) is { } singleKey) {
-                pack.HaveConstructorWithKey = singleKey.Type.Name
-                 == possibleKeyConstructor.Parameters[0].Type.Name;
-            } else {
-                var typeKeyTypeNames = pack.Members
-                   .Select(x => x.Type.Name)
-                   .ToHashSet();
-                var possibleConstructorArgsTypeNames = possibleKeyConstructor.Parameters
-                   .Select(x => x.Type.Name)
-                   .ToHashSet();
-                pack.HaveConstructorWithKey = typeKeyTypeNames.SetEquals(possibleConstructorArgsTypeNames);
-            }
-        }
-
-        if (pack.HaveConstructorWithKey is false && pack.Symbol.IsRecord) {
-            return null;
-        }
-
-        return pack;
-    }
-
-    static void CodeGeneration(SourceProductionContext context, ImmutableArray<TypePack> types) {
-        if (types.IsDefaultOrEmpty) {
-            return;
-        }
-
-        var typesGroupedByNamespace = types
-           .ToLookup(x => x.Symbol.ContainingNamespace, SymbolEqualityComparer.Default);
-
-        foreach (var a in typesGroupedByNamespace) {
-            var group = a.ToArray();
-            var ns = a.Key!.ToString()!;
-            var sourceCode = ProcessTypes(ns, group);
-            if (sourceCode is null) {
-                continue;
-            }
-
-            context.AddSource($"Perf.ValueObjects.Generator_{ns}.cs", SourceText.From(sourceCode, Encoding.UTF8));
-        }
-    }
-
-    static string? ProcessTypes(string containingNamespace, TypePack[] types) {
-        var writer = new IndentedTextWriter(new StringWriter(), "    ");
-
-        writer.WriteLines(
-            "// <auto-generated />",
-            "using System.Runtime.InteropServices;",
-            "using Perf.ValueObjects;",
-            "using Perf.ValueObjects.Attributes;",
-            null
-        );
-
-        var nsToImport = types
-           .SelectMany(
-                x => x.Members
-                   .Select(y => y.OriginalType.ContainingNamespace)
-                   .Where(y => y.ToString() != containingNamespace && y.IsGlobalNamespace is false)
-                   .Select(y => y.ToString())
-            )
-           .Distinct();
-
-        foreach (var ns in nsToImport) {
-            writer.WriteLine($"using {ns};");
-        }
-
-        writer.WriteLine($"namespace {containingNamespace};");
-
-        foreach (var type in types) {
-            using (NestedClassScope.Start(writer, type.Symbol)) {
-                if (type.Members.Count(x => x.IsKey) is 1) {
-                    WriteCastSingleKeyMethods(writer, type);
-                    WriteToString(writer, type);
-                    if (type.AddEqualityOperators) {
-                        WriteEqualityOperators(writer, type);
-                    }
+                string sourceText;
+                if (objInfo.ContractType is ValueObjectType.General) {
+                    sourceText = PatternFormatter.Format(GeneralPattern, objInfo.PatternValues);
+                } else if (objInfo.ContractType is ValueObjectType.Validatable) {
+                    sourceText = PatternFormatter.Format(ValidatablePattern, objInfo.PatternValues);
                 } else {
-                    WriteCastComplexKeyMethods(writer, type);
+                    throw new InvalidOperationException("Unsupported ValueObject contract to process source generation");
                 }
 
-                if (type.HaveConstructorWithKey is false) {
-                    WriteConstructorForKeys(writer, type);
-                }
+                context.AddSource($"{objInfo.FullName}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
             }
-        }
-
-        var forExtensions = types
-           .Where(x => x.Members.Count(y => y.IsKey) is 1 && x.AddExtensionMethod)
-           .ToArray();
-
-        if (forExtensions.Any()) {
-            writer.WriteLine("public static class __ValueObjectsExtensions");
-            using (NestedScope.Start(writer)) {
-                foreach (var t in forExtensions) {
-                    var key = t.Members.Single(x => x.IsKey);
-                    writer.WriteLine(
-                        $"{t.Symbol.DeclaredAccessibility.ToString().ToLower()} static {t.Symbol.MinimalName()} To{t.Symbol.Name}(this {key.Type.MinimalName()} key) => new(key);"
-                    );
-                }
-            }
-        }
-
-        var resultSourceCode = writer.InnerWriter.ToString();
-        return resultSourceCode;
+        );
     }
+
+    const string GeneralPattern = """
+        // <auto-generated/>
+        #nullable enable
+
+        namespace {Namespace};
+
+        {DebugViewVisibility}sealed class {Name}_DebugView {
+            public {Name}_DebugView({Name} value) {
+                try {
+                    Value = value.Value;
+                } catch {
+                    Value = "!!! Incorrect State !!!";
+                }
+            }
+
+            public object? Value { get; }
+        }
+
+        [global::System.Diagnostics.DebuggerTypeProxy(typeof({Name}_DebugView))]
+        [global::System.Diagnostics.DebuggerDisplay("{DebugPrint()}")]
+        [global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Auto)]
+        readonly partial {TypeKeyword} {Name} {
+            public {Name}() {
+                init = false;
+                value = default!;
+            }
+            
+            public {Name}({QualifiedValue} value) {
+                init = true;
+                this.value = value;
+                // TODO Validation moves
+            }
+
+            readonly bool init;
+            readonly {QualifiedValue} value;
+            [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+            public {QualifiedValue} Value => init ? value : throw global::Perf.ValueObjects.ValueObjectException.Initialization<{Name}>();
+
+            public static implicit operator {QualifiedValue}({Name} vo) => vo.Value;
+            public static explicit operator {Name}({QualifiedValue} value) => new(value);
+            public override string? ToString() => init ? {ValueToStringAccess} : throw global::Perf.ValueObjects.ValueObjectException.Initialization<{Name}>();
+            public override int GetHashCode() => init ? {ValueHashCodeAccess} : throw global::Perf.ValueObjects.ValueObjectException.Initialization<{Name}>();
+
+            string DebugPrint() => init ? $"Value={value}" : "!!! Incorrect State !!!";
+        }
+        """;
+
+    const string ValidatablePattern = """
+        // <auto-generated/>
+        #nullable enable
+
+        namespace {Namespace};
+
+        {DebugViewVisibility}sealed class {Name}_DebugView {
+            public {Name}_DebugView({Name} value) {
+                try {
+                    Value = value.Value;
+                } catch {
+                    Value = "!!! Incorrect State !!!";
+                }
+            }
+
+            public object? Value { get; }
+        }
+
+        [global::System.Diagnostics.DebuggerTypeProxy(typeof({Name}_DebugView))]
+        [global::System.Diagnostics.DebuggerDisplay("{DebugPrint()}")]
+        [global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Auto)]
+        readonly partial {TypeKeyword} {Name} {
+            public {Name}() {
+                init = false;
+                value = default!;
+            }
+            
+            public {Name}({QualifiedValue} value) {
+                init = true;
+                this.value = value;
+                if (Validate(value) is false) throw global::Perf.ValueObjects.ValueObjectException.Validation<{Name}>(this);
+            }
+
+            readonly bool init;
+            readonly {QualifiedValue} value;
+            [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+            public {QualifiedValue} Value => init ? value : throw global::Perf.ValueObjects.ValueObjectException.Initialization<{Name}>();
+
+            public static implicit operator {QualifiedValue}({Name} vo) => vo.Value;
+            public static explicit operator {Name}({QualifiedValue} value) => new(value);
+            public override string? ToString() => init ? {ValueToStringAccess} : throw global::Perf.ValueObjects.ValueObjectException.Initialization<{Name}>();
+            public override int GetHashCode() => init ? {ValueHashCodeAccess} : throw global::Perf.ValueObjects.ValueObjectException.Initialization<{Name}>();
+
+            string DebugPrint() => init ? $"Value={value}" : "!!! Incorrect State !!!";
+        }
+        """;
 }

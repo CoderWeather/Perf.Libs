@@ -1,3 +1,5 @@
+// ReSharper disable UnusedTypeParameter
+
 namespace Perf.Holders;
 
 /// <summary>
@@ -6,9 +8,9 @@ namespace Perf.Holders;
 public interface IResultHolder<out TOk, out TError>
     where TOk : notnull
     where TError : notnull {
-    TOk Ok { get; }
-    TError Error { get; }
-    bool IsOk { get; }
+    // TOk Ok { get; }
+    // TError Error { get; }
+    // bool IsOk { get; }
 }
 
 public enum ResultState : byte {

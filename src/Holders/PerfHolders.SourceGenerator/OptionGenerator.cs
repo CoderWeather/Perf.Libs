@@ -1,28 +1,29 @@
 namespace Perf.Holders.Generator;
 
 using System.Text;
+using Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 [Generator]
-public sealed class OptionHolderGenerator : IIncrementalGenerator {
+sealed class OptionHolderGenerator : IIncrementalGenerator {
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var types = context.SyntaxProvider.CreateSyntaxProvider(
             static (node, _) => {
                 if (node is not StructDeclarationSyntax {
+                        Modifiers.Count: > 0,
                         BaseList.Types.Count: > 0,
                         TypeParameterList: null
-                    } s) {
+                    } sds
+                    || sds.Modifiers.Any(SyntaxKind.PartialKeyword) is false
+                    || sds.Modifiers.Any(SyntaxKind.RefKeyword)
+                ) {
                     return false;
                 }
 
-                if (s.Modifiers.Any(SyntaxKind.PartialKeyword) is false) {
-                    return false;
-                }
-
-                foreach (var bt in s.BaseList.Types) {
+                foreach (var bt in sds.BaseList.Types) {
                     switch (bt) {
                         case SimpleBaseTypeSyntax {
                             Type: QualifiedNameSyntax {
@@ -52,13 +53,20 @@ public sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 INamedTypeSymbol marker = null!;
                 foreach (var i in option.Interfaces) {
-                    if (i.FullPath() is Constants.OptionInterfaceFullName) {
-                        if (marker is not null) {
-                            return default;
-                        }
-
-                        marker = i;
+                    var iPath = i.FullPath();
+                    if (iPath is Constants.ResultMarkerFullName) {
+                        return default;
                     }
+
+                    if (iPath is not Constants.OptionMarkerFullName) {
+                        continue;
+                    }
+
+                    if (marker is not null) {
+                        return default;
+                    }
+
+                    marker = i;
                 }
 
                 var arg = marker.TypeArguments[0];
@@ -113,7 +121,7 @@ public sealed class OptionHolderGenerator : IIncrementalGenerator {
                     : "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n";
 
                 var sourceText = PatternFormatter.Format(
-                    Patterns.Option1,
+                    Patterns.Option,
                     holderInfo.PatternValues
                 );
 

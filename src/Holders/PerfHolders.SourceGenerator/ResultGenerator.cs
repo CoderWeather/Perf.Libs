@@ -1,156 +1,222 @@
 namespace Perf.Holders.Generator;
 
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using System.Text;
+using Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 [Generator]
-public sealed class ResultHolderGenerator : IIncrementalGenerator {
+sealed class ResultHolderGenerator : IIncrementalGenerator {
     public void Initialize(IncrementalGeneratorInitializationContext context) {
-        var types = context
-            .SyntaxProvider.CreateSyntaxProvider(
-                static (node, _) => {
-                    if (node is not StructDeclarationSyntax {
-                            BaseList.Types.Count: > 0
-                        } s) {
-                        return false;
-                    }
+        var types = context.SyntaxProvider.CreateSyntaxProvider(
+            static (node, _) => {
+                if (node is not StructDeclarationSyntax {
+                        Modifiers.Count: > 0,
+                        BaseList.Types.Count: > 0,
+                        TypeParameterList: null or { Parameters.Count: <= 2 }
+                    } sds
+                    || sds.Modifiers.Any(SyntaxKind.PartialKeyword) is false
+                    || sds.Modifiers.Any(SyntaxKind.RefKeyword)
+                ) {
+                    return false;
+                }
 
-                    if (s.Modifiers.Any(SyntaxKind.PartialKeyword) is false) {
-                        return false;
-                    }
-
-                    foreach (var bt in s.BaseList.Types) {
-                        switch (bt) {
-                            case SimpleBaseTypeSyntax {
-                                Type: QualifiedNameSyntax {
-                                    Right: GenericNameSyntax {
-                                        Identifier.Text : "IResultHolder",
-                                        TypeArgumentList.Arguments.Count: 2
-                                    }
-                                }
-                            }:
-                            case SimpleBaseTypeSyntax {
-                                Type: GenericNameSyntax {
-                                    Identifier.Text : "IResultHolder",
+                foreach (var bt in sds.BaseList.Types) {
+                    switch (bt) {
+                        case SimpleBaseTypeSyntax {
+                            Type: QualifiedNameSyntax {
+                                Right: GenericNameSyntax {
+                                    Identifier.Text: "IResultHolder",
                                     TypeArgumentList.Arguments.Count: 2
                                 }
-                            }:
-                                return true;
-                        }
+                            }
+                        }:
+                        case SimpleBaseTypeSyntax {
+                            Type: GenericNameSyntax {
+                                Identifier.Text: "IResultHolder",
+                                TypeArgumentList.Arguments.Count: 2
+                            }
+                        }:
+                            return true;
+                        default:
+                            continue;
                     }
+                }
 
-                    return false;
-                },
-                static (context, ct) => {
-                    var syntax = (StructDeclarationSyntax)context.Node;
-                    if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } result) {
+                return false;
+            },
+            static (context, ct) => {
+                var syntax = (StructDeclarationSyntax)context.Node;
+                if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } result) {
+                    return default;
+                }
+
+                INamedTypeSymbol marker = null!;
+                foreach (var i in result.Interfaces) {
+                    var iPath = i.FullPath();
+                    if (iPath is Constants.OptionMarkerFullName) {
                         return default;
                     }
 
-                    INamedTypeSymbol marker = null!;
-                    foreach (var i in result.Interfaces) {
-                        if (i.FullPath() is not Constants.ResultInterfaceFullName) {
-                            continue;
-                        }
-
-                        if (marker != null) {
-                            return default;
-                        }
-
-                        marker = i;
+                    if (iPath is not Constants.ResultMarkerFullName) {
+                        continue;
                     }
 
-                    var arg1 = marker.TypeArguments[0];
-                    var arg2 = marker.TypeArguments[1];
+                    if (marker != null) {
+                        return default;
+                    }
 
-                    var patternValues = new Dictionary<string, string?> {
-                        ["Namespace"] = result.ContainingNamespace.ToDisplayString(),
-                        ["ResultName"] = result.Name,
-                        ["ResultShort"] = result.MinimalName(),
-                        ["ResultTypeofString"] = result.TypeArguments switch {
-                            [ ]                => result.Name,
-                            [ var t1 ]         => $"{result.Name}<{{typeof({t1.MinimalName()}).Name}}>",
-                            [ var t1, var t2 ] => $"{result.Name}<{{typeof({t1.MinimalName()}).Name}}, {{typeof({t2.MinimalName()}).Name}}>",
-                            _                  => result.MinimalName()
-                        },
-                        ["TypeArguments"] = result.TypeArguments switch {
-                            [ ITypeParameterSymbol t1 ]                          => $"<{t1.Name}>",
-                            [ var t1 ]                                           => $"<{t1.MinimalName()}>",
-                            [ ITypeParameterSymbol t1, ITypeParameterSymbol t2 ] => $"<{t1.Name}, {t2.Name}>",
-                            [ ITypeParameterSymbol t1, var t2 ]                  => $"<{t1.Name}, {t2.MinimalName()}>",
-                            [ var t1, ITypeParameterSymbol t2 ]                  => $"<{t1.MinimalName()}, {t2.Name}>",
-                            [ var t1, var t2 ]                                   => $"<{t1.MinimalName()}, {t2.MinimalName()}>",
-                            _                                                    => null
-                        },
-                        ["OpenTypeArguments"] = result.TypeArguments switch {
-                            [ _ ]    => "<>",
-                            [ _, _ ] => "<,>",
-                            _        => null
-                        },
-                        ["OkQualified"] = arg1 is ITypeParameterSymbol ? arg1.Name : arg1.GlobalName(),
-                        ["OkQualifiedForEquals"] = arg1 switch {
-                            ITypeParameterSymbol      => arg1.Name,
-                            { IsReferenceType: true } => $"{arg1.GlobalName()}?",
-                            _                         => arg1.GlobalName()
-                        },
-                        ["ErrorQualified"] = arg2 is ITypeParameterSymbol ? arg2.Name : arg2.GlobalName(),
-                        ["ErrorQualifiedForEquals"] = arg2 switch {
-                            ITypeParameterSymbol      => arg2.Name,
-                            { IsReferenceType: true } => $"{arg2.GlobalName()}?",
-                            _                         => arg2.GlobalName()
-                        },
-                        ["ResultStateQualified"] = "global::Perf.Holders.ResultState",
-                        ["SharedResultQualified"] = "global::Perf.Holders.Result"
-                    };
-
-                    return new BasicHolderContextInfo(
-                        MinimalNameWithGenericMetadata: MinimalNameWithGenericMetadata(result),
-                        PatternValues: patternValues
-                    );
+                    marker = i;
                 }
-            )
-            .WithTrackingName("Initial syntax selection and semantic transforming");
-        var filtered = types
-            .Where(static x => x != default)
-            .WithTrackingName("Filtered after transforming");
 
-        var compInfo = context
-            .CompilationProvider
-            .Select(static (c, _) => {
+                var arg1 = marker.TypeArguments[0];
+                var arg1Name = arg1.GlobalName();
+                var arg2 = marker.TypeArguments[1];
+                var arg2Name = arg2.GlobalName();
+
+                if (arg1.Equals(arg2, SymbolEqualityComparer.Default)) {
+                    return default;
+                }
+
+                var patternValues = new Dictionary<string, string?> {
+                    ["Namespace"] = result.ContainingNamespace.ToDisplayString(),
+                    ["ResultName"] = result.Name,
+                    ["ResultShort"] = result.MinimalName(),
+                    ["ResultTypeofString"] = result.TypeArguments switch {
+                        [ ]      => result.Name,
+                        [ _ ]    => $"{result.Name}<{{typeof({arg1Name}).Name}}>",
+                        [ _, _ ] => $"{result.Name}<{{typeof({arg1Name}).Name}}, {{typeof({arg2Name}).Name}}>",
+                        _        => result.MinimalName()
+                    },
+                    ["TypeArguments"] = result.TypeArguments switch {
+                        [ ITypeParameterSymbol, ITypeParameterSymbol ] => $"<{arg1Name}, {arg2Name}>",
+                        [ ITypeParameterSymbol ]                       => $"<{arg1Name}>",
+                        _                                              => null
+                    },
+                    ["TypeArgumentsConstraints"] = result.TypeArguments switch {
+                        [ ITypeParameterSymbol, ITypeParameterSymbol ] => $"where {arg1Name} : notnull where {arg2Name} : notnull ",
+                        [ ITypeParameterSymbol ]                       => $"where {arg1Name} : notnull ",
+                        _                                              => null
+                    },
+                    ["OpenTypeArguments"] = result.TypeArguments switch {
+                        [ _ ]    => "<>",
+                        [ _, _ ] => "<,>",
+                        _        => null
+                    },
+                    ["IsOkProperty"] = "IsOk",
+                    ["IsOkDeclarationModifiers"] = " ",
+                    ["OkProperty"] = "Ok",
+                    ["OkField"] = "ok",
+                    ["OkDeclarationModifiers"] = " ",
+                    ["OkType"] = arg1Name,
+                    ["OkTypeForEquals"] = arg1 switch {
+                        ITypeParameterSymbol or { IsReferenceType: true } => $"{arg1Name}?",
+                        _                                                 => arg1Name
+                    },
+                    ["ErrorProperty"] = "Error",
+                    ["ErrorField"] = "error",
+                    ["ErrorDeclarationModifiers"] = " ",
+                    ["ErrorType"] = arg2Name,
+                    ["ErrorTypeForEquals"] = arg2 switch {
+                        ITypeParameterSymbol or { IsReferenceType: true } => $"{arg2Name}?",
+                        _                                                 => arg2Name
+                    },
+                    ["ResultState"] = "global::Perf.Holders.ResultState",
+                    ["SharedResultQualified"] = "global::Perf.Holders.Result"
+                };
+
+                var declaredPartialProperties = GetPropertiesWithPredicate(result.GetMembers(), x => x.IsPartialDefinition);
+                if (declaredPartialProperties.Length > 0) {
+                    var isProp = declaredPartialProperties.FirstOrDefault(x => x.Type is INamedTypeSymbol { SpecialType: SpecialType.System_Boolean });
+                    if (isProp is not null) {
+                        patternValues["IsOkProperty"] = isProp.Name;
+                        patternValues["IsOkDeclarationModifiers"] = "partial ";
+                    }
+
+                    var okProp = declaredPartialProperties.FirstOrDefault(x => x.Type.Equals(arg1, SymbolEqualityComparer.Default));
+                    if (okProp is not null) {
+                        patternValues["OkProperty"] = okProp.Name;
+                        patternValues["OkField"] = okProp.Name.ToLowerFirstChar();
+                        patternValues["OkDeclarationModifiers"] = "partial ";
+                        if (isProp is null) {
+                            patternValues["IsOkProperty"] = $"Is{okProp.Name}";
+                        }
+                    }
+
+                    var errorProp = declaredPartialProperties.FirstOrDefault(x => x.Type.Equals(arg2, SymbolEqualityComparer.Default));
+                    if (errorProp is not null) {
+                        patternValues["ErrorProperty"] = errorProp.Name;
+                        patternValues["ErrorField"] = errorProp.Name.ToLowerFirstChar();
+                        patternValues["ErrorDeclarationModifiers"] = "partial ";
+                    }
+                }
+
+                return new BasicHolderContextInfo(
+                    MinimalNameWithGenericMetadata: MinimalNameWithGenericMetadata(result),
+                    PatternValues: patternValues
+                );
+            }
+        );
+        var filtered = types.Where(static x => x != default);
+
+        var compInfo = context.CompilationProvider
+            .Select(
+                static (c, _) => {
                     LanguageVersion? langVersion = c is CSharpCompilation comp ? comp.LanguageVersion : null;
                     return new CompInfo(langVersion);
                 }
-            )
-            .WithTrackingName("Getting LangVersion from CompilationProvider");
+            );
 
-        var typesAndCompInfo = filtered
-            .Combine(compInfo)
-            .WithTrackingName("Combining filtered entries with compilation info");
+        var typesAndCompInfo = filtered.Combine(compInfo);
 
         context.RegisterSourceOutput(
             typesAndCompInfo,
             static (context, tuple1) => {
-                var (tuple2, compInfo) = tuple1;
-                var values = tuple2.PatternValues;
+                var ((minimalNameWithGenericMetadata, values), compInfo) = tuple1;
 
                 values["DebugViewVisibility"] = compInfo.Version is >= LanguageVersion.CSharp11
                     ? "file "
                     : "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n";
 
                 var sourceText = PatternFormatter.Format(
-                    Patterns.Result2,
+                    Patterns.Result,
                     values
                 );
 
-                context.AddSource($"{tuple2.MinimalNameWithGenericMetadata}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+                context.AddSource($"{minimalNameWithGenericMetadata}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
             }
         );
     }
 
     static string MinimalNameWithGenericMetadata(INamedTypeSymbol symbol) {
         return symbol.IsGenericType ? $"{symbol.Name}`{symbol.TypeParameters.Length}" : symbol.Name;
+    }
+
+    static ImmutableArray<IPropertySymbol> GetPropertiesWithPredicate(ImmutableArray<ISymbol> symbols, Func<IPropertySymbol, bool> predicate) {
+        var count = 0;
+        var span = symbols.AsSpan();
+        foreach (ref readonly var sr in span) {
+            if (sr is IPropertySymbol ps && predicate(ps)) {
+                count++;
+            }
+        }
+
+        if (count is 0) {
+            return ImmutableArray<IPropertySymbol>.Empty;
+        }
+
+        var results = new IPropertySymbol[count];
+        var i = 0;
+        foreach (ref readonly var sr in span) {
+            if (sr is IPropertySymbol ps) {
+                results[i++] = ps;
+            }
+        }
+
+        return ImmutableCollectionsMarshal.AsImmutableArray(results);
     }
 }

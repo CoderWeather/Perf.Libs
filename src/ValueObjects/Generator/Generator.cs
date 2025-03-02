@@ -74,7 +74,7 @@ sealed class ValueObjectGenerator : IIncrementalGenerator {
 
                 // for classic record keyword=record, class=class
                 // for record struct keyword=record and only in RecordDeclarationSyntax additional keyword=struct
-                if (node is not StructDeclarationSyntax and not RecordDeclarationSyntax { ClassOrStructKeyword.RawKind: (int)SyntaxKind.StructKeyword }) {
+                if (node is not StructDeclarationSyntax) {
                     return false;
                 }
 
@@ -140,7 +140,6 @@ sealed class ValueObjectGenerator : IIncrementalGenerator {
                     _                         => qualifiedArg
                 };
                 var typeKeyword = symbol switch {
-                    { IsValueType: true, IsRecord: true } => "record struct",
                     { IsValueType: true }                 => "struct",
                     _                                     => throw new InvalidOperationException($"Unsupported object type: {symbol.GlobalName()}")
                 };

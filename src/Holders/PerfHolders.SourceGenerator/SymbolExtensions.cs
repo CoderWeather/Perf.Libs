@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 static class SymbolExtensions {
     public static bool IsValueNullable(this ITypeSymbol type) =>
         type is INamedTypeSymbol {
-            OriginalDefinition.Name: "Nullable", IsValueType: true
+            OriginalDefinition.Name: "Nullable", IsValueType: true, ContainingNamespace: { Name: "System" }
         };
 
     public static string GlobalName(this ITypeSymbol type) {

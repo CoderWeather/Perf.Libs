@@ -83,7 +83,9 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 }
 
                 var patternValues = new Dictionary<string, string?> {
-                    ["Namespace"] = result.ContainingNamespace.ToDisplayString(),
+                    ["Namespace"] = result.ContainingNamespace.IsGlobalNamespace is false
+                        ? result.ContainingNamespace.ToDisplayString()
+                        : context.SemanticModel.Compilation.Assembly.Name,
                     ["ResultName"] = result.Name,
                     ["ResultShort"] = result.MinimalName(),
                     ["ResultTypeofString"] = result.TypeArguments switch {
@@ -131,27 +133,28 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
                 var declaredPartialProperties = GetPropertiesWithPredicate(result.GetMembers(), x => x.IsPartialDefinition);
                 if (declaredPartialProperties.Length > 0) {
-                    var isProp = declaredPartialProperties.FirstOrDefault(x => x.Type is INamedTypeSymbol { SpecialType: SpecialType.System_Boolean });
-                    if (isProp is not null) {
-                        patternValues["IsOkProperty"] = isProp.Name;
-                        patternValues["IsOkDeclarationModifiers"] = "partial ";
-                    }
-
-                    var okProp = declaredPartialProperties.FirstOrDefault(x => x.Type.Equals(arg1, SymbolEqualityComparer.Default));
-                    if (okProp is not null) {
-                        patternValues["OkProperty"] = okProp.Name;
-                        patternValues["OkField"] = okProp.Name.ToLowerFirstChar();
-                        patternValues["OkDeclarationModifiers"] = "partial ";
-                        if (isProp is null) {
-                            patternValues["IsOkProperty"] = $"Is{okProp.Name}";
+                    var isOkSet = false;
+                    var okSet = false;
+                    var errorSet = false;
+                    foreach (var sp in declaredPartialProperties) {
+                        if (okSet is false && sp.Type.Equals(arg1, SymbolEqualityComparer.Default)) {
+                            patternValues["OkProperty"] = sp.Name;
+                            patternValues["OkField"] = sp.Name.ToFieldFormat();
+                            patternValues["OkDeclarationModifiers"] = "partial ";
+                            okSet = true;
+                            if (isOkSet is false) {
+                                patternValues["IsOkProperty"] = $"Is{sp.Name}";
+                            }
+                        } else if (errorSet is false && sp.Type.Equals(arg2, SymbolEqualityComparer.Default)) {
+                            patternValues["ErrorProperty"] = sp.Name;
+                            patternValues["ErrorField"] = sp.Name.ToFieldFormat();
+                            patternValues["ErrorDeclarationModifiers"] = "partial ";
+                            errorSet = true;
+                        } else if (isOkSet is false && sp.Type is INamedTypeSymbol { SpecialType: SpecialType.System_Boolean }) {
+                            patternValues["IsOkProperty"] = sp.Name;
+                            patternValues["IsOkDeclarationModifiers"] = "partial ";
+                            isOkSet = true;
                         }
-                    }
-
-                    var errorProp = declaredPartialProperties.FirstOrDefault(x => x.Type.Equals(arg2, SymbolEqualityComparer.Default));
-                    if (errorProp is not null) {
-                        patternValues["ErrorProperty"] = errorProp.Name;
-                        patternValues["ErrorField"] = errorProp.Name.ToLowerFirstChar();
-                        patternValues["ErrorDeclarationModifiers"] = "partial ";
                     }
                 }
 
@@ -181,6 +184,9 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 values["DebugViewVisibility"] = compInfo.Version is >= LanguageVersion.CSharp11
                     ? "file "
                     : "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n";
+                values["NullableFileAnnotation"] = compInfo.Version is >= LanguageVersion.CSharp6
+                    ? "#nullable enable\n"
+                    : "";
 
                 var sourceText = PatternFormatter.Format(
                     Patterns.Result,

@@ -24,23 +24,30 @@ static class StringExtensions {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string? ToLowerFirstChar(this string? s) {
+    public static string? ToFieldFormat(this string? s) {
         if (string.IsNullOrWhiteSpace(s)) {
             return s;
         }
 
         if (s!.Length is 1) {
-            return char.ToLower(s[0]).ToString();
+            return char.IsLower(s[0]) ? $"_{s[0]}" : char.ToLower(s[0]).ToString();
         }
 
-        Span<char> buffer = stackalloc char[s.Length];
-        buffer[0] = char.ToLower(s[0]);
-        s.AsSpan()[1..].CopyTo(buffer[1..]);
+        var addUnderscore = char.IsLower(s[0]);
+
+        Span<char> buffer = stackalloc char[addUnderscore ? s.Length + 1 : s.Length];
+        var i = 0;
+        if (addUnderscore) {
+            buffer[i++] = '_';
+        }
+
+        buffer[i++] = char.ToLower(s[0]);
+        s.AsSpan()[1..].CopyTo(buffer[i..]);
 
         string result;
         unsafe {
             var p = (char*)Unsafe.AsPointer(ref buffer.GetPinnableReference());
-            result = new string(p, 0, s.Length);
+            result = new string(p, 0, buffer.Length);
         }
 
         return result;

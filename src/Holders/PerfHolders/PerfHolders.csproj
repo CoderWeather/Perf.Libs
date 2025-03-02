@@ -16,7 +16,7 @@
 
     <PropertyGroup>
         <PackageId>PerfHolders</PackageId>
-        <Version>1.1.0</Version>
+        <Version>1.1.1</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based value holders for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>

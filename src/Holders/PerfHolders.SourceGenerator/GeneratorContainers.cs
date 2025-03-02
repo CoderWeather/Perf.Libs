@@ -9,8 +9,16 @@ readonly record struct BasicHolderContextInfo(
     Dictionary<string, string?> PatternValues
 ) {
     public bool Equals(BasicHolderContextInfo other) {
-        if (PatternValues == null! || other.PatternValues == null!) {
-            return false;
+        switch (MinimalNameWithGenericMetadata, other.MinimalNameWithGenericMetadata) {
+            case ({ } s1, { } s2) when string.Equals(s1, s2): break;
+            case (null, null):                                return true;
+            case (null, _) or (_, null):                      return false;
+        }
+
+        switch (PatternValues, other.PatternValues) {
+            case ({ Count: var c1 }, { Count: var c2 }) when c1 == c2: break;
+            case (null, null):                                         return true;
+            case (null, _) or (_, null):                               return false;
         }
 
         if (other.PatternValues.Count != PatternValues.Count) {

@@ -8,7 +8,7 @@ static class Patterns {
         {DebugViewVisibility}sealed class {ResultName}_DebugView{TypeArguments} {TypeArgumentsConstraints}{
             public {ResultName}_DebugView({ResultShort} result) {
                 this.State = ({ResultState})typeof({ResultShort})
-                    .GetField("state", global::System.Reflection.BindingFlags.BindingFlags.NonPublic | global::System.Reflection.BindingFlags.BindingFlags.Instance)!
+                    .GetField("state", global::System.Reflection.BindingFlags.NonPublic | global::System.Reflection.BindingFlags.Instance)!
                     .GetValue(result)!;
                 this.Value = this.State switch {
                     {ResultState}.Ok            => result.{OkProperty},
@@ -220,16 +220,14 @@ static class Patterns {
         
             private readonly {OptionState} state;
             private readonly {SomeType} {SomeField};
-        
-            private static readonly string NoneException = $"{OptionType} is None";
 
         {SomeInterfaceProperty}
             {DebuggerBrowsableNever}
             public {SomeDeclarationModifiers}{SomeType} {SomeProperty} =>
                 state switch {
                     {OptionState}.Some => {SomeField},
-                    {OptionState}.None => throw new global::System.InvalidOperationException(NoneException),
-                    _ => throw new global::System.ArgumentOutOfRangeException()
+                    {OptionState}.None => throw global::Perf.Holders.OptionHolderExceptions.SomeAccessWhenNone<{OptionShort}, {SomeType}>(),
+                    _ => throw global::Perf.Holders.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
         {IsSomeInterfaceProperty}
             {DebuggerBrowsableNever}
@@ -237,7 +235,7 @@ static class Patterns {
                 state switch {
                     {OptionState}.Some => true,
                     {OptionState}.None => false,
-                    _ => throw new global::System.ArgumentOutOfRangeException(nameof(state))
+                    _ => throw global::Perf.Holders.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
 
         // Operators
@@ -270,7 +268,7 @@ static class Patterns {
                 (state, other.state) switch {
                     ({OptionState}.Some, {OptionState}.Some) => global::System.Collections.Generic.EqualityComparer<{SomeType}>.Default.Equals({SomeField}, other.{SomeField}),
                     ({OptionState}.None, {OptionState}.None) => true,
-                    _ => throw new global::System.ArgumentOutOfRangeException(nameof(state))
+                    _ => throw global::Perf.Holders.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
             public bool Equals({BaseOption}<{SomeType}> other) => other.Equals(({BaseOption}<{SomeType}>)this);
             public bool Equals({SomeTypeForEquals} v) => {IsSomeProperty} && global::System.Collections.Generic.EqualityComparer<{SomeTypeForEquals}>.Default.Equals({SomeField}, v);
@@ -279,14 +277,14 @@ static class Patterns {
                 state switch {
                     {OptionState}.Some => {SomeField}.GetHashCode(),
                     {OptionState}.None => {BaseOption}.None.Value.GetHashCode(),
-                    _ => throw new global::System.ArgumentOutOfRangeException(nameof(state))
+                    _ => throw global::Perf.Holders.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
         
             public override string? ToString() =>
                 state switch {
                     {OptionState}.Some => {SomeField}.ToString(),
                     {OptionState}.None => {BaseOption}.None.Value.ToString(),
-                    _ => throw new global::System.ArgumentOutOfRangeException(nameof(state))
+                    _ => throw global::Perf.Holders.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
         
             public string DebugPrint() =>

@@ -11,7 +11,7 @@ namespace Perf.Holders;
 /// <para>If you using bool for Some value it will be named in order Ok->Error->IsOk</para>
 /// </remarks>
 /// <example>
-/// <para>With default generated properies</para>
+/// <para>With default generated properties</para>
 /// <code>
 /// partial struct MyResult : IResultHolder&lt;int, string&gt;;
 /// MyResult result = 10;

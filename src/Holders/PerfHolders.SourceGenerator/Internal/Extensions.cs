@@ -1,10 +1,36 @@
 namespace Perf.Holders.Generator.Internal;
 
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.CodeAnalysis;
 
 static class CollectionExtensions {
-    //
+    public static ImmutableArray<T> WhereOfType<T>(this ImmutableArray<ISymbol> symbols, Func<T, bool> predicate)
+        where T : ISymbol {
+        var count = 0;
+        var span = symbols.AsSpan();
+        foreach (ref readonly var sr in span) {
+            if (sr is T ps && predicate(ps)) {
+                count++;
+            }
+        }
+
+        if (count is 0) {
+            return ImmutableArray<T>.Empty;
+        }
+
+        var results = new T[count];
+        var i = 0;
+        foreach (ref readonly var sr in span) {
+            if (sr is T ps) {
+                results[i++] = ps;
+            }
+        }
+
+        return ImmutableCollectionsMarshal.AsImmutableArray(results);
+    }
 }
 
 static class StringExtensions {

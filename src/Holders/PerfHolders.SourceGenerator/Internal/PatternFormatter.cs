@@ -1,6 +1,5 @@
 namespace Perf.Holders.Generator.Internal;
 
-using System.Runtime.CompilerServices;
 using System.Text;
 
 static class PatternFormatter {

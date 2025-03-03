@@ -3,12 +3,15 @@
 namespace Perf.Holders;
 
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 file sealed class ResultHolder_DebugView<TOk, TError> where TOk : notnull where TError : notnull {
     public ResultHolder_DebugView(Result<TOk, TError> result) {
-        State = result.State;
+        State = (ResultState)typeof(Result<TOk, TError>)
+            .GetField("state", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(result)!;
         Value = State switch {
             ResultState.Ok            => result.Ok,
             ResultState.Error         => result.Error,
@@ -86,7 +89,7 @@ public readonly struct Result<TOk, TError> :
             _                         => throw new ArgumentOutOfRangeException(nameof(state))
         };
 
-    public ResultState State => state;
+    // public ResultState State => state;
     public static implicit operator Result<TOk, TError>(TOk ok) => new(ok);
     public static implicit operator Result<TOk, TError>(Result.Ok<TOk> ok) => new(ok.Value);
     public static implicit operator Result<TOk, TError>(TError error) => new(error);
@@ -101,7 +104,7 @@ public readonly struct Result<TOk, TError> :
 
     public TOther As<TOther>() where TOther : struct, IResultHolder<TOk, TError> {
         var t = this;
-        return ___HoldersInvisibleHelpers.Cast<TOk, TError, TOther>(ref t);
+        return ___HoldersInvisibleHelpers.CastResult<Result<TOk, TError>, TOk, TError, TOther>(ref t);
     }
 
     public override bool Equals(object? obj) => obj is Result<TOk, TError> other && Equals(other);

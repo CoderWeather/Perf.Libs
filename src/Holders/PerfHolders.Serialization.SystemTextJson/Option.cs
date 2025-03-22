@@ -1,9 +1,13 @@
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
+
 namespace Perf.Holders.Serialization.SystemTextJson;
 
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Internal;
 
 #if NET7_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -43,7 +47,6 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
 sealed class HolderOptionJsonConverter<TOption, TValue> : JsonConverter<TOption>
     where TOption : struct, IOptionHolder<TValue>
     where TValue : notnull {
-    HolderOptionJsonConverter() { }
     public static readonly HolderOptionJsonConverter<TOption, TValue> Instance = new();
 
     public override void Write(Utf8JsonWriter writer, TOption value, JsonSerializerOptions options) {

@@ -1,9 +1,13 @@
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
+
 namespace Perf.Holders.Serialization.MessagePack;
 
 using System.Collections.Concurrent;
 using System.Reflection;
 using global::MessagePack;
 using global::MessagePack.Formatters;
+using Internal;
 
 #if NET7_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -44,11 +48,10 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
     where TResult : struct, IResultHolder<TOk, TError>
     where TOk : notnull
     where TError : notnull {
-    HolderResultFormatter() { }
     public static readonly HolderResultFormatter<TResult, TOk, TError> Instance = new();
 
     public void Serialize(ref MessagePackWriter writer, TResult value, MessagePackSerializerOptions options) {
-        // catch to throwing exceptions any states other than ok and error 
+        // catch to throwing exceptions any states other than ok and error
         var isOk = value.IsOk;
         writer.WriteMapHeader(1);
         if (isOk) {

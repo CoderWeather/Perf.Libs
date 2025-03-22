@@ -45,7 +45,7 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 var patternValues = new Dictionary<string, string?> {
                     ["NamespaceDeclaration"] = option.ContainingNamespace.IsGlobalNamespace is false
-                        ? $"namespace {option.ContainingNamespace.ToDisplayString()};\n"
+                        ? $"namespace {option.ContainingNamespace.ToDisplayString()}\n"
                         : "",
                     ["OptionName"] = option.Name,
                     ["OptionShort"] = option.MinimalName(),
@@ -76,10 +76,12 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     },
                     ["OptionState"] = "global::Perf.Holders.OptionState",
                     ["BaseOption"] = "global::Perf.Holders.Option",
-                    ["DebuggerBrowsableNever"] = "[global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]"
+                    ["DebuggerBrowsableNever"] =
+                        "[global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]"
                 };
 
-                var declaredPartialProperties = option.GetMembers().WhereOfType<IPropertySymbol>(x => x.IsPartialDefinition);
+                var declaredPartialProperties = option.GetMembers()
+                    .WhereOfType<IPropertySymbol>(x => x.IsPartialDefinition);
                 if (declaredPartialProperties.Length > 0) {
                     var someSet = false;
                     var isSomeSet = false;
@@ -126,8 +128,7 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
         var filtered = types.Where(static x => x != default);
 
         var compInfo = context.CompilationProvider
-            .Select(
-                static (c, _) => {
+            .Select(static (c, _) => {
                     LanguageVersion? langVersion = c is CSharpCompilation comp ? comp.LanguageVersion : null;
                     return new CompInfo(langVersion);
                 }

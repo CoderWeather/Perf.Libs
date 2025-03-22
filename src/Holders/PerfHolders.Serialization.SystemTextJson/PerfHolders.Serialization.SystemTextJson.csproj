@@ -2,9 +2,6 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net7.0;net8.0;net9.0</TargetFrameworks>
-        <LangVersion>latest</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <AssemblyName>Perf.Holders.Serialization.SystemTextJson</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
         <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
@@ -25,12 +22,20 @@
         <PackageTags>result option holder valueobject csharp c# perf</PackageTags>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="PerfHolders" Version="1.3.3" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+        <PackageReference Include="System.Text.Json" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net7.0' or '$(TargetFramework)' == 'net8.0'">
-        <PackageReference Include="System.Text.Json" Version="9.0.2" />
+    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+      <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+      <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../PerfHolders/PerfHolders.csproj" />
     </ItemGroup>
 
 </Project>

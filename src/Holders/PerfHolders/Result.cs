@@ -1,4 +1,5 @@
 // ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
 
 namespace Perf.Holders;
 
@@ -6,8 +7,11 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Exceptions;
 
-file sealed class ResultHolder_DebugView<TOk, TError> where TOk : notnull where TError : notnull {
+file sealed class ResultHolder_DebugView<TOk, TError>
+    where TOk : notnull
+    where TError : notnull {
     public ResultHolder_DebugView(Result<TOk, TError> result) {
         State = (ResultState)typeof(Result<TOk, TError>)
             .GetField("state", BindingFlags.NonPublic | BindingFlags.Instance)!
@@ -58,26 +62,23 @@ public readonly struct Result<TOk, TError> :
     readonly ResultState state;
     readonly TOk ok;
     readonly TError error;
-    static readonly string UninitializedException = $"Result<{typeof(TOk).Name}, {typeof(TError).Name}> is Unitialized";
-    static readonly string ErrorAccessException = $"Cannot access Error. Result<{typeof(TOk).Name}, {typeof(TError).Name}> is Ok";
-    static readonly string OkAccessException = $"Cannot access Ok. Result<{typeof(TOk).Name}, {typeof(TError).Name}> is Error";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public TOk Ok =>
         state switch {
             ResultState.Ok            => ok,
-            ResultState.Error         => throw new InvalidOperationException(OkAccessException),
-            ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-            _                         => throw new ArgumentOutOfRangeException(nameof(state))
+            ResultState.Error         => throw ResultHolderExceptions.ErrorAccessWhenOk<Result<TOk, TError>, TOk, TError>("Ok", "Error"),
+            ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
         };
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public TError Error =>
         state switch {
-            ResultState.Ok            => throw new InvalidOperationException(ErrorAccessException),
+            ResultState.Ok            => throw ResultHolderExceptions.OkAccessWhenError<Result<TOk, TError>, TOk, TError>("Ok", "Error"),
             ResultState.Error         => error,
-            ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-            _                         => throw new ArgumentOutOfRangeException(nameof(state))
+            ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
         };
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -85,8 +86,8 @@ public readonly struct Result<TOk, TError> :
         state switch {
             ResultState.Ok            => true,
             ResultState.Error         => false,
-            ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-            _                         => throw new ArgumentOutOfRangeException(nameof(state))
+            ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
         };
 
     // public ResultState State => state;
@@ -102,20 +103,19 @@ public readonly struct Result<TOk, TError> :
     public static bool operator ==(Result<TOk, TError> left, TError right) => left.Equals(right);
     public static bool operator !=(Result<TOk, TError> left, TError right) => left.Equals(right) is false;
 
-    public TOther As<TOther>() where TOther : struct, IResultHolder<TOk, TError> {
-        var t = this;
-        return ___HoldersInvisibleHelpers.CastResult<Result<TOk, TError>, TOk, TError, TOther>(ref t);
-    }
+    public TOther As<TOther>()
+        where TOther : struct, IResultHolder<TOk, TError> =>
+        ___HoldersInvisibleHelpers.CastResult<Result<TOk, TError>, TOk, TError, TOther>(in this);
 
     public override bool Equals(object? obj) => obj is Result<TOk, TError> other && Equals(other);
 
     public bool Equals(Result<TOk, TError> other) =>
         (state, other.state) switch {
-            (ResultState.Ok, ResultState.Ok)                                           => EqualityComparer<TOk>.Default.Equals(ok, other.ok),
-            (ResultState.Error, ResultState.Error)                                     => EqualityComparer<TError>.Default.Equals(error, other.error),
+            (ResultState.Ok, ResultState.Ok) => EqualityComparer<TOk>.Default.Equals(ok, other.ok),
+            (ResultState.Error, ResultState.Error) => EqualityComparer<TError>.Default.Equals(error, other.error),
             (ResultState.Ok, ResultState.Error) or (ResultState.Error, ResultState.Ok) => false,
-            (ResultState.Uninitialized, _) or (_, ResultState.Uninitialized)           => throw new InvalidOperationException(UninitializedException),
-            _                                                                          => throw new ArgumentOutOfRangeException(nameof(state))
+            (ResultState.Uninitialized, _) or (_, ResultState.Uninitialized) => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
+            _ => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
         };
 
     public bool Equals(TOk? v) => IsOk && EqualityComparer<TOk?>.Default.Equals(x: ok, y: v);
@@ -127,16 +127,16 @@ public readonly struct Result<TOk, TError> :
         state switch {
             ResultState.Ok            => ok.GetHashCode(),
             ResultState.Error         => error.GetHashCode(),
-            ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-            _                         => throw new ArgumentOutOfRangeException(nameof(state))
+            ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
         };
 
     public override string? ToString() =>
         state switch {
             ResultState.Ok            => ok.ToString(),
             ResultState.Error         => error.ToString(),
-            ResultState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-            _                         => throw new ArgumentOutOfRangeException(nameof(state))
+            ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
         };
 
     string DebugPrint() =>
@@ -167,13 +167,17 @@ public readonly struct Result<TOk, TError> :
     public Result<TNewOk, TNewError> Map<TNewOk, TNewError>(
         Func<TOk, TNewOk> mapOk,
         Func<TError, TNewError> mapError
-    ) where TNewOk : notnull where TNewError : notnull =>
+    )
+        where TNewOk : notnull
+        where TNewError : notnull =>
         IsOk ? mapOk(ok) : mapError(error);
 
     public async ValueTask<Result<TNewOk, TNewError>> Map<TNewOk, TNewError>(
         Func<TOk, ValueTask<TNewOk>> mapOk,
         Func<TError, ValueTask<TNewError>> mapError
-    ) where TNewOk : notnull where TNewError : notnull =>
+    )
+        where TNewOk : notnull
+        where TNewError : notnull =>
         IsOk ? await mapOk(ok) : await mapError(error);
 }
 
@@ -184,7 +188,8 @@ public static class Result {
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct Ok<T> : IEquatable<Ok<T>> {
+    public readonly struct Ok<T> : IEquatable<Ok<T>>
+        where T : notnull {
         public Ok() {
             value = default!;
             state = ElState.Uninitialized;
@@ -197,7 +202,7 @@ public static class Result {
 
         readonly ElState state;
         readonly T value;
-        static readonly string UninitializedException = $"Result.Ok<{typeof(T).Name}> is Unitialized";
+        static readonly string UninitializedException = $"Result.Ok<{typeof(T).Name}> is Uninitialized";
 
         public T Value =>
             state switch {
@@ -224,11 +229,12 @@ public static class Result {
             };
 
         public override bool Equals(object? obj) => obj is Ok<T> other && Equals(other);
-        public override int GetHashCode() => Value?.GetHashCode() ?? typeof(T).GetHashCode();
+        public override int GetHashCode() => Value.GetHashCode();
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct Error<T> : IEquatable<Error<T>> {
+    public readonly struct Error<T> : IEquatable<Error<T>>
+        where T : notnull {
         public Error() {
             value = default!;
             state = ElState.Initialized;
@@ -241,7 +247,7 @@ public static class Result {
 
         readonly ElState state;
         readonly T value;
-        static readonly string UninitializedException = $"Result.Error<{typeof(T).Name}> is Unitialized";
+        static readonly string UninitializedException = $"Result.Error<{typeof(T).Name}> is Uninitialized";
 
         public T Value =>
             state switch {
@@ -260,6 +266,8 @@ public static class Result {
                 _                     => throw new ArgumentOutOfRangeException(nameof(state))
             };
 
+        public override bool Equals(object? obj) => obj is Error<T> other && Equals(other);
+
         public bool Equals(Error<T> other) =>
             (state, other.state) switch {
                 (ElState.Initialized, ElState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
@@ -267,20 +275,28 @@ public static class Result {
                 _                                                        => throw new ArgumentOutOfRangeException(nameof(state))
             };
 
-        public override bool Equals(object? obj) => obj is Error<T> other && Equals(other);
-        public override int GetHashCode() => Value?.GetHashCode() ?? typeof(T).GetHashCode();
+        public override int GetHashCode() =>
+            state switch {
+                ElState.Initialized   => Value.GetHashCode(),
+                ElState.Uninitialized => throw new InvalidOperationException(UninitializedException),
+                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+            };
     }
 }
 
 public static class GlobalHolderResultFunctions {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Result.Ok<T> Ok<T>(T ok) where T : notnull => new(ok);
+    public static Result.Ok<T> Ok<T>(T ok)
+        where T : notnull =>
+        new(ok);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result.Ok<Unit> Ok() => Unit.Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Result.Error<T> Error<T>(T error) where T : notnull => new(error);
+    public static Result.Error<T> Error<T>(T error)
+        where T : notnull =>
+        new(error);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Result.Error<Unit> Error() => Unit.Value;

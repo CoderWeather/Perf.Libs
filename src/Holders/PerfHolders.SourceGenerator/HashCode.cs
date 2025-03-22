@@ -24,7 +24,9 @@ struct HashCode {
     static uint GenerateGlobalSeed() {
         var buffer = new byte[sizeof(uint)];
 #pragma warning disable RS1035
+#pragma warning disable CA5394
         new Random().NextBytes(buffer);
+#pragma warning restore CA5394
 #pragma warning restore RS1035
         return BitConverter.ToUInt32(buffer, 0);
     }
@@ -271,7 +273,7 @@ struct HashCode {
     }
 
     public void Add<T>(T value, IEqualityComparer<T>? comparer) {
-        Add(value is null ? 0 : (comparer?.GetHashCode(value) ?? value.GetHashCode()));
+        Add(value is null ? 0 : comparer?.GetHashCode(value) ?? value.GetHashCode());
     }
 
     void Add(int value) {
@@ -305,22 +307,28 @@ struct HashCode {
 
         // Switch can't be inlined.
 
-        if (position == 0) {
-            _queue1 = val;
-        } else if (position == 1) {
-            _queue2 = val;
-        } else if (position == 2) {
-            _queue3 = val;
-        } else // position == 3
-        {
-            if (previousLength == 3) {
-                Initialize(out _v1, out _v2, out _v3, out _v4);
-            }
+        switch (position) {
+            case 0:
+                _queue1 = val;
+                break;
+            case 1:
+                _queue2 = val;
+                break;
+            case 2:
+                _queue3 = val;
+                break;
+            // position == 3
+            default: {
+                if (previousLength == 3) {
+                    Initialize(out _v1, out _v2, out _v3, out _v4);
+                }
 
-            _v1 = Round(_v1, _queue1);
-            _v2 = Round(_v2, _queue2);
-            _v3 = Round(_v3, _queue3);
-            _v4 = Round(_v4, val);
+                _v1 = Round(_v1, _queue1);
+                _v2 = Round(_v2, _queue2);
+                _v3 = Round(_v3, _queue3);
+                _v4 = Round(_v4, val);
+                break;
+            }
         }
     }
 
@@ -368,7 +376,7 @@ struct HashCode {
     // Disallowing GetHashCode and Equals is by design
 
     // * We decided to not override GetHashCode() to produce the hash code
-    //   as this would be weird, both naming-wise as well as from a
+    //   as this would be weird, both naming-wise and from a
     //   behavioral standpoint (GetHashCode() should return the object's
     //   hash code, not the one being computed).
 

@@ -1,4 +1,4 @@
-namespace Perf.Holders;
+namespace Perf.Holders.Exceptions;
 
 public abstract class OptionHolderException(string message) : Exception(message);
 public sealed class OptionStateOutOfValidValues(string message) : OptionHolderException(message);

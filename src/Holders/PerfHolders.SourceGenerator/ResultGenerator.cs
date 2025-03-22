@@ -51,7 +51,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
                 var patternValues = new Dictionary<string, string?> {
                     ["NamespaceDeclaration"] = result.ContainingNamespace.IsGlobalNamespace is false
-                        ? $"namespace {result.ContainingNamespace.ToDisplayString()};\n"
+                        ? $"namespace {result.ContainingNamespace.ToDisplayString()}\n"
                         : "",
                     ["ResultName"] = result.Name,
                     ["ResultShort"] = result.MinimalName(),

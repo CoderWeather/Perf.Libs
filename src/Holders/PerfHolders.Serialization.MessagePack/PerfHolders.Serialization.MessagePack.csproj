@@ -2,9 +2,6 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net7.0;net8.0;net9.0</TargetFrameworks>
-        <LangVersion>latest</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <AssemblyName>Perf.Holders.Serialization.MessagePack</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
         <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
@@ -16,7 +13,7 @@
 
     <PropertyGroup>
         <PackageId>PerfHolders.Serialization.MessagePack</PackageId>
-        <Version>1.3.3</Version>
+        <Version>1.3.3-alpha.1</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based value holders for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -26,8 +23,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="PerfHolders" Version="1.3.3" />
-        <PackageReference Include="MessagePack" Version="3.1.3" />
+        <PackageReference Include="MessagePack" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../PerfHolders/PerfHolders.csproj" />
     </ItemGroup>
 
 </Project>

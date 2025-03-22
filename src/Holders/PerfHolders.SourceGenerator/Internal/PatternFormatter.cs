@@ -46,7 +46,6 @@ static class PatternFormatter {
                 if (entrySpan.SequenceEqual(k.AsSpan())) {
                     sb.Append(v);
                     span = span[(nextEntryIndex + endEntryIndex + 2)..];
-                    // span = entryStart[(k.Length + 1)..];
                     found = true;
                     break;
                 }

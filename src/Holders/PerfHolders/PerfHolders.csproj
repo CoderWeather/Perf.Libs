@@ -2,13 +2,16 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net7.0;net8.0;net9.0</TargetFrameworks>
-        <LangVersion>latest</LangVersion>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <AssemblyName>Perf.Holders</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
         <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
     </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Perf.Holders.Serialization.SystemTextJson" />
+        <InternalsVisibleTo Include="Perf.Holders.Serialization.MessagePack" />
+        <InternalsVisibleTo Include="Perf.Holders.Serialization.Newtonsoft.Json" />
+    </ItemGroup>
 
     <ItemGroup>
         <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
@@ -27,8 +30,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
-        <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
+        <PackageReference Include="PolySharp" PrivateAssets="all" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Threading.Tasks.Extensions" />
     </ItemGroup>
 
 </Project>

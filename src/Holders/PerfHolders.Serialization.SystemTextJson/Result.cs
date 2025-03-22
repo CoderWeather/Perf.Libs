@@ -1,9 +1,12 @@
+// ReSharper disable UnusedMember.Global
+
 namespace Perf.Holders.Serialization.SystemTextJson;
 
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Internal;
 
 #if NET7_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
@@ -45,7 +48,6 @@ sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
     where TResult : struct, IResultHolder<TOk, TError>
     where TOk : notnull
     where TError : notnull {
-    HolderResultJsonConverter() { }
     public static readonly HolderResultJsonConverter<TResult, TOk, TError> Instance = new();
 
     public override void Write(Utf8JsonWriter writer, TResult value, JsonSerializerOptions options) {

@@ -1,4 +1,4 @@
-namespace Perf.Holders;
+namespace Perf.Holders.Exceptions;
 
 public abstract class ResultHolderException(string message) : Exception(message);
 public sealed class ResultStateOutOfValidValuesException(string message) : ResultHolderException(message);

@@ -40,9 +40,8 @@ static class StringExtensions {
             return sb;
         }
 
-        ref readonly var spanRef = ref span.GetPinnableReference();
         unsafe {
-            var p = (char*)Unsafe.AsPointer(ref Unsafe.AsRef(in spanRef));
+            var p = (char*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(span));
             sb.Append(p, span.Length);
         }
 

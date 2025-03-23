@@ -8,5 +8,7 @@ public static class OptionExtensions {
         where T : struct =>
         value.HasValue ? new(value.Value) : default;
 
-    public static Option<T> AsOption<T>(this T? value) => new(value);
+    public static Option<T> AsOption<T>(this T? value)
+        where T : notnull =>
+        new(value);
 }

@@ -1,0 +1,46 @@
+﻿<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Holders/">
+    <Project Path="src\Holders\Perf.Holders.CodeFixes\Perf.Holders.CodeFixes.csproj" Type="Classic C#" />
+    <Project Path="src\Holders\PerfHolders.Generator\PerfHolders.Generator.csproj" Type="Classic C#" />
+    <Project Path="src\Holders\PerfHolders.Serialization.MessagePack\PerfHolders.Serialization.MessagePack.csproj" Type="Classic C#" />
+    <Project Path="src\Holders\PerfHolders.Serialization.SystemTextJson\PerfHolders.Serialization.SystemTextJson.csproj" Type="Classic C#" />
+    <Project Path="src\Holders\PerfHolders\PerfHolders.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Holders/nuget/">
+    <File Path="src\Holders\nuget\pack_main.sh" />
+    <File Path="src\Holders\nuget\PerfHolders.nuspec" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src\Shared\Mediator\Mediator.csproj" Type="Classic C#" />
+    <Project Path="src\Shared\Perf.SourceGeneration.Internal\Perf.SourceGeneration.Internal.csproj" Type="Classic C#" />
+    <Project Path="src\Shared\SourceGeneration\SourceGeneration.csproj" Type="Classic C#" />
+    <Project Path="src\Shared\Utilities\Utilities.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/ValueObjects/">
+    <Project Path="src\ValueObjects\Generator\Generator.csproj" Type="Classic C#" />
+    <Project Path="src\ValueObjects\ValueObjects.SystemTextJson\ValueObjects.SystemTextJson.csproj" Type="Classic C#" />
+    <Project Path="src\ValueObjects\ValueObjects\ValueObjects.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/Xml/">
+    <Project Path="src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" Type="Classic C#" />
+    <Project Path="src\Xml\PerfXml\PerfXml.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests\GeneratorTester\GeneratorTester.csproj" Type="Classic C#" />
+    <Project Path="tests\PerfXml.Tests\PerfXml.Tests.csproj" Type="Classic C#" />
+    <Project Path="test\SourceGenerators11\SourceGenerators11.Sample\SourceGenerators11.Sample.csproj" Type="Classic C#" />
+    <Project Path="test\SourceGenerators11\SourceGenerators11.Tests\SourceGenerators11.Tests.csproj" Type="Classic C#" />
+    <Project Path="test\SourceGenerators11\SourceGenerators11\SourceGenerators11.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/_globals/">
+    <File Path="global.json" />
+    <File Path=".editorconfig" />
+    <File Path="nuget-pack.sh" />
+    <File Path="README.md" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="nuget.config" />
+  </Folder>
+</Solution>

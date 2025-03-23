@@ -8,12 +8,10 @@ public sealed class OptionStateOutOfValidValues(string message) : OptionHolderEx
 public sealed class OptionSomeAccessWhenNoneException(string message) : OptionHolderException(message);
 
 public static class OptionHolderExceptions {
-    public static OptionSomeUninitializedException SomeUnitialized<T>()
-        where T : notnull =>
-        new($"{typeof(Option.Some<T>)} Cannot access state while state is Unitilized");
+    public static OptionSomeUninitializedException SomeUnitialized<TSome>() =>
+        new($"{typeof(Option.Some<TSome>)} Cannot access state while state is Unitilized");
 
-    public static OptionSomeStateOutOfValidValuesException SomeStateOutOfValidValues<TSome>(byte state)
-        where TSome : notnull =>
+    public static OptionSomeStateOutOfValidValuesException SomeStateOutOfValidValues<TSome>(byte state) =>
         new($"{typeof(Option.Some<TSome>)} SomeState {state} is out of valid values");
 
     public static OptionStateOutOfValidValues StateOutOfValidValues<TOption, TSome>(OptionState state)

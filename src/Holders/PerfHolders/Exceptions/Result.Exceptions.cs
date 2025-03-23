@@ -10,11 +10,11 @@ public sealed class ResultOkAccessWhenErrorException(string message) : ResultHol
 public sealed class ResultErrorAccessWhenOkException(string message) : ResultHolderException(message);
 
 public static class ResultHolderExceptions {
-    public static ResultObjectUninitializedException UnitializedOk<TOk>()
+    public static ResultObjectUninitializedException UninitializedOk<TOk>()
         where TOk : notnull =>
         new($"{typeof(Result.Ok<TOk>)} Cannot access state while state is {nameof(ResultState.Uninitialized)}");
 
-    public static ResultObjectUninitializedException UnitializedError<TError>()
+    public static ResultObjectUninitializedException UninitializedError<TError>()
         where TError : notnull =>
         new($"{typeof(Result.Error<TError>)} Cannot access state while state is {nameof(ResultState.Uninitialized)}");
 

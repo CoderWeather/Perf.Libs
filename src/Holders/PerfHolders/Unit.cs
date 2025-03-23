@@ -4,7 +4,7 @@ namespace Perf.Holders;
 
 using System.Runtime.InteropServices;
 
-[StructLayout(LayoutKind.Sequential, Size = 1)]
+[StructLayout(LayoutKind.Explicit, Size = 1)]
 public readonly struct Unit : IEquatable<Unit> {
     public static Unit Value => default;
     public override bool Equals(object? obj) => obj is Unit;

@@ -41,7 +41,13 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                 }
 
                 var arg = marker.TypeArguments[0];
+                if (arg.NullableAnnotation is NullableAnnotation.Annotated) {
+                    return default;
+                }
+
+                var argNullable = arg.WithNullableAnnotation(NullableAnnotation.Annotated);
                 var argName = arg.GlobalName();
+                var argNullableName = argNullable.GlobalName();
 
                 var patternValues = new Dictionary<string, string?> {
                     ["NamespaceDeclaration"] = option.ContainingNamespace.IsGlobalNamespace is false
@@ -71,9 +77,10 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     ["SomeDeclarationModifiers"] = "",
                     ["SomeType"] = argName,
                     ["SomeTypeForEquals"] = arg switch {
-                        { IsReferenceType: true } => $"{argName}?",
+                        { IsReferenceType: true } => argNullableName,
                         _                         => argName
                     },
+                    ["SomeTypeNullable"] = argNullableName,
                     ["OptionState"] = "global::Perf.Holders.OptionState",
                     ["BaseOption"] = "global::Perf.Holders.Option",
                     ["DebuggerBrowsableNever"] =
@@ -150,7 +157,11 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 var sourceText = PatternFormatter.Format(Patterns.Option, values);
 
+#if DEBUG
+                context.AddSource($"{minimalNameWithGenericMetadata}.cs", SourceText.From(sourceText, Encoding.UTF8));
+#else
                 context.AddSource($"{minimalNameWithGenericMetadata}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+#endif
             }
         );
     }

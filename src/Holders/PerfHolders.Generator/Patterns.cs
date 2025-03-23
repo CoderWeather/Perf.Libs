@@ -142,7 +142,7 @@ static class Patterns {
                     _ => throw global::Perf.Holders.Exceptions.ResultHolderExceptions.StateOutOfValidValues<{ResultShort}, {OkType}, {ErrorType}>(state)
                 };
         
-            public string DebugPrint() =>
+            string DebugPrint() =>
                 state switch {
                     {ResultState}.Ok            => $"{OkProperty}={{OkField}}",
                     {ResultState}.Error         => $"{ErrorProperty}={{ErrorField}}",
@@ -212,11 +212,16 @@ static class Patterns {
                 state = {OptionState}.None;
                 {SomeField} = default!;
             }
-            public {OptionName}({SomeType} {SomeField}) {
-                state = {OptionState}.Some;
-                this.{SomeField} = {SomeField};
+            public {OptionName}({SomeTypeNullable} {SomeField}) {
+                if({SomeField} != null) {
+                    state = {OptionState}.Some;
+                    this.{SomeField} = ({SomeType}){SomeField};
+                } else {
+                    state = {OptionState}.None;
+                    this.{SomeField} = default!;
+                }
             }
-            public {OptionName}({BaseOption}.Some<{SomeType}> some) : this({SomeField}: some.Value) { }
+            public {OptionName}({BaseOption}.Some<{SomeType}> someObject) : this({SomeField}: someObject.Value) { }
         
             private readonly {OptionState} state;
             private readonly {SomeType} {SomeField};
@@ -239,7 +244,7 @@ static class Patterns {
                 };
 
         // Operators
-            public static implicit operator {OptionShort}({SomeType} {SomeField}) => new({SomeField}: {SomeField});
+            public static implicit operator {OptionShort}({SomeTypeNullable} {SomeField}) => new({SomeField}: {SomeField});
             public static implicit operator {OptionShort}({BaseOption}.Some<{SomeType}> some) => new({SomeField}: some.Value);
             public static implicit operator {OptionShort}({BaseOption}.None _) => default;
             public static implicit operator {BaseOption}<{SomeType}>({OptionShort} o) => o.{IsSomeProperty} ? new(o.{SomeProperty}) : default;
@@ -259,8 +264,15 @@ static class Patterns {
             public TOther CastByRef<TOther>() where TOther : struct, global::Perf.Holders.IOptionHolder<{SomeType}> => global::Perf.Holders.___HoldersInvisibleHelpers.CastOption<{OptionShort}, {SomeType}, TOther>(in this);
         // Equality
             public override bool Equals(object? obj) =>
-                (obj is {OptionShort} other && Equals(other))
-                    || (obj is {BaseOption}<{SomeType}> o && Equals(o));
+                obj switch {
+                    null => false,
+                    {OptionShort} o => Equals(o),
+                    {BaseOption}<{SomeType}> b => Equals(b),
+                    {SomeType} v => Equals(v),
+                    {BaseOption}.Some<{SomeType}> s => Equals(s),
+                    {BaseOption}.None => {IsSomeProperty} == false,
+                    _ => false
+                };
             public bool Equals({OptionShort} other) =>
                 (state, other.state) switch {
                     ({OptionState}.Some, {OptionState}.Some) => global::System.Collections.Generic.EqualityComparer<{SomeType}>.Default.Equals({SomeField}, other.{SomeField}),
@@ -284,7 +296,7 @@ static class Patterns {
                     _ => throw global::Perf.Holders.Exceptions.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
         
-            public string DebugPrint() =>
+            string DebugPrint() =>
                 state switch {
                     {OptionState}.Some => $"{SomeProperty}={{SomeField}}",
                     {OptionState}.None => "None",

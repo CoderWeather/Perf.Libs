@@ -1,3 +1,6 @@
+// ReSharper disable UnusedMember.Local
+// ReSharper disable MemberCanBePrivate.Global
+
 namespace Perf.Holders.Generator;
 
 using Microsoft.CodeAnalysis;

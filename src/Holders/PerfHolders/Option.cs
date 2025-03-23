@@ -2,6 +2,7 @@
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedParameter.Global
 // ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ConvertToAutoPropertyWhenPossible
 
 namespace Perf.Holders;
 
@@ -39,15 +40,17 @@ public readonly struct Option<T> :
         some = default!;
     }
 
-    public Option(T some) {
-        state = OptionState.Some;
-        this.some = some;
+    public Option(T? some) {
+        if (some is not null) {
+            state = OptionState.Some;
+            this.some = some;
+        } else {
+            state = OptionState.None;
+            this.some = default!;
+        }
     }
 
-    public Option(Option.Some<T> some) {
-        state = OptionState.Some;
-        this.some = some.Value;
-    }
+    public Option(Option.Some<T?> someObject) : this(someObject.Value) { }
 
     readonly OptionState state;
     readonly T some;
@@ -69,7 +72,7 @@ public readonly struct Option<T> :
         };
 
     public OptionState State => state;
-    public static implicit operator Option<T>(T some) => new(some);
+    public static implicit operator Option<T>(T? some) => new(some);
     public static implicit operator Option<T>(Option.Some<T> some) => new(some.Value);
     public static implicit operator Option<T>(Option.None _) => default;
     public static implicit operator bool(Option<T> option) => option.IsSome;
@@ -84,7 +87,15 @@ public readonly struct Option<T> :
         where TOther : struct, IOptionHolder<T> =>
         ___HoldersInvisibleHelpers.CastOption<Option<T>, T, TOther>(in this);
 
-    public override bool Equals(object? obj) => obj is Option<T> other && Equals(other);
+    public override bool Equals(object? obj) =>
+        obj switch {
+            null             => false,
+            Option<T> o      => Equals(o),
+            Option.Some<T> s => Equals(s),
+            T v              => Equals(v),
+            Option.None      => IsSome is false,
+            _                => false
+        };
 
     public bool Equals(Option<T> other) =>
         (state, other.state) switch {
@@ -94,7 +105,7 @@ public readonly struct Option<T> :
         };
 
     public bool Equals(T? v) => IsSome && EqualityComparer<T?>.Default.Equals(some, v);
-    public bool Equals(Option.Some<T> v) => IsSome && EqualityComparer<T>.Default.Equals(some, v.Value);
+    public bool Equals(Option.Some<T> v) => IsSome && EqualityComparer<T?>.Default.Equals(some, v.Value);
 
     public override int GetHashCode() {
         return state switch {
@@ -133,54 +144,48 @@ public static class Option {
         Initialized = 1
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public readonly struct Some<T> : IEquatable<Some<T>>
-        where T : notnull {
+    [StructLayout(LayoutKind.Auto)]
+    public readonly struct Some<T> : IEquatable<Some<T>> {
         public Some() {
             state = ObjectState.Uninitialized;
             value = default!;
         }
 
-        public Some(T value) {
+        public Some(T? value) {
             state = ObjectState.Initialized;
             this.value = value;
         }
 
         readonly ObjectState state;
-        readonly T value;
+        readonly T? value;
 
-        public T Value =>
+        public T? Value =>
             state switch {
                 ObjectState.Initialized   => value,
                 ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUnitialized<T>(),
                 _                         => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
             };
 
-        public static implicit operator Some<T>(T value) => new(value);
-        public static implicit operator T(Some<T> some) => some.Value;
+        public static implicit operator Some<T>(T? value) => new(value);
+        public static implicit operator T?(Some<T> some) => some.Value;
 
         public bool Equals(Some<T> other) =>
             (state, other.state) switch {
-                (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
+                (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T?>.Default.Equals(value, other.value),
                 (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw OptionHolderExceptions.SomeUnitialized<T>(),
-                _                                                                => false
+                _                                                                => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
             };
 
         public override bool Equals(object? obj) => obj is Some<T> other && Equals(other);
-        public override int GetHashCode() => Value.GetHashCode();
+        public override int GetHashCode() => Value?.GetHashCode() ?? 0;
 
         public static bool operator ==(Some<T> left, Some<T> right) => left.Equals(right);
         public static bool operator !=(Some<T> left, Some<T> right) => left.Equals(right) is false;
 
-        public override string? ToString() =>
-            state switch {
-                ObjectState.Initialized   => value as string ?? value?.ToString(),
-                ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUnitialized<T>(),
-                _                         => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
-            };
+        public override string? ToString() => Value as string ?? value?.ToString();
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Auto)]
     public readonly struct None : IEquatable<None> {
         public static None Value => default;
         public override bool Equals(object? obj) => obj is None;
@@ -197,7 +202,7 @@ public static class Option {
 public static class GlobalHolderOptionFunctions {
     public static Option.Some<T> Some<T>(T v)
         where T : notnull =>
-        v;
+        new(v);
 
     public static Option.Some<Unit> Some() => Unit.Value;
     public static Option.None None() => default;

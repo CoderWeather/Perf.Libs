@@ -187,7 +187,7 @@ public static class Result {
         Initialized = 1
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Auto)]
     public readonly struct Ok<T> : IEquatable<Ok<T>>
         where T : notnull {
         public Ok() {
@@ -206,32 +206,28 @@ public static class Result {
         public T Value =>
             state switch {
                 ObjectState.Initialized   => value,
-                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedOk<T>(),
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UninitializedOk<T>(),
                 _                         => throw ResultHolderExceptions.OkStateOutOfValidValues<T>((byte)state)
             };
 
         public static implicit operator Ok<T>(T value) => new(value);
         public static implicit operator T(Ok<T> ok) => ok.Value;
 
-        public override string? ToString() =>
-            state switch {
-                ObjectState.Initialized   => value?.ToString(),
-                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedOk<T>(),
-                _                         => throw ResultHolderExceptions.OkStateOutOfValidValues<T>((byte)state)
-            };
-
         public bool Equals(Ok<T> other) =>
             (state, other.state) switch {
                 (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw ResultHolderExceptions.UnitializedOk<T>(),
+                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw ResultHolderExceptions.UninitializedOk<T>(),
                 _                                                                => throw ResultHolderExceptions.OkStateOutOfValidValues<T>((byte)state)
             };
 
         public override bool Equals(object? obj) => obj is Ok<T> other && Equals(other);
         public override int GetHashCode() => Value.GetHashCode();
+        public static bool operator ==(Ok<T> left, Ok<T> right) => left.Equals(right);
+        public static bool operator !=(Ok<T> left, Ok<T> right) => left.Equals(right) is false;
+        public override string? ToString() => Value as string ?? value?.ToString();
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Auto)]
     public readonly struct Error<T> : IEquatable<Error<T>>
         where T : notnull {
         public Error() {
@@ -250,35 +246,25 @@ public static class Result {
         public T Value =>
             state switch {
                 ObjectState.Initialized   => value,
-                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedError<T>(),
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UninitializedError<T>(),
                 _                         => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
             };
 
         public static implicit operator Error<T>(T value) => new(value);
         public static implicit operator T(Error<T> ok) => ok.Value;
 
-        public override string? ToString() =>
-            state switch {
-                ObjectState.Initialized   => value?.ToString(),
-                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedError<T>(),
-                _                         => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
-            };
-
-        public override bool Equals(object? obj) => obj is Error<T> other && Equals(other);
-
         public bool Equals(Error<T> other) =>
             (state, other.state) switch {
                 (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw ResultHolderExceptions.UnitializedError<T>(),
+                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw ResultHolderExceptions.UninitializedError<T>(),
                 _                                                                => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
             };
 
-        public override int GetHashCode() =>
-            state switch {
-                ObjectState.Initialized   => Value.GetHashCode(),
-                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedError<T>(),
-                _                         => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
-            };
+        public override bool Equals(object? obj) => obj is Error<T> other && Equals(other);
+        public override int GetHashCode() => Value.GetHashCode();
+        public static bool operator ==(Error<T> left, Error<T> right) => left.Equals(right);
+        public static bool operator !=(Error<T> left, Error<T> right) => left.Equals(right) is false;
+        public override string? ToString() => Value as string ?? value.ToString();
     }
 }
 

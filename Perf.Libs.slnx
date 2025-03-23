@@ -36,7 +36,6 @@
   <Folder Name="/_globals/">
     <File Path="global.json" />
     <File Path=".editorconfig" />
-    <File Path="nuget-pack.sh" />
     <File Path="README.md" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Build.props" />

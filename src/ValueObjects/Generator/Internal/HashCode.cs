@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// Polyfill for .NET 6 HashCode  
+/// Polyfill for .NET 6 HashCode
 /// </summary>
 struct HashCode {
     static readonly uint SSeed = GenerateGlobalSeed();

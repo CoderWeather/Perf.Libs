@@ -2,10 +2,8 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>netstandard2.0;net9.0</TargetFrameworks>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <LangVersion>latest</LangVersion>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+        <AnalysisLevel>0</AnalysisLevel>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,9 +12,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-        <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
+        <PackageReference Include="BenchmarkDotNet" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    </ItemGroup>
+
+    <PropertyGroup Condition="$(TargetFramework) == 'netstandard2.0'">
+        <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+    </PropertyGroup>
+    <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
+        <PackageReference Include="PolySharp" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
@@ -24,10 +29,10 @@
         <ProjectReference Include="..\..\src\ValueObjects\Generator\Generator.csproj" OutputItemType="Analyzer" />
         <!--        <ProjectReference Include="..\..\src\Xml\PerfXml.Generator\PerfXml.Generator.csproj" OutputItemType="Analyzer" />-->
         <!--        <ProjectReference Include="..\..\src\Xml\PerfXml\PerfXml.csproj" />-->
-        <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.MessagePack\PerfHolders.Serialization.MessagePack.csproj" />
-        <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.SystemTextJson\PerfHolders.Serialization.SystemTextJson.csproj" />
+        <!--        <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.MessagePack\PerfHolders.Serialization.MessagePack.csproj" />-->
+        <!--        <ProjectReference Include="..\..\src\Holders\PerfHolders.Serialization.SystemTextJson\PerfHolders.Serialization.SystemTextJson.csproj" />-->
         <ProjectReference Include="..\..\src\Holders\PerfHolders\PerfHolders.csproj" AotCompatibility="true" />
-        <ProjectReference Include="..\..\src\Holders\PerfHolders.SourceGenerator\PerfHolders.SourceGenerator.csproj" OutputItemType="Analyzer" />
+        <ProjectReference Include="..\..\src\Holders\PerfHolders.Generator\PerfHolders.Generator.csproj" OutputItemType="Analyzer" />
     </ItemGroup>
 
 </Project>

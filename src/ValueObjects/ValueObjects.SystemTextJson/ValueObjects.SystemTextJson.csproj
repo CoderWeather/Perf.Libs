@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net7.0;net8.0;net9.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <AssemblyName>Perf.ValueObjects</AssemblyName>
+        <AssemblyName>Perf.ValueObjects.SystemTextJson</AssemblyName>
         <RootNamespace>$(AssemblyName)</RootNamespace>
     </PropertyGroup>
 
@@ -25,8 +25,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="PerfValueObjects" Version="1.0.11" />
-        <PackageReference Include="System.Text.Json" Version="7.0.0-rc.1.22426.10" />
+        <PackageReference Include="System.Text.Json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../ValueObjects/ValueObjects.csproj" />
     </ItemGroup>
 
 </Project>

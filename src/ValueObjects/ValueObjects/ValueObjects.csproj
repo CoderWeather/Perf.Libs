@@ -25,8 +25,11 @@
         <None Include="../../../LICENSE" Pack="true" PackagePath="" Visible="false" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
+    <PropertyGroup Condition="$(TargetFramework) == 'netstandard2.0'">
+        <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+    </PropertyGroup>
+    <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
+        <PackageReference Include="PolySharp" PrivateAssets="all" />
     </ItemGroup>
 
 </Project>

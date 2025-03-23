@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MessagePack" Version="2.5.192" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
-        <PackageReference Include="xunit" Version="2.9.2" />
+        <PackageReference Include="MessagePack" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
         <Using Include="Xunit" />
-        <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.1.0" />
+        <PackageReference Include="CommunityToolkit.HighPerformance" />
     </ItemGroup>
 
     <ItemGroup>

@@ -14,7 +14,7 @@ sealed class NestedScope : IDisposable {
             Close();
         }
 
-        if (Stack.Any()) {
+        if (Stack.Count != 0) {
             Stack.Pop();
         }
     }

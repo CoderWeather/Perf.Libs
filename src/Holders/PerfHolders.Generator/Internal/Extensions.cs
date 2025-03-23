@@ -72,7 +72,7 @@ static class StringExtensions {
         string result;
         unsafe {
             var p = (char*)Unsafe.AsPointer(ref buffer.GetPinnableReference());
-            result = new string(p, 0, buffer.Length);
+            result = new(p, 0, buffer.Length);
         }
 
         return result;

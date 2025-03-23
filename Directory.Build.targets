@@ -1,7 +1,6 @@
 <Project>
-
     <Choose>
-        <When Condition="$(Configuration) == 'Debug' and $(TargetFramework) == 'net7.0'">
+        <When Condition="$(Configuration) == 'Debug'">
             <PropertyGroup>
                 <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
                 <CompilerGeneratedFilesOutputPath>$(MSBuildProjectDirectory)/obj/$(Configuration)/generated</CompilerGeneratedFilesOutputPath>
@@ -15,5 +14,4 @@
             </ItemGroup>
         </When>
     </Choose>
-
 </Project>

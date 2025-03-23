@@ -128,31 +128,32 @@ public readonly struct Option<T> :
 }
 
 public static class Option {
-    enum ElState : byte {
+    enum ObjectState : byte {
         Uninitialized = 0,
         Initialized = 1
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public readonly struct Some<T> : IEquatable<Some<T>> where T : notnull {
+    public readonly struct Some<T> : IEquatable<Some<T>>
+        where T : notnull {
         public Some() {
-            state = ElState.Uninitialized;
+            state = ObjectState.Uninitialized;
             value = default!;
         }
 
         public Some(T value) {
-            state = ElState.Initialized;
+            state = ObjectState.Initialized;
             this.value = value;
         }
 
-        readonly ElState state;
+        readonly ObjectState state;
         readonly T value;
 
         public T Value =>
             state switch {
-                ElState.Initialized   => value,
-                ElState.Uninitialized => throw new InvalidOperationException($"Option.Some<{typeof(T).Name}> is Uninitialized"),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => value,
+                ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUnitialized<T>(),
+                _                         => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
             };
 
         public static implicit operator Some<T>(T value) => new(value);
@@ -160,10 +161,9 @@ public static class Option {
 
         public bool Equals(Some<T> other) =>
             (state, other.state) switch {
-                (ElState.Initialized, ElState.Initialized) => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) =>
-                    throw new InvalidOperationException($"Option.Some<{typeof(T).Name}> is Uninitialized"),
-                _ => false
+                (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
+                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw OptionHolderExceptions.SomeUnitialized<T>(),
+                _                                                                => false
             };
 
         public override bool Equals(object? obj) => obj is Some<T> other && Equals(other);
@@ -174,9 +174,9 @@ public static class Option {
 
         public override string? ToString() =>
             state switch {
-                ElState.Initialized   => value as string ?? value?.ToString(),
-                ElState.Uninitialized => throw new InvalidOperationException($"Option.Some<{typeof(T).Name}> is Uninitialized"),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => value as string ?? value?.ToString(),
+                ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUnitialized<T>(),
+                _                         => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
             };
     }
 
@@ -195,7 +195,10 @@ public static class Option {
 }
 
 public static class GlobalHolderOptionFunctions {
-    public static Option.Some<T> Some<T>(T v) => v;
+    public static Option.Some<T> Some<T>(T v)
+        where T : notnull =>
+        v;
+
     public static Option.Some<Unit> Some() => Unit.Value;
     public static Option.None None() => default;
 }

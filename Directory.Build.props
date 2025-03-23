@@ -1,0 +1,13 @@
+<Project>
+    <PropertyGroup>
+        <LangVersion>13</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <AnalysisModeSecurity>All</AnalysisModeSecurity>
+        <AnalysisModePerformance>All</AnalysisModePerformance>
+        <AnalysisModeInteroperability>All</AnalysisModeInteroperability>
+        <AnalysisModeMaintainability>All</AnalysisModeMaintainability>
+        <NoWarn>CA1515,CA1815,CA1852,CA1812,CA1810</NoWarn>
+    </PropertyGroup>
+</Project>

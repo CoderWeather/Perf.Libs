@@ -182,7 +182,7 @@ public readonly struct Result<TOk, TError> :
 }
 
 public static class Result {
-    enum ElState : byte {
+    enum ObjectState : byte {
         Uninitialized = 0,
         Initialized = 1
     }
@@ -192,23 +192,22 @@ public static class Result {
         where T : notnull {
         public Ok() {
             value = default!;
-            state = ElState.Uninitialized;
+            state = ObjectState.Uninitialized;
         }
 
         public Ok(T value) {
             this.value = value;
-            state = ElState.Initialized;
+            state = ObjectState.Initialized;
         }
 
-        readonly ElState state;
+        readonly ObjectState state;
         readonly T value;
-        static readonly string UninitializedException = $"Result.Ok<{typeof(T).Name}> is Uninitialized";
 
         public T Value =>
             state switch {
-                ElState.Initialized   => value,
-                ElState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => value,
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedOk<T>(),
+                _                         => throw ResultHolderExceptions.OkStateOutOfValidValues<T>((byte)state)
             };
 
         public static implicit operator Ok<T>(T value) => new(value);
@@ -216,16 +215,16 @@ public static class Result {
 
         public override string? ToString() =>
             state switch {
-                ElState.Initialized   => value?.ToString(),
-                ElState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => value?.ToString(),
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedOk<T>(),
+                _                         => throw ResultHolderExceptions.OkStateOutOfValidValues<T>((byte)state)
             };
 
         public bool Equals(Ok<T> other) =>
             (state, other.state) switch {
-                (ElState.Initialized, ElState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) => throw new InvalidOperationException(UninitializedException),
-                _                                                        => throw new ArgumentOutOfRangeException(nameof(state))
+                (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
+                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw ResultHolderExceptions.UnitializedOk<T>(),
+                _                                                                => throw ResultHolderExceptions.OkStateOutOfValidValues<T>((byte)state)
             };
 
         public override bool Equals(object? obj) => obj is Ok<T> other && Equals(other);
@@ -237,23 +236,22 @@ public static class Result {
         where T : notnull {
         public Error() {
             value = default!;
-            state = ElState.Initialized;
+            state = ObjectState.Initialized;
         }
 
         public Error(T value) {
             this.value = value;
-            state = ElState.Initialized;
+            state = ObjectState.Initialized;
         }
 
-        readonly ElState state;
+        readonly ObjectState state;
         readonly T value;
-        static readonly string UninitializedException = $"Result.Error<{typeof(T).Name}> is Uninitialized";
 
         public T Value =>
             state switch {
-                ElState.Initialized   => value,
-                ElState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => value,
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedError<T>(),
+                _                         => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
             };
 
         public static implicit operator Error<T>(T value) => new(value);
@@ -261,25 +259,25 @@ public static class Result {
 
         public override string? ToString() =>
             state switch {
-                ElState.Initialized   => value?.ToString(),
-                ElState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => value?.ToString(),
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedError<T>(),
+                _                         => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
             };
 
         public override bool Equals(object? obj) => obj is Error<T> other && Equals(other);
 
         public bool Equals(Error<T> other) =>
             (state, other.state) switch {
-                (ElState.Initialized, ElState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
-                (ElState.Uninitialized, _) or (_, ElState.Uninitialized) => throw new InvalidOperationException(UninitializedException),
-                _                                                        => throw new ArgumentOutOfRangeException(nameof(state))
+                (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T>.Default.Equals(value, other.value),
+                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw ResultHolderExceptions.UnitializedError<T>(),
+                _                                                                => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
             };
 
         public override int GetHashCode() =>
             state switch {
-                ElState.Initialized   => Value.GetHashCode(),
-                ElState.Uninitialized => throw new InvalidOperationException(UninitializedException),
-                _                     => throw new ArgumentOutOfRangeException(nameof(state))
+                ObjectState.Initialized   => Value.GetHashCode(),
+                ObjectState.Uninitialized => throw ResultHolderExceptions.UnitializedError<T>(),
+                _                         => throw ResultHolderExceptions.ErrorStateOutOfValidValues<T>((byte)state)
             };
     }
 }

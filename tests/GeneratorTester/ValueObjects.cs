@@ -13,8 +13,7 @@ using Perf.ValueObjects;
 //     public string Key { get; } = "";
 // }
 // ref partial struct RefValueObject : IValueObject<string> { }
-partial record struct CustomValueObject : IValueObject<string>;
-
+partial struct CustomValueObject : IValueObject<string>;
 partial struct CustomValueObject2 : IValidatableValueObject<string> {
     public bool Validate(string valueToValidate) {
         return true;

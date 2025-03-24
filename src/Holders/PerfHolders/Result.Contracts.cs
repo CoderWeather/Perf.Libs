@@ -1,5 +1,3 @@
-// ReSharper disable UnusedTypeParameter
-
 namespace Perf.Holders;
 
 /// <summary>

@@ -1,8 +1,7 @@
 // ReSharper disable UnusedMember.Global
 
-namespace Perf.Holders.Generator;
+namespace Perf.Holders.Generator.Internal;
 
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 /// <summary>
@@ -308,15 +307,9 @@ struct HashCode {
         // Switch can't be inlined.
 
         switch (position) {
-            case 0:
-                _queue1 = val;
-                break;
-            case 1:
-                _queue2 = val;
-                break;
-            case 2:
-                _queue3 = val;
-                break;
+            case 0: _queue1 = val; break;
+            case 1: _queue2 = val; break;
+            case 2: _queue3 = val; break;
             // position == 3
             default: {
                 if (previousLength == 3) {
@@ -370,32 +363,6 @@ struct HashCode {
         hash = MixFinal(hash);
         return (int)hash;
     }
-
-#pragma warning disable 0809
-    // Obsolete member 'memberA' overrides non-obsolete member 'memberB'.
-    // Disallowing GetHashCode and Equals is by design
-
-    // * We decided to not override GetHashCode() to produce the hash code
-    //   as this would be weird, both naming-wise and from a
-    //   behavioral standpoint (GetHashCode() should return the object's
-    //   hash code, not the one being computed).
-
-    // * Even though ToHashCode() can be called safely multiple times on
-    //   this implementation, it is not part of the contract. If the
-    //   implementation has to change in the future we don't want to worry
-    //   about people who might have incorrectly used this type.
-
-    [Obsolete(
-        "HashCode is a mutable struct and should not be compared with other HashCodes. Use ToHashCode to retrieve the computed hash code.",
-        error: true
-    )]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public override int GetHashCode() => throw new NotSupportedException("Hash code not supported");
-
-    [Obsolete("HashCode is a mutable struct and should not be compared with other HashCodes.", error: true)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public override bool Equals(object? obj) => throw new NotSupportedException("Equality not supported");
-#pragma warning restore 0809
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static uint RotateLeft(uint value, int offset) => (value << offset) | (value >> (32 - offset));

@@ -227,6 +227,7 @@ static class Patterns {
             private readonly {SomeType} {SomeField};
 
         {SomeInterfaceProperty}
+        {IsSomeInterfaceProperty}
             {DebuggerBrowsableNever}
             public {SomeDeclarationModifiers}{SomeType} {SomeProperty} =>
                 state switch {
@@ -234,7 +235,6 @@ static class Patterns {
                     {OptionState}.None => throw global::Perf.Holders.Exceptions.OptionHolderExceptions.SomeAccessWhenNone<{OptionShort}, {SomeType}>(),
                     _ => throw global::Perf.Holders.Exceptions.OptionHolderExceptions.StateOutOfValidValues<{OptionShort}, {SomeType}>(state)
                 };
-        {IsSomeInterfaceProperty}
             {DebuggerBrowsableNever}
             public {IsSomeDeclarationModifiers}bool {IsSomeProperty} =>
                 state switch {

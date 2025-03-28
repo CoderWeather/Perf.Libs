@@ -3,8 +3,7 @@ namespace Perf.Holders.Generator.Internal;
 using System.Text;
 
 static class PatternFormatter {
-    public static string Format(string pattern, Dictionary<string, string?> values) {
-        var sb = new StringBuilder();
+    public static void AppendFormatPattern(this StringBuilder sb, string pattern, Dictionary<string, string?> values) {
         var span = pattern.AsSpan();
 
         while (span.Length > 0) {
@@ -56,7 +55,11 @@ static class PatternFormatter {
                 span = span[(nextEntryIndex + 1)..];
             }
         }
+    }
 
+    public static string FormatPattern(string pattern, Dictionary<string, string?> values) {
+        var sb = new StringBuilder();
+        sb.AppendFormatPattern(pattern, values);
         return sb.ToString();
     }
 }

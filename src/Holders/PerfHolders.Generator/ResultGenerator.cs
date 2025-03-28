@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using Types;
 
 [Generator]
 sealed class ResultHolderGenerator : IIncrementalGenerator {
@@ -21,11 +22,12 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 INamedTypeSymbol marker = null!;
                 foreach (var i in result.Interfaces) {
                     var iPath = i.FullPath();
-                    if (iPath is HolderTypeNames.OptionMarkerFullName) {
-                        return default;
-                    }
 
                     if (iPath is not HolderTypeNames.ResultMarkerFullName) {
+                        if (iPath.AsSpan().StartsWith("Perf.Holders.".AsSpan(), StringComparison.Ordinal)) {
+                            return default;
+                        }
+
                         continue;
                     }
 
@@ -49,7 +51,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     return default;
                 }
 
-                var patternValues = new Dictionary<string, string?> {
+                var patternValues = new EquatableDictionary<string, string?> {
                     ["NamespaceDeclaration"] = result.ContainingNamespace.IsGlobalNamespace is false
                         ? $"namespace {result.ContainingNamespace.ToDisplayString()}\n"
                         : "",
@@ -147,20 +149,14 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 }
 
                 return new BasicHolderContextInfo(
-                    MinimalNameWithGenericMetadata: MinimalNameWithGenericMetadata(result),
+                    SourceFileName: SourceFileName(result),
                     PatternValues: patternValues
                 );
             }
         );
         var filtered = types.Where(static x => x != default);
 
-        var compInfo = context.CompilationProvider
-            .Select(
-                static (c, _) => {
-                    LanguageVersion? langVersion = c is CSharpCompilation comp ? comp.LanguageVersion : null;
-                    return new CompInfo(langVersion);
-                }
-            );
+        var compInfo = context.CompilationProvider.SelectCompInfo();
 
         var typesAndCompInfo = filtered.Combine(compInfo);
 
@@ -169,21 +165,25 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
             static (context, tuple1) => {
                 var ((minimalNameWithGenericMetadata, values), compInfo) = tuple1;
 
-                values["DebugViewVisibility"] = compInfo.Version is >= LanguageVersion.CSharp11
+                values["DebugViewVisibility"] = compInfo.Version >= LanguageVersion.CSharp11
                     ? "file "
                     : "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n";
-                values["NullableFileAnnotation"] = compInfo.Version is >= LanguageVersion.CSharp8
+                values["NullableFileAnnotation"] = compInfo.Version >= LanguageVersion.CSharp8
                     ? "#nullable enable"
                     : "";
 
-                var sourceText = PatternFormatter.Format(Patterns.Result, values);
+                var sourceText = PatternFormatter.FormatPattern(Patterns.Result, values);
 
-                context.AddSource($"{minimalNameWithGenericMetadata}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+                if (compInfo.OptimizationLevel is OptimizationLevel.Debug) {
+                    context.AddSource($"{minimalNameWithGenericMetadata}.cs", SourceText.From(sourceText, Encoding.UTF8));
+                } else if (compInfo.OptimizationLevel is OptimizationLevel.Release) {
+                    context.AddSource($"{minimalNameWithGenericMetadata}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+                }
             }
         );
     }
 
-    static string MinimalNameWithGenericMetadata(INamedTypeSymbol symbol) {
+    static string SourceFileName(INamedTypeSymbol symbol) {
         return symbol.IsGenericType ? $"{symbol.Name}`{symbol.TypeParameters.Length}" : symbol.Name;
     }
 }

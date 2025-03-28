@@ -6,17 +6,16 @@ namespace Perf.Holders.Generator;
 using Microsoft.CodeAnalysis;
 
 static class SymbolExtensions {
-    public static bool IsValueNullable(this ITypeSymbol type) =>
-        type is INamedTypeSymbol {
-            OriginalDefinition.Name: "Nullable", IsValueType: true, ContainingNamespace: { Name: "System" }
-        };
-
     public static string GlobalName(this ITypeSymbol type) {
-        var nullablePostfix = type.NullableAnnotation is NullableAnnotation.Annotated && type.IsValueNullable() is false
-            ? "?"
-            : null;
-        return $"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{nullablePostfix}";
+        return type.ToDisplayString(GlobalFormat);
     }
+
+    static readonly SymbolDisplayFormat GlobalFormat =
+        SymbolDisplayFormat.FullyQualifiedFormat
+            .WithMiscellaneousOptions(
+                SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+                | SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+            );
 
     static readonly SymbolDisplayFormat FullPathFormat = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,

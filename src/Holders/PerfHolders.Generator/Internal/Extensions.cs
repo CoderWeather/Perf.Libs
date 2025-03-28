@@ -1,6 +1,13 @@
+// ReSharper disable UnusedMethodReturnValue.Global
+// ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBePrivate.Global
+
 namespace Perf.Holders.Generator.Internal;
 
 using System.Collections.Immutable;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -31,6 +38,23 @@ static class CollectionExtensions {
 
         return ImmutableCollectionsMarshal.AsImmutableArray(results);
     }
+
+    public static T[] GetUnderlyingArray<T>(this List<T> list) => ListArrayAccessor<T>.Func(list);
+
+    static class ListArrayAccessor<T> {
+        public static readonly Func<List<T>, T[]> Func;
+
+        static ListArrayAccessor() {
+            var list = typeof(List<T>);
+            var field = list.GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var p1 = Expression.Parameter(typeof(List<T>), "list");
+            var lambda = Expression.Lambda<Func<List<T>, T[]>>(
+                Expression.Field(p1, field),
+                p1
+            );
+            Func = lambda.Compile();
+        }
+    }
 }
 
 static class StringExtensions {
@@ -49,7 +73,7 @@ static class StringExtensions {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string? ToFieldFormat(this string? s) {
+    public static string ToFieldFormat(this string s) {
         if (string.IsNullOrWhiteSpace(s)) {
             return s;
         }
@@ -163,5 +187,19 @@ static class StringExtensions {
         }
 
         return true;
+    }
+}
+
+static class StringBuilderExtensions {
+    public static StringBuilder AppendInterpolated(this StringBuilder sb, DefaultInterpolatedStringHandler interpolatedStringHandler) {
+        sb.Append(interpolatedStringHandler.Text);
+        interpolatedStringHandler.Clear();
+        return sb;
+    }
+
+    public static StringBuilder AppendInterpolatedLine(this StringBuilder sb, DefaultInterpolatedStringHandler interpolatedStringHandler) {
+        AppendInterpolated(sb, interpolatedStringHandler);
+        sb.AppendLine();
+        return sb;
     }
 }

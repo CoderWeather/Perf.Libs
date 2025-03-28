@@ -25,13 +25,15 @@ static class SyntaxFilter {
                     Type: QualifiedNameSyntax {
                         Right: GenericNameSyntax g1
                     }
-                }) {
+                }
+            ) {
                 gns = g1;
             }
 
             if (bt is SimpleBaseTypeSyntax {
                     Type: GenericNameSyntax g2
-                }) {
+                }
+            ) {
                 gns = g2;
             }
 
@@ -50,8 +52,7 @@ static class SyntaxFilter {
     public static bool IsOptionHolder(this SyntaxNode sn) {
         if (sn is not StructDeclarationSyntax {
                 Modifiers.Count: > 0,
-                BaseList.Types.Count: > 0,
-                TypeParameterList: null
+                BaseList.Types.Count: > 0
             } sds
             || sds.Modifiers.Any(SyntaxKind.PartialKeyword) is false
             || sds.Modifiers.Any(SyntaxKind.RefKeyword)
@@ -65,13 +66,15 @@ static class SyntaxFilter {
                     Type: QualifiedNameSyntax {
                         Right: GenericNameSyntax g1
                     }
-                }) {
+                }
+            ) {
                 gns = g1;
             }
 
             if (bt is SimpleBaseTypeSyntax {
                     Type: GenericNameSyntax g2
-                }) {
+                }
+            ) {
                 gns = g2;
             }
 

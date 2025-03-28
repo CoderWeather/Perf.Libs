@@ -92,8 +92,7 @@ sealed class InvalidHolderDeclarationAnalyzer : DiagnosticAnalyzer {
         foreach (var i in type.Interfaces) {
             var fullInterfaceName = i.FullPath();
             switch (fullInterfaceName) {
-                case HolderTypeNames.ResultMarkerFullName or HolderTypeNames.OptionMarkerFullName
-                    when holderType != HolderType.Undefined:
+                case { } s when holderType > HolderType.Undefined && s.StartsWith("Perf.Holders."):
                     context.ReportDiagnostic(Diagnostic.Create(OnlyOneInterfaceMarkerRule, node.GetLocation()));
                     break;
                 case HolderTypeNames.ResultMarkerFullName: {

@@ -22,9 +22,13 @@
     <files>
         <file src="../../../LICENSE" target="LICENSE" />
         <file src="../PerfHolders/bin/Release/net7.0/Perf.Holders.dll" target="lib/net7.0" />
+        <file src="../PerfHolders/bin/Release/net7.0/Perf.Holders.pdb" target="lib/net7.0" />
         <file src="../PerfHolders/bin/Release/net8.0/Perf.Holders.dll" target="lib/net8.0" />
+        <file src="../PerfHolders/bin/Release/net8.0/Perf.Holders.pdb" target="lib/net8.0" />
         <file src="../PerfHolders/bin/Release/net9.0/Perf.Holders.dll" target="lib/net9.0" />
+        <file src="../PerfHolders/bin/Release/net9.0/Perf.Holders.pdb" target="lib/net9.0" />
         <file src="../PerfHolders/bin/Release/netstandard2.0/Perf.Holders.dll" target="lib/netstandard2.0" />
+        <file src="../PerfHolders/bin/Release/netstandard2.0/Perf.Holders.pdb" target="lib/netstandard2.0" />
         <file src="../PerfHolders.Generator/bin/Release/netstandard2.0/Perf.Holders.Generator.dll" target="analyzers/dotnet/cs" />
     </files>
 </package>

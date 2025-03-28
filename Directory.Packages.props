@@ -1,26 +1,26 @@
 <Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.3" />
-    <PackageVersion Include="PolySharp" Version="1.15.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.13.0" />
-    <PackageVersion Include="System.Text.Json" Version="9.0.3" />
-    <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.2" />
-    <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.1" />
-    <PackageVersion Include="PerfHolders" Version="1.4.0" />
-    <PackageVersion Include="MessagePack" Version="3.1.3" />
-    <PackageVersion Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" Version="1.1.2" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageVersion>
-  </ItemGroup>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.3" />
+        <PackageVersion Include="PolySharp" Version="1.15.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.13.0" />
+        <PackageVersion Include="System.Text.Json" Version="9.0.3" />
+        <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.2" />
+        <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.1" />
+        <PackageVersion Include="PerfHolders" Version="1.4.0" />
+        <PackageVersion Include="MessagePack" Version="3.1.3" />
+        <PackageVersion Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+        <PackageVersion Include="xunit" Version="2.9.3" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit" Version="1.1.2" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageVersion>
+    </ItemGroup>
 </Project>

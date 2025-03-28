@@ -3,6 +3,7 @@
         <LangVersion>13</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <WarningsAsErrors>nullable</WarningsAsErrors>
         <AnalysisLevel>latest</AnalysisLevel>
         <AnalysisModeSecurity>All</AnalysisModeSecurity>
         <AnalysisModePerformance>All</AnalysisModePerformance>

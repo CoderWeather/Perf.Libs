@@ -2,11 +2,28 @@ namespace GeneratorTester;
 
 using Perf.Holders;
 
-partial struct BasicMaybe : IOptionHolder<int>;
+partial class C1Class {
+    partial struct C2Struct {
+        partial record C3Record {
+            partial record struct C4RecordStruct {
+                static partial class C5StaticClass {
+                    partial struct InnerInnerOption<T> : IOptionHolder<T> where T : notnull;
+                }
+            }
+        }
+    }
+}
+
+partial struct BasicMaybe : IOptionHolder<int> {
+    public partial int One { get; }
+    public partial bool Two { get; }
+}
+
 partial struct BasicRefMaybe : IOptionHolder<string>;
 
 partial struct ComplexMaybe : IOptionHolder<string> {
     public partial string Complex { get; }
+    public partial bool Done { get; }
 }
 
 partial struct MaybeString : IOptionHolder<string> {

@@ -29,9 +29,6 @@
   <Folder Name="/tests/">
     <Project Path="tests\GeneratorTester\GeneratorTester.csproj" Type="Classic C#" />
     <Project Path="tests\PerfXml.Tests\PerfXml.Tests.csproj" Type="Classic C#" />
-    <Project Path="test\SourceGenerators11\SourceGenerators11.Sample\SourceGenerators11.Sample.csproj" Type="Classic C#" />
-    <Project Path="test\SourceGenerators11\SourceGenerators11.Tests\SourceGenerators11.Tests.csproj" Type="Classic C#" />
-    <Project Path="test\SourceGenerators11\SourceGenerators11\SourceGenerators11.csproj" Type="Classic C#" />
   </Folder>
   <Folder Name="/_globals/">
     <File Path="global.json" />

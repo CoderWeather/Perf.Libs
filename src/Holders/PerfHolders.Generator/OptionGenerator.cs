@@ -69,6 +69,8 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     return default;
                 }
 
+                var configuration = option.GetAttributes().ReadOptionConfigurationFromAttributes();
+
                 var argNullable = arg.IsValueType
                     ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(arg)
                     : arg.WithNullableAnnotation(NullableAnnotation.Annotated);
@@ -93,8 +95,11 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     HavePartial: false
                 );
 
-                var declaredPartialProperties = option.GetMembers()
-                    .WhereOfType<IPropertySymbol>(x => x.IsPartialDefinition);
+                var declaredPartialProperties = option.GetMembers().WhereOfType<IPropertySymbol>(x => x is {
+                        DeclaredAccessibility: Accessibility.Public,
+                        IsPartialDefinition: true
+                    }
+                );
                 if (declaredPartialProperties.Length > 0) {
                     foreach (var ps in declaredPartialProperties) {
                         if (someInfo.HavePartial is false && ps.Type.Equals(arg, SymbolEqualityComparer.Default)) {
@@ -127,7 +132,8 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     Option: optionInfo,
                     Some: someInfo,
                     IsSome: isSomeInfo,
-                    ContainingTypes: containingTypes
+                    ContainingTypes: containingTypes,
+                    Configuration: configuration
                 );
             }
         );
@@ -135,13 +141,19 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
         var compInfo = context.CompilationProvider.SelectCompInfo();
 
-        var typesAndCompInfo = filtered.Combine(compInfo);
+        var optionHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadOptionConfiguration();
+
+        var final = filtered.Combine(compInfo).Combine(optionHolderConfiguration);
 
         context.RegisterSourceOutput(
-            typesAndCompInfo,
+            final,
             static (context, tuple1) => {
-                var (optionInfo, compInfo) = tuple1;
+                var ((optionInfo, compInfo), optionConfiguration) = tuple1;
                 var sourceFileName = optionInfo.SourceFileName;
+
+                optionInfo = optionInfo with {
+                    Configuration = optionInfo.Configuration.MergeWithMajor(optionConfiguration).ApplyDefaults()
+                };
 
                 var sourceText = new OptionSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();
 

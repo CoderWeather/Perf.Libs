@@ -166,12 +166,18 @@ sealed class ResultSourceBuilder(
         sb.AppendInterpolatedLine($"global::System.IEquatable<{context.Result.DeclarationName}>,");
         sb.AppendInterpolatedLine($"global::System.IEquatable<{baseType}>,");
 
-        sb.AppendInterpolatedLine($"global::System.IEquatable<{context.Ok.TypeNullable}>,");
+        sb.AppendInterpolated($"global::System.IEquatable<{context.Ok.TypeNullable}>");
         if (context.Ok.IsStruct) {
-            sb.AppendInterpolatedLine($"global::System.IEquatable<{context.Ok.Type}>,");
+            sb.AppendLine(",");
+            sb.AppendInterpolated($"global::System.IEquatable<{context.Ok.Type}>");
         }
 
-        sb.AppendInterpolatedLine($"global::System.IEquatable<{BaseResult}.Ok<{context.Ok.Type}>>");
+        if (context.Configuration.IncludeResultOkObject is true) {
+            sb.AppendLine(",");
+            sb.AppendInterpolated($"global::System.IEquatable<{BaseResult}.Ok<{context.Ok.Type}>>");
+        }
+
+        sb.AppendLine();
 
         if (context.Ok.IsTypeArgument) {
             sb.AppendInterpolatedLine($"where {context.Ok.Type} : notnull");
@@ -210,10 +216,15 @@ sealed class ResultSourceBuilder(
                 this.{{okField}} = default!;
                 this.{{errorField}} = {{errorField}};
             }
-            public {{option}}({{BaseResult}}.Ok<{{okType}}> okObject) : this({{okField}}: okObject.Value) { }
-            public {{option}}({{BaseResult}}.Error<{{errorType}}> errorObject) : this({{errorField}}: errorObject.Value) { }
             """
         );
+        if (context.Configuration.IncludeResultOkObject is true) {
+            sb.AppendInterpolatedLine($"public {option}({BaseResult}.Ok<{okType}> okObject) : this({okField}: okObject.Value) {{ }}");
+        }
+
+        if (context.Configuration.IncludeResultErrorObject is true) {
+            sb.AppendInterpolatedLine($"public {option}({BaseResult}.Error<{errorType}> errorObject) : this({errorField}: errorObject.Value) {{ }}");
+        }
     }
 
     void WriteFields() {
@@ -354,12 +365,34 @@ sealed class ResultSourceBuilder(
         var isOk = context.IsOk.Property;
         var result = context.Result.DeclarationName;
 
+        if (context.Configuration.ImplicitCastOkTypeToResult is true) {
+            sb.AppendInterpolatedLine(
+                $$"""
+                public static implicit operator {{result}}({{okType}} {{okField}}) => new({{okField}}: {{okField}});
+                """
+            );
+        }
+
+        if (context.Configuration.ImplicitCastErrorTypeToResult is true) {
+            sb.AppendInterpolatedLine(
+                $$"""
+                public static implicit operator {{result}}({{errorType}} {{errorField}}) => new({{errorField}}: {{errorField}});
+                """
+            );
+        }
+
+        if (context.Configuration.IncludeResultOkObject is true) {
+            sb.AppendInterpolatedLine($"public static implicit operator {result}({BaseResult}.Ok<{okType}> okObject) => new({okField}: okObject.Value);");
+        }
+
+        if (context.Configuration.IncludeResultErrorObject is true) {
+            sb.AppendInterpolatedLine(
+                $"public static implicit operator {result}({BaseResult}.Error<{errorType}> errorObject) => new({errorField}: errorObject.Value);"
+            );
+        }
+
         sb.AppendInterpolatedLine(
             $$"""
-            public static implicit operator {{result}}({{okType}} {{okField}}) => new({{okField}}: {{okField}});
-            public static implicit operator {{result}}({{BaseResult}}.Ok<{{okType}}> okObject) => new({{okField}}: okObject.Value);
-            public static implicit operator {{result}}({{errorType}} {{errorField}}) => new({{errorField}}: {{errorField}});
-            public static implicit operator {{result}}({{BaseResult}}.Error<{{errorType}}> errorObject) => new({{errorField}}: errorObject.Value);
             public static implicit operator {{baseType}}({{result}} result) => result.{{isOk}} ? new(ok: result.{{okField}}) : new(error: result.{{errorField}});
             public static implicit operator {{result}}({{baseType}} result) => result.IsOk ? new({{okField}}: result.Ok) : new({{errorField}}: result.Error);
             public static implicit operator bool({{result}} result) => result.{{isOk}};
@@ -406,15 +439,29 @@ sealed class ResultSourceBuilder(
             $$"""
             public override bool Equals(object? obj) =>
                 obj switch {
-                    null => false,
-                    {{context.Result.DeclarationName}} o1 => Equals(o1),
-                    {{baseType}} o2 => Equals(o2),
-                    {{okType}} o3 => Equals(o3),
-                    {{BaseResult}}.Ok<{{okType}}> o4 => Equals(o4),
-                    {{errorType}} o5 => Equals(o5),
-                    {{BaseResult}}.Error<{{errorType}}> o6 => Equals(o6),
-                    _ => false
-                };
+            """
+        );
+        sb.Indent += 2;
+        sb.AppendLine("null => false,");
+        sb.AppendInterpolatedLine($"{context.Result.DeclarationName} o1 => Equals(o1),");
+        sb.AppendInterpolatedLine($"{baseType} o2 => Equals(o2),");
+        sb.AppendInterpolatedLine($"{okType} o3 => Equals(o3),");
+        if (context.Configuration.IncludeResultOkObject is true) {
+            sb.AppendInterpolatedLine($"{BaseResult}.Ok<{okType}> o4 => Equals(o4),");
+        }
+
+        sb.AppendInterpolatedLine($"{errorType} o5 => Equals(o5),");
+        if (context.Configuration.IncludeResultErrorObject is true) {
+            sb.AppendInterpolatedLine($"{BaseResult}.Error<{errorType}> o6 => Equals(o6),");
+        }
+
+        sb.AppendLine("_ => false");
+        sb.Indent--;
+        sb.AppendLine("};");
+        sb.Indent--;
+
+        sb.AppendInterpolatedLine(
+            $$"""
             public bool Equals({{context.Result.DeclarationName}} other) =>
                 (state, other.state) switch {
                     ({{ResultState}}.Ok, {{ResultState}}.Ok) => {{context.Ok.Field}}.Equals(other.{{context.Ok.Field}}),
@@ -423,13 +470,27 @@ sealed class ResultSourceBuilder(
                     ({{ResultState}}.Uninitialized, _) or (_, {{ResultState}}.Uninitialized) => {{ThrowUninitialized}},
                     _ => {{ThrowStateOutOfValidValues}}
                 };
-            public bool Equals({{baseType}} other) => other.Equals(({{baseType}})this);
-            public bool Equals({{okTypeForEquals}} other) => {{context.IsOk.Property}} && {{EqualityComparer}}<{{okType}}>.Default.Equals({{context.Ok.Field}}, other);
-            public bool Equals({{BaseResult}}.Ok<{{okType}}> okObject) => {{context.IsOk.Property}} && {{EqualityComparer}}<{{okType}}>.Default.Equals({{context.Ok.Field}}, okObject.Value);
-            public bool Equals({{errorTypeForEquals}} other) => {{context.IsOk.Property}} == false && {{EqualityComparer}}<{{errorType}}>.Default.Equals({{context.Error.Field}}, other);
-            public bool Equals({{BaseResult}}.Error<{{errorType}}> errorObject) => {{context.IsOk.Property}} == false && {{EqualityComparer}}<{{errorType}}>.Default.Equals({{context.Error.Field}}, errorObject.Value);
             """
         );
+        sb.AppendInterpolatedLine(
+            $$"""
+            public bool Equals({{baseType}} other) => other.Equals(({{baseType}})this);
+            public bool Equals({{okTypeForEquals}} other) => {{context.IsOk.Property}} && {{EqualityComparer}}<{{okType}}>.Default.Equals({{context.Ok.Field}}, other);
+            public bool Equals({{errorTypeForEquals}} other) => {{context.IsOk.Property}} == false && {{EqualityComparer}}<{{errorType}}>.Default.Equals({{context.Error.Field}}, other);
+            """
+        );
+        if (context.Configuration.IncludeResultOkObject is true) {
+            sb.AppendInterpolatedLine(
+                $"public bool Equals({BaseResult}.Ok<{okType}> okObject) => {context.IsOk.Property} && {EqualityComparer}<{okType}>.Default.Equals({context.Ok.Field}, okObject.Value);"
+            );
+        }
+
+        if (context.Configuration.IncludeResultErrorObject is true) {
+            sb.AppendInterpolatedLine(
+                $"public bool Equals({BaseResult}.Error<{errorType}> errorObject) => {context.IsOk.Property} == false && {EqualityComparer}<{errorType}>.Default.Equals({context.Error.Field}, errorObject.Value);"
+            );
+        }
+
         if (context.Ok.IsStruct) {
             sb.AppendInterpolatedLine(
                 $$"""
@@ -473,10 +534,10 @@ sealed class ResultSourceBuilder(
             $$"""
             string DebugPrint() =>
                 state switch {
-                    {{ResultState}}.Ok => $"Ok({{{context.Ok.Field}}})",
-                    {{ResultState}}.Error => $"Error({{{context.Error.Field}}})",
+                    {{ResultState}}.Ok => $"{{context.Ok.Property}}({{{context.Ok.Field}}})",
+                    {{ResultState}}.Error => $"{{context.Error.Property}}({{{context.Error.Field}}})",
                     {{ResultState}}.Uninitialized => "Uninitialized",
-                    _ => "StateOutOfValidValues"
+                    _ => "!!! Incorrect State !!!"
                 };
             """
         );

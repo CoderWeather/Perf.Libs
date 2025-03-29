@@ -9,6 +9,10 @@ using global::MessagePack;
 using global::MessagePack.Formatters;
 using Internal;
 
+#if NET7_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
+
 public sealed class OptionHolderFormatterResolver : IFormatterResolver {
     public static readonly OptionHolderFormatterResolver Instance = new();
 
@@ -33,6 +37,9 @@ public sealed class OptionHolderFormatterResolver : IFormatterResolver {
     }
 }
 
+#if NET7_0_OR_GREATER
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
 sealed class OptionHolderFormatter<TOption, TValue> : IMessagePackFormatter<TOption>
     where TOption : struct, IOptionHolder<TValue>
     where TValue : notnull {
@@ -47,8 +54,7 @@ sealed class OptionHolderFormatter<TOption, TValue> : IMessagePackFormatter<TOpt
     }
 
     public TOption Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
-        if (reader.IsNil) {
-            reader.ReadNil();
+        if (reader.TryReadNil()) {
             return default;
         }
 

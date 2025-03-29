@@ -136,16 +136,21 @@ sealed class OptionSourceBuilder(
         sb.AppendInterpolatedLine($"global::System.IEquatable<{context.Option.DeclarationName}>,");
         sb.AppendInterpolatedLine($"global::System.IEquatable<{BaseOption}<{context.Some.Type}>>,");
 
-        sb.AppendInterpolatedLine($"global::System.IEquatable<{context.Some.TypeNullable}>,");
-        if (context.Some.IsStruct) {
-            sb.AppendInterpolatedLine($"global::System.IEquatable<{context.Some.Type}>,");
-        }
-
-        sb.AppendInterpolated($"global::System.IEquatable<{BaseOption}.Some<{context.Some.TypeNullable}>>");
+        sb.AppendInterpolated($"global::System.IEquatable<{context.Some.TypeNullable}>");
         if (context.Some.IsStruct) {
             sb.AppendLine(",");
-            sb.AppendInterpolatedLine($"global::System.IEquatable<{BaseOption}.Some<{context.Some.Type}>>");
+            sb.AppendInterpolated($"global::System.IEquatable<{context.Some.Type}>");
         }
+
+        if (context.Configuration.IncludeOptionSomeObject is true) {
+            sb.AppendLine(",");
+            sb.AppendInterpolated($"global::System.IEquatable<{BaseOption}.Some<{context.Some.TypeNullable}>>");
+            if (context.Some.IsStruct) {
+                sb.AppendLine(",");
+                sb.AppendInterpolated($"global::System.IEquatable<{BaseOption}.Some<{context.Some.Type}>>");
+            }
+        }
+        sb.AppendLine();
 
         if (context.Some.IsTypeArgument) {
             sb.AppendInterpolatedLine($"where {context.Some.Type} : notnull");
@@ -208,19 +213,21 @@ sealed class OptionSourceBuilder(
             );
         }
 
-        if (context.Some.IsStruct) {
+        if (context.Configuration.IncludeOptionSomeObject is true) {
+            if (context.Some.IsStruct) {
+                sb.AppendInterpolatedLine(
+                    $$"""
+                    public {{option}}({{BaseOption}}.Some<{{someType}}> someObject) : this({{field}}: someObject.Value) { }
+                    """
+                );
+            }
+
             sb.AppendInterpolatedLine(
                 $$"""
-                public {{option}}({{BaseOption}}.Some<{{someType}}> someObject) : this({{field}}: someObject.Value) { }
+                public {{option}}({{BaseOption}}.Some<{{someTypeNullable}}> someObject) : this({{field}}: someObject.Value) { }
                 """
             );
         }
-
-        sb.AppendInterpolatedLine(
-            $$"""
-            public {{option}}({{BaseOption}}.Some<{{someTypeNullable}}> someObject) : this({{field}}: someObject.Value) { }
-            """
-        );
     }
 
     void WriteFields() {
@@ -318,32 +325,38 @@ sealed class OptionSourceBuilder(
         var someTypeNullable = context.Some.TypeNullable;
         var option = context.Option.DeclarationName;
 
-        if (context.Some.IsStruct) {
+        if (context.Configuration.ImplicitCastSomeTypeToOption is true) {
+            if (context.Some.IsStruct) {
+                sb.AppendInterpolatedLine(
+                    $$"""
+                    public static implicit operator {{option}}({{someType}} {{field}}) => new({{field}}: {{field}});
+                    """
+                );
+            }
+
             sb.AppendInterpolatedLine(
                 $$"""
-                public static implicit operator {{option}}({{someType}} {{field}}) => new({{field}}: {{field}});
+                public static implicit operator {{option}}({{someTypeNullable}} {{field}}) => new({{field}}: {{field}});
                 """
+            );
+        }
+
+        if (context.Configuration.IncludeOptionSomeObject is true) {
+            if (context.Some.IsStruct) {
+                sb.AppendInterpolatedLine(
+                    $"public static implicit operator {option}({BaseOption}.Some<{someType}> someObject) => new(someObject: someObject);"
+                );
+            }
+
+            sb.AppendInterpolatedLine(
+                $"public static implicit operator {option}({BaseOption}.Some<{someTypeNullable}> someObject) => new(someObject: someObject);"
             );
         }
 
         sb.AppendInterpolatedLine(
             $$"""
-            public static implicit operator {{option}}({{someTypeNullable}} {{field}}) => new({{field}}: {{field}});
-            """
-        );
-
-        if (context.Some.IsStruct) {
-            sb.AppendInterpolatedLine(
-                $$"""
-                public static implicit operator {{option}}({{BaseOption}}.Some<{{someType}}> someObject) => new(someObject: someObject);
-                """
-            );
-        }
-
-        sb.AppendInterpolatedLine(
-            $$"""
-            public static implicit operator {{option}}({{BaseOption}}.Some<{{someTypeNullable}}> someObject) => new(someObject: someObject);
             public static implicit operator {{option}}({{BaseOption}}.None _) => default;
+            public static implicit operator {{option}}(global::Perf.Holders.Unit _) => default;
             public static implicit operator {{option}}({{BaseOption}}<{{someType}}> o) => o.IsSome ? new({{field}}: o.Some) : default;
             public static implicit operator {{BaseOption}}<{{someType}}>({{option}} o) => o.{{context.IsSome.Property}} ? new(some: o.{{field}}) : default;
             public static implicit operator bool({{option}} o) => o.{{context.IsSome.Property}};
@@ -382,21 +395,23 @@ sealed class OptionSourceBuilder(
             """
         );
 
-        if (context.Some.IsStruct) {
+        if (context.Configuration.IncludeOptionSomeObject is true) {
+            if (context.Some.IsStruct) {
+                sb.AppendInterpolatedLine(
+                    $$"""
+                    public static bool operator ==({{option}} left, {{BaseOption}}.Some<{{someType}}> right) => left.Equals(right);
+                    public static bool operator !=({{option}} left, {{BaseOption}}.Some<{{someType}}> right) => left.Equals(right) == false;
+                    """
+                );
+            }
+
             sb.AppendInterpolatedLine(
                 $$"""
-                public static bool operator ==({{option}} left, {{BaseOption}}.Some<{{someType}}> right) => left.Equals(right);
-                public static bool operator !=({{option}} left, {{BaseOption}}.Some<{{someType}}> right) => left.Equals(right) == false;
+                public static bool operator ==({{option}} left, {{BaseOption}}.Some<{{someTypeNullable}}> right) => left.Equals(right);
+                public static bool operator !=({{option}} left, {{BaseOption}}.Some<{{someTypeNullable}}> right) => left.Equals(right) == false;
                 """
             );
         }
-
-        sb.AppendInterpolatedLine(
-            $$"""
-            public static bool operator ==({{option}} left, {{BaseOption}}.Some<{{someTypeNullable}}> right) => left.Equals(right);
-            public static bool operator !=({{option}} left, {{BaseOption}}.Some<{{someTypeNullable}}> right) => left.Equals(right) == false;
-            """
-        );
     }
 
     void WriteCastingMethods() {
@@ -414,17 +429,26 @@ sealed class OptionSourceBuilder(
             $$"""
             public override bool Equals(object? obj) =>
                 obj switch {
-                    null => false,
-                    {{context.Option.DeclarationName}} o1 => Equals(o1),
-                    {{BaseOption}}<{{context.Some.Type}}> o2 => Equals(o2),
-                    {{context.Some.Type}} o4 => Equals(o4),
-                    {{BaseOption}}.Some<{{context.Some.TypeNullable}}> o5 => Equals(o5),{{
-                        (context.Some.IsStruct ? $"{BaseOption}.Some<{context.Some.Type}> o6 => Equals(o6)," : null)}}
-                    {{BaseOption}}.None => {{context.IsSome.Property}} == false,
-                    _ => false
-                };
             """
         );
+        sb.Indent += 2;
+        sb.AppendInterpolatedLine($"null => false,");
+        sb.AppendInterpolatedLine($"{context.Option.DeclarationName} o1 => Equals(o1),");
+        sb.AppendInterpolatedLine($"{BaseOption}<{context.Some.Type}> o2 => Equals(o2),");
+        sb.AppendInterpolatedLine($"{context.Some.Type} o3 => Equals(o3),");
+
+        if (context.Configuration.IncludeOptionSomeObject is true) {
+            sb.AppendInterpolatedLine($"{BaseOption}.Some<{context.Some.TypeNullable}> o4 => Equals(o4),");
+            if (context.Some.IsStruct) {
+                sb.AppendInterpolatedLine($"{BaseOption}.Some<{context.Some.Type}> o5 => Equals(o5),");
+            }
+        }
+
+        sb.AppendInterpolatedLine($"{BaseOption}.None => {context.IsSome.Property} == false,");
+        sb.AppendLine("_ => false");
+        sb.Indent--;
+        sb.AppendLine("};");
+        sb.Indent--;
 
         sb.AppendInterpolatedLine(
             $$"""
@@ -436,16 +460,21 @@ sealed class OptionSourceBuilder(
                 };
             public bool Equals({{BaseOption}}<{{context.Some.Type}}> other) => other.Equals(this.AsBase());
             public bool Equals({{context.Some.TypeNullable}} v) => {{context.IsSome.Property}} && {{EqualityComparer}}<{{context.Some.TypeNullable}}>.Default.Equals({{context.Some.Field}}, v);
-            public bool Equals({{BaseOption}}.Some<{{context.Some.TypeNullable}}> someObject) => {{context.IsSome.Property}} && {{EqualityComparer}}<{{context.Some.TypeNullable}}>.Default.Equals({{context.Some.Field}}, someObject.Value);
             """
         );
-        if (context.Some.IsStruct) {
+        if (context.Configuration.IncludeOptionSomeObject is true) {
             sb.AppendInterpolatedLine(
-                $$"""
-                public bool Equals({{context.Some.Type}} v) => {{context.IsSome.Property}} && {{context.Some.Field}}.Equals(v);
-                public bool Equals({{BaseOption}}.Some<{{context.Some.Type}}> someObject) => {{context.IsSome.Property}} && {{context.Some.Field}}.Equals(someObject.Value);
-                """
+                $"public bool Equals({BaseOption}.Some<{context.Some.TypeNullable}> someObject) => {context.IsSome.Property} && {EqualityComparer}<{context.Some.TypeNullable}>.Default.Equals({context.Some.Field}, someObject.Value);"
             );
+        }
+
+        if (context.Some.IsStruct) {
+            sb.AppendInterpolatedLine($"public bool Equals({context.Some.Type} v) => {context.IsSome.Property} && {context.Some.Field}.Equals(v);");
+            if (context.Configuration.IncludeOptionSomeObject is true) {
+                sb.AppendInterpolatedLine(
+                    $"public bool Equals({BaseOption}.Some<{context.Some.Type}> someObject) => {context.IsSome.Property} && {context.Some.Field}.Equals(someObject.Value);"
+                );
+            }
         }
     }
 

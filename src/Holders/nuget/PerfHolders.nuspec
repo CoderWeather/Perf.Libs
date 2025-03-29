@@ -2,7 +2,7 @@
     <metadata>
         <id>PerfHolders</id>
         <title>Perf.Holders</title>
-        <version>1.4.1</version>
+        <version>1.4.2</version>
         <authors>coderweather</authors>
         <description>Struct based value holders for C#.</description>
         <license type="file">LICENSE</license>

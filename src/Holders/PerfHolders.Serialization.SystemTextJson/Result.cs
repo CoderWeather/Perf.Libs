@@ -1,4 +1,5 @@
 // ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
 
 namespace Perf.Holders.Serialization.SystemTextJson;
 
@@ -12,9 +13,6 @@ using Internal;
 using System.Diagnostics.CodeAnalysis;
 #endif
 
-#if NET7_0_OR_GREATER
-[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
 public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
     public static readonly ResultHolderJsonConverterFactory Instance = new();
 
@@ -25,9 +23,6 @@ public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
 
     static readonly ConcurrentDictionary<Type, JsonConverter> Converters = new();
 
-#if NET7_0_OR_GREATER
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         if (Converters.TryGetValue(typeToConvert, out var converter)) {
             return converter;
@@ -44,6 +39,9 @@ public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
     }
 }
 
+#if NET7_0_OR_GREATER
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
 sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TResult>
     where TResult : struct, IResultHolder<TOk, TError>
     where TOk : notnull

@@ -13,9 +13,6 @@ using Internal;
 using System.Diagnostics.CodeAnalysis;
 #endif
 
-#if NET7_0_OR_GREATER
-[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
 public sealed class ResultHolderFormatterResolver : IFormatterResolver {
     public static readonly ResultHolderFormatterResolver Instance = new();
 
@@ -64,11 +61,12 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
     }
 
     public TResult Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
-        if (reader.IsNil) {
+        if (reader.IsNil
+            || reader.TryReadMapHeader(out var mapHeader)
+        ) {
             throw new MessagePackSerializationException($"Expected '{MessagePackType.Map}' but got '{reader.NextMessagePackType}'");
         }
 
-        var mapHeader = reader.ReadMapHeader();
         if (mapHeader is not 1) {
             throw new MessagePackSerializationException($"Expected map header 1 but got '{mapHeader}'");
         }
@@ -83,8 +81,7 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
                 var value = MessagePackSerializer.Deserialize<TError>(ref reader, options);
                 return DynamicCast.Cast<TError, TResult>(ref value);
             }
-            default:
-                throw new MessagePackSerializationException($"Expected key 1 or 2 but got '{key}'");
+            default: throw new MessagePackSerializationException($"Expected key 1 or 2 but got '{key}'");
         }
     }
 }

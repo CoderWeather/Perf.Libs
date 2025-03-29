@@ -13,9 +13,6 @@ using Internal;
 using System.Diagnostics.CodeAnalysis;
 #endif
 
-#if NET7_0_OR_GREATER
-[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
 public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
     public static readonly OptionHolderJsonConverterFactory Instance = new();
 
@@ -26,9 +23,6 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
 
     static readonly ConcurrentDictionary<Type, JsonConverter> Converters = new();
 
-#if NET7_0_OR_GREATER
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) {
         if (Converters.TryGetValue(typeToConvert, out var converter)) {
             return converter;
@@ -44,6 +38,9 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
     }
 }
 
+#if NET7_0_OR_GREATER
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
 sealed class HolderOptionJsonConverter<TOption, TValue> : JsonConverter<TOption>
     where TOption : struct, IOptionHolder<TValue>
     where TValue : notnull {

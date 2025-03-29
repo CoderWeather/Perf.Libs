@@ -74,6 +74,8 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     return default;
                 }
 
+                var configuration = result.GetAttributes().ReadResultConfigurationFromAttributes();
+
                 var okArgNullable = okArg.IsValueType
                     ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(okArg)
                     : okArg.WithNullableAnnotation(NullableAnnotation.Annotated);
@@ -110,7 +112,11 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     HavePartial: false
                 );
 
-                var declaredPartialProperties = result.GetMembers().WhereOfType<IPropertySymbol>(x => x.IsPartialDefinition);
+                var declaredPartialProperties = result.GetMembers().WhereOfType<IPropertySymbol>(x => x is {
+                        DeclaredAccessibility: Accessibility.Public,
+                        IsPartialDefinition: true
+                    }
+                );
                 if (declaredPartialProperties.Length > 0) {
                     foreach (var ps in declaredPartialProperties) {
                         if (okInfo.HavePartial is false && ps.Type.Equals(okArg, SymbolEqualityComparer.Default)) {
@@ -150,7 +156,8 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     Ok: okInfo,
                     Error: errorInfo,
                     IsOk: isOkInfo,
-                    ContainingTypes: containingTypes
+                    ContainingTypes: containingTypes,
+                    Configuration: configuration
                 );
             }
         );
@@ -158,15 +165,18 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
         var compInfo = context.CompilationProvider.SelectCompInfo();
 
-        var typesAndCompInfo = filtered.Combine(compInfo);
+        var resultHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadResultConfiguration();
 
-        // context.AnalyzerConfigOptionsProvider
-        //     .Select(static x => x.GlobalOptions.TryGetValue())
+        var final = filtered.Combine(compInfo).Combine(resultHolderConfiguration);
 
         context.RegisterSourceOutput(
-            typesAndCompInfo,
+            final,
             static (context, tuple1) => {
-                var (resultInfo, compInfo) = tuple1;
+                var ((resultInfo, compInfo), resultConfiguration) = tuple1;
+
+                resultInfo = resultInfo with {
+                    Configuration = resultInfo.Configuration.MergeWithMajor(resultConfiguration).ApplyDefaults()
+                };
 
                 var sourceText = new ResultSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
 

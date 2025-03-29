@@ -211,7 +211,7 @@ public static class Result {
             };
 
         public static implicit operator Ok<T>(T value) => new(value);
-        public static implicit operator T(Ok<T> ok) => ok.Value;
+        public static explicit operator T(Ok<T> ok) => ok.Value;
 
         public bool Equals(Ok<T> other) =>
             (state, other.state) switch {
@@ -251,7 +251,7 @@ public static class Result {
             };
 
         public static implicit operator Error<T>(T value) => new(value);
-        public static implicit operator T(Error<T> ok) => ok.Value;
+        public static explicit operator T(Error<T> ok) => ok.Value;
 
         public bool Equals(Error<T> other) =>
             (state, other.state) switch {

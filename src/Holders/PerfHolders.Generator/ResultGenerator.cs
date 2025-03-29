@@ -1,6 +1,7 @@
 namespace Perf.Holders.Generator;
 
 using System.Text;
+using Builders;
 using Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -42,115 +43,114 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     return default;
                 }
 
-                var arg1 = marker.TypeArguments[0];
-                var arg1Name = arg1.GlobalName();
-                var arg2 = marker.TypeArguments[1];
-                var arg2Name = arg2.GlobalName();
+                EquatableList<HolderContainingType> containingTypes = default;
+                if (result.ContainingType != null) {
+                    containingTypes = [ ];
+                    var t = result;
+                    do {
+                        t = t.ContainingType;
 
-                if (arg1.Equals(arg2, SymbolEqualityComparer.Default)) {
+                        HolderContainingType containingType = t switch {
+                            { IsReferenceType: true, IsRecord: true } => new(Kind: "record", Name: t.Name),
+                            { IsReferenceType: true }                 => new(Kind: "class", Name: t.Name),
+                            { IsValueType: true, IsRecord: true }     => new(Kind: "record struct", Name: t.Name),
+                            { IsValueType: true }                     => new(Kind: "struct", Name: t.Name),
+                            _                                         => default
+                        };
+                        if (containingType != default) {
+                            containingTypes.Add(containingType);
+                        }
+                    } while (t.ContainingType != null);
+                }
+
+                var okArg = marker.TypeArguments[0];
+                var errorArg = marker.TypeArguments[1];
+
+                if (okArg.Equals(errorArg, SymbolEqualityComparer.Default)) {
                     return default;
                 }
 
-                var patternValues = new EquatableDictionary<string, string?> {
-                    ["NamespaceDeclaration"] = result.ContainingNamespace.IsGlobalNamespace is false
-                        ? $"namespace {result.ContainingNamespace.ToDisplayString()}\n"
-                        : "",
-                    ["ResultName"] = result.Name,
-                    ["ResultShort"] = result.MinimalName(),
-                    ["TypeArguments"] = result.TypeArguments switch {
-                        [ ITypeParameterSymbol, ITypeParameterSymbol ] => $"<{arg1Name}, {arg2Name}>",
-                        [ ITypeParameterSymbol ]                       => $"<{arg1Name}>",
-                        _                                              => null
-                    },
-                    ["TypeArgumentsConstraints"] = result.TypeArguments switch {
-                        [ ITypeParameterSymbol, ITypeParameterSymbol ] => $"where {arg1Name} : notnull where {arg2Name} : notnull ",
-                        [ ITypeParameterSymbol ]                       => $"where {arg1Name} : notnull ",
-                        _                                              => null
-                    },
-                    ["OpenTypeArguments"] = result.TypeArguments switch {
-                        [ _, _ ] => "<,>",
-                        [ _ ]    => "<>",
-                        _        => null
-                    },
-                    ["IsOkProperty"] = "IsOk",
-                    ["IsOkInterfaceProperty"] = "",
-                    ["IsOkDeclarationModifiers"] = "",
-                    ["OkProperty"] = "Ok",
-                    ["OkField"] = "ok",
-                    ["OkInterfaceProperty"] = "",
-                    ["OkDeclarationModifiers"] = " ",
-                    ["OkType"] = arg1Name,
-                    ["OkTypeForEquals"] = arg1 switch {
-                        ITypeParameterSymbol or { IsReferenceType: true } => $"{arg1Name}?",
-                        _                                                 => arg1Name
-                    },
-                    ["ErrorProperty"] = "Error",
-                    ["ErrorField"] = "error",
-                    ["ErrorInterfaceProperty"] = "",
-                    ["ErrorDeclarationModifiers"] = " ",
-                    ["ErrorType"] = arg2Name,
-                    ["ErrorTypeForEquals"] = arg2 switch {
-                        ITypeParameterSymbol or { IsReferenceType: true } => $"{arg2Name}?",
-                        _                                                 => arg2Name
-                    },
-                    ["ResultState"] = "global::Perf.Holders.ResultState",
-                    ["BaseResult"] = "global::Perf.Holders.Result",
-                    ["DebuggerBrowsableNever"] = "[global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]"
-                };
+                if (okArg.NullableAnnotation is NullableAnnotation.Annotated) {
+                    return default;
+                }
+
+                var okArgNullable = okArg.IsValueType
+                    ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(okArg)
+                    : okArg.WithNullableAnnotation(NullableAnnotation.Annotated);
+                var errorArgNullable = errorArg.IsValueType
+                    ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(errorArg)
+                    : errorArg.WithNullableAnnotation(NullableAnnotation.Annotated);
+
+                var resultInfo = new ResultHolderContextInfo.ResultInfo(
+                    DeclarationName: result.MinimalName(),
+                    OnlyName: result.Name,
+                    GlobalName: result.GlobalName(),
+                    TypeArgumentCount: result.TypeArguments.Length
+                );
+                var okInfo = new ResultHolderContextInfo.OkInfo(
+                    IsStruct: okArg.IsValueType,
+                    IsTypeArgument: okArg is ITypeParameterSymbol,
+                    Property: ResultHolderContextInfo.OkInfo.DefaultProperty,
+                    Field: ResultHolderContextInfo.OkInfo.DefaultField,
+                    Type: okArg.GlobalName(),
+                    TypeNullable: okArgNullable.GlobalName(),
+                    HavePartial: false
+                );
+                var errorInfo = new ResultHolderContextInfo.ErrorInfo(
+                    IsStruct: errorArg.IsValueType,
+                    IsTypeArgument: errorArg is ITypeParameterSymbol,
+                    Property: ResultHolderContextInfo.ErrorInfo.DefaultProperty,
+                    Field: ResultHolderContextInfo.ErrorInfo.DefaultField,
+                    Type: errorArg.GlobalName(),
+                    TypeNullable: errorArgNullable.GlobalName(),
+                    HavePartial: false
+                );
+                var isOkInfo = new ResultHolderContextInfo.IsOkInfo(
+                    Property: ResultHolderContextInfo.IsOkInfo.DefaultProperty,
+                    HavePartial: false
+                );
 
                 var declaredPartialProperties = result.GetMembers().WhereOfType<IPropertySymbol>(x => x.IsPartialDefinition);
                 if (declaredPartialProperties.Length > 0) {
-                    var okSet = false;
-                    var errorSet = false;
-                    var isOkSet = false;
-
                     foreach (var ps in declaredPartialProperties) {
-                        if (okSet is false && ps.Type.Equals(arg1, SymbolEqualityComparer.Default)) {
-                            okSet = true;
-                            patternValues["OkProperty"] = ps.Name;
-                            patternValues["OkField"] = ps.Name.ToFieldFormat();
-                            patternValues["OkDeclarationModifiers"] = "partial ";
-                            if (ps.Name is not "Ok") {
-                                patternValues["OkInterfaceProperty"] = $"""
-                                        [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-                                        {arg1Name} global::Perf.Holders.IResultHolder<{arg1Name}, {arg2Name}>.Ok => {ps.Name};
-                                    """;
-                            }
-                        } else if (errorSet is false && ps.Type.Equals(arg2, SymbolEqualityComparer.Default)) {
-                            errorSet = true;
-                            patternValues["ErrorProperty"] = ps.Name;
-                            patternValues["ErrorField"] = ps.Name.ToFieldFormat();
-                            patternValues["ErrorDeclarationModifiers"] = "partial ";
-                            if (ps.Name is not "Error") {
-                                patternValues["ErrorInterfaceProperty"] = $"""
-                                        [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-                                        {arg2Name} global::Perf.Holders.IResultHolder<{arg1Name}, {arg2Name}>.Error => {ps.Name};
-                                    """;
-                            }
-                        } else if (isOkSet is false && ps.Type is INamedTypeSymbol { SpecialType: SpecialType.System_Boolean }) {
-                            isOkSet = true;
-                            patternValues["IsOkProperty"] = ps.Name;
-                            patternValues["IsOkDeclarationModifiers"] = "partial ";
-                            if (ps.Name is not "IsOk") {
-                                patternValues["IsOkInterfaceProperty"] = $"""
-                                        [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
-                                        bool global::Perf.Holders.IResultHolder<{arg1Name}, {arg2Name}>.IsOk => {ps.Name};
-                                    """;
-                            }
+                        if (okInfo.HavePartial is false && ps.Type.Equals(okArg, SymbolEqualityComparer.Default)) {
+                            okInfo = okInfo with {
+                                Property = ps.Name,
+                                Field = ps.Name.ToFieldFormat(),
+                                HavePartial = true
+                            };
+                        } else if (errorInfo.HavePartial is false && ps.Type.Equals(errorArg, SymbolEqualityComparer.Default)) {
+                            errorInfo = errorInfo with {
+                                Property = ps.Name,
+                                Field = ps.Name.ToFieldFormat(),
+                                HavePartial = true
+                            };
+                        } else if (isOkInfo.HavePartial is false && ps.Type is INamedTypeSymbol { SpecialType: SpecialType.System_Boolean }) {
+                            isOkInfo = new(
+                                Property: ps.Name,
+                                HavePartial: true
+                            );
                         }
                     }
 
-                    if (isOkSet is false && okSet) {
-                        patternValues["IsOkProperty"] = $"Is{patternValues["OkProperty"]}";
-                        patternValues["IsOkInterfaceProperty"] = $"""
-                                bool global::Perf.Holders.IResultHolder<{arg1Name}, {arg2Name}>.IsOk => Is{patternValues["OkProperty"]};
-                            """;
+                    if (okInfo.HavePartial && isOkInfo.HavePartial is false) {
+                        isOkInfo = new(
+                            Property: $"Is{okInfo.Property}",
+                            HavePartial: false
+                        );
                     }
                 }
 
-                return new BasicHolderContextInfo(
+                return new ResultHolderContextInfo(
                     SourceFileName: SourceFileName(result),
-                    PatternValues: patternValues
+                    Namespace: result.ContainingNamespace.IsGlobalNamespace
+                        ? null
+                        : result.ContainingNamespace.ToDisplayString(),
+                    Result: resultInfo,
+                    Ok: okInfo,
+                    Error: errorInfo,
+                    IsOk: isOkInfo,
+                    ContainingTypes: containingTypes
                 );
             }
         );
@@ -160,24 +160,20 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
         var typesAndCompInfo = filtered.Combine(compInfo);
 
+        // context.AnalyzerConfigOptionsProvider
+        //     .Select(static x => x.GlobalOptions.TryGetValue())
+
         context.RegisterSourceOutput(
             typesAndCompInfo,
             static (context, tuple1) => {
-                var ((minimalNameWithGenericMetadata, values), compInfo) = tuple1;
+                var (resultInfo, compInfo) = tuple1;
 
-                values["DebugViewVisibility"] = compInfo.Version >= LanguageVersion.CSharp11
-                    ? "file "
-                    : "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]\n";
-                values["NullableFileAnnotation"] = compInfo.Version >= LanguageVersion.CSharp8
-                    ? "#nullable enable"
-                    : "";
-
-                var sourceText = PatternFormatter.FormatPattern(Patterns.Result, values);
+                var sourceText = new ResultSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
 
                 if (compInfo.OptimizationLevel is OptimizationLevel.Debug) {
-                    context.AddSource($"{minimalNameWithGenericMetadata}.cs", SourceText.From(sourceText, Encoding.UTF8));
+                    context.AddSource($"{resultInfo.SourceFileName}.cs", SourceText.From(sourceText, Encoding.UTF8));
                 } else if (compInfo.OptimizationLevel is OptimizationLevel.Release) {
-                    context.AddSource($"{minimalNameWithGenericMetadata}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+                    context.AddSource($"{resultInfo.SourceFileName}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
                 }
             }
         );

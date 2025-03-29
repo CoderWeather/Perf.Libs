@@ -9,7 +9,7 @@ sealed class OptionSourceBuilder(
 ) {
     const string OptionState = "global::Perf.Holders.OptionState";
     const string BaseOption = "global::Perf.Holders.Option";
-    const string OptionContract = "global::Perf.Holders.IOptionHolder";
+    const string OptionMarker = "global::Perf.Holders.IOptionHolder";
     const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
     const string DebuggerBrowsableNever = "[global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]";
     const string EditorBrowsable = "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]";
@@ -20,6 +20,7 @@ sealed class OptionSourceBuilder(
 
     // minimum at 1 because of generated type braces
     int bracesToCloseOnEnd = 1;
+    bool debugViewAdded;
 
     void Preparation() {
         if (compInfo.SupportNullableAnnotation() is false && context.Some.IsStruct is false) {
@@ -59,15 +60,15 @@ sealed class OptionSourceBuilder(
             sb.AppendLine("#nullable enable");
         }
 
-        if (compInfo.SupportFileScopedNamespace()) {
-            sb.AppendLine($"namespace {context.Namespace};");
-        } else {
-            sb.AppendLine($"namespace {context.Namespace}\n{{");
-            bracesToCloseOnEnd++;
+        if (context.Namespace is not null) {
+            if (compInfo.SupportFileScopedNamespace()) {
+                sb.AppendLine($"namespace {context.Namespace};");
+            } else {
+                sb.AppendLine($"namespace {context.Namespace}\n{{");
+                bracesToCloseOnEnd++;
+            }
         }
     }
-
-    bool debugViewAdded;
 
     void WriteDebugView() {
         if (compInfo.SupportFileVisibilityModifier() && context.ContainingTypes == default) {
@@ -77,8 +78,8 @@ sealed class OptionSourceBuilder(
         }
 
         debugViewAdded = true;
-        var typeArgs = context.Some.IsTypeArgument ? "<T>" : "";
-        var typeArgsConstraints = context.Some.IsTypeArgument ? "where T : notnull " : "";
+        var typeArgs = context.Some.IsTypeArgument ? $"<{context.Some.Type}>" : "";
+        var typeArgsConstraints = context.Some.IsTypeArgument ? $"where {context.Some.Type} : notnull " : "";
         sb.AppendInterpolatedLine(
             $$"""
             sealed class {{context.Option.OnlyName}}_DebugView{{typeArgs}} {{typeArgsConstraints}}{
@@ -236,7 +237,7 @@ sealed class OptionSourceBuilder(
             sb.AppendInterpolatedLine(
                 $$"""
                 {{DebuggerBrowsableNever}}
-                {{context.Some.Type}} {{OptionContract}}<{{context.Some.Type}}>.Some => {{context.Some.Property}};
+                {{context.Some.Type}} {{OptionMarker}}<{{context.Some.Type}}>.Some => {{context.Some.Property}};
                 """
             );
         }
@@ -245,7 +246,7 @@ sealed class OptionSourceBuilder(
             sb.AppendInterpolatedLine(
                 $$"""
                 {{DebuggerBrowsableNever}}
-                bool {{OptionContract}}<{{context.Some.Type}}>.IsSome => {{context.IsSome.Property}};
+                bool {{OptionMarker}}<{{context.Some.Type}}>.IsSome => {{context.IsSome.Property}};
                 """
             );
         }
@@ -255,12 +256,14 @@ sealed class OptionSourceBuilder(
         if (context.Some.HavePartial) {
             sb.AppendInterpolatedLine(
                 $$"""
+                {{DebuggerBrowsableNever}}
                 public partial {{context.Some.Type}} {{context.Some.Property}} =>
                 """
             );
         } else {
             sb.AppendInterpolatedLine(
                 $$"""
+                {{DebuggerBrowsableNever}}
                 public {{context.Some.Type}} {{context.Some.Property}} =>
                 """
             );
@@ -281,12 +284,14 @@ sealed class OptionSourceBuilder(
         if (context.IsSome.HavePartial) {
             sb.AppendInterpolatedLine(
                 $$"""
+                {{DebuggerBrowsableNever}}
                 public partial bool {{context.IsSome.Property}} =>
                 """
             );
         } else {
             sb.AppendInterpolatedLine(
                 $$"""
+                {{DebuggerBrowsableNever}}
                 public bool {{context.IsSome.Property}} =>
                 """
             );
@@ -398,7 +403,7 @@ sealed class OptionSourceBuilder(
         sb.AppendInterpolatedLine(
             $$"""
             public {{BaseOption}}<{{context.Some.Type}}> AsBase() => this;
-            public TOther CastByRef<TOther>() where TOther : struct, {{OptionContract}}<{{context.Some.Type}}> =>
+            public TOther CastByRef<TOther>() where TOther : struct, {{OptionMarker}}<{{context.Some.Type}}> =>
                 global::Perf.Holders.___HoldersInvisibleHelpers.CastOption<{{context.Option.DeclarationName}}, {{context.Some.Type}}, TOther>(in this);
             """
         );
@@ -413,8 +418,8 @@ sealed class OptionSourceBuilder(
                     {{context.Option.DeclarationName}} o1 => Equals(o1),
                     {{BaseOption}}<{{context.Some.Type}}> o2 => Equals(o2),
                     {{context.Some.Type}} o4 => Equals(o4),
-                    {{BaseOption}}.Some<{{context.Some.TypeNullable}}> o5 => Equals(o5),
-                    {{(context.Some.IsStruct ? $"{BaseOption}.Some<{context.Some.Type}> o6 => Equals(o6)," : null)}}
+                    {{BaseOption}}.Some<{{context.Some.TypeNullable}}> o5 => Equals(o5),{{
+                        (context.Some.IsStruct ? $"{BaseOption}.Some<{context.Some.Type}> o6 => Equals(o6)," : null)}}
                     {{BaseOption}}.None => {{context.IsSome.Property}} == false,
                     _ => false
                 };
@@ -474,7 +479,7 @@ sealed class OptionSourceBuilder(
     void WriteDebugPrint() {
         sb.AppendInterpolatedLine(
             $$"""
-            public string DebugPrint() =>
+            string DebugPrint() =>
                 state switch {
                     {{OptionState}}.Some => $"{{context.Some.Property}}={{{context.Some.Field}}}",
                     {{OptionState}}.None => "None",

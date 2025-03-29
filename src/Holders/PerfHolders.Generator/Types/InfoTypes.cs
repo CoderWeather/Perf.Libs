@@ -26,10 +26,59 @@ static class CompInfoExtensions {
         );
 }
 
-readonly record struct BasicHolderContextInfo(
+readonly record struct HolderContainingType(string Kind, string Name);
+
+readonly record struct ResultHolderContextInfo(
     string SourceFileName,
-    EquatableDictionary<string, string?> PatternValues
-);
+    string? Namespace,
+    ResultHolderContextInfo.ResultInfo Result,
+    ResultHolderContextInfo.OkInfo Ok,
+    ResultHolderContextInfo.ErrorInfo Error,
+    ResultHolderContextInfo.IsOkInfo IsOk,
+    EquatableList<HolderContainingType> ContainingTypes
+) {
+    public readonly record struct Feature(string Name, bool Enabled);
+
+    public readonly record struct ResultInfo(
+        string DeclarationName,
+        string OnlyName,
+        string GlobalName,
+        int TypeArgumentCount
+    );
+
+    public readonly record struct OkInfo(
+        bool IsStruct,
+        bool IsTypeArgument,
+        string Property,
+        string Field,
+        string Type,
+        string TypeNullable,
+        bool HavePartial
+    ) {
+        public const string DefaultProperty = "Ok";
+        public const string DefaultField = "ok";
+    }
+
+    public readonly record struct ErrorInfo(
+        bool IsStruct,
+        bool IsTypeArgument,
+        string Property,
+        string Field,
+        string Type,
+        string TypeNullable,
+        bool HavePartial
+    ) {
+        public const string DefaultProperty = "Error";
+        public const string DefaultField = "error";
+    }
+
+    public readonly record struct IsOkInfo(
+        string Property,
+        bool HavePartial
+    ) {
+        public const string DefaultProperty = "IsOk";
+    }
+}
 
 readonly record struct OptionHolderContextInfo(
     string SourceFileName,
@@ -37,15 +86,10 @@ readonly record struct OptionHolderContextInfo(
     OptionHolderContextInfo.OptionInfo Option,
     OptionHolderContextInfo.SomeInfo Some,
     OptionHolderContextInfo.IsSomeInfo IsSome,
-    EquatableList<OptionHolderContextInfo.ContainingType> ContainingTypes = default,
+    EquatableList<HolderContainingType> ContainingTypes = default,
     EquatableList<OptionHolderContextInfo.Feature> Features = default
 ) {
     public readonly record struct Feature(string Name, bool Enabled);
-
-    public readonly record struct ContainingType(
-        string Kind,
-        string Name
-    );
 
     public readonly record struct OptionInfo(
         string DeclarationName,

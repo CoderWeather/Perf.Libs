@@ -167,7 +167,7 @@ public static class Option {
             };
 
         public static implicit operator Some<T>(T? value) => new(value);
-        public static implicit operator T?(Some<T> some) => some.Value;
+        public static explicit operator T?(Some<T> some) => some.Value;
 
         public bool Equals(Some<T> other) =>
             (state, other.state) switch {

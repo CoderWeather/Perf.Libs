@@ -44,14 +44,14 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                 }
                 // check for type arguments zero or one and this one should be argument for marker
 
-                EquatableList<OptionHolderContextInfo.ContainingType> containingTypes = default;
+                EquatableList<HolderContainingType> containingTypes = default;
                 if (option.ContainingType != null) {
                     containingTypes = [ ];
                     var t = option;
                     do {
                         t = t.ContainingType;
 
-                        OptionHolderContextInfo.ContainingType containingType = t switch {
+                        HolderContainingType containingType = t switch {
                             { IsReferenceType: true, IsRecord: true } => new(Kind: "record", Name: t.Name),
                             { IsReferenceType: true }                 => new(Kind: "class", Name: t.Name),
                             { IsValueType: true, IsRecord: true }     => new(Kind: "record struct", Name: t.Name),

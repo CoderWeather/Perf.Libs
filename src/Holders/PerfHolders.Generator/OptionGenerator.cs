@@ -79,8 +79,18 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     DeclarationName: option.MinimalName(),
                     OnlyName: option.Name,
                     GlobalName: option.GlobalName(),
-                    TypeArgumentCount: option.TypeArguments.Length
+                    TypeArgumentCount: option.TypeArguments.Length,
+                    Accessibility: option.DeclaredAccessibility switch {
+                        Accessibility.Public   => TypeAccessibility.Public,
+                        Accessibility.Private  => TypeAccessibility.Private,
+                        Accessibility.Internal => TypeAccessibility.Internal,
+                        _                      => TypeAccessibility.None
+                    }
                 );
+                if (optionInfo.Accessibility is TypeAccessibility.None) {
+                    return default;
+                }
+
                 var someInfo = new OptionHolderContextInfo.SomeInfo(
                     IsStruct: arg.IsValueType,
                     IsTypeArgument: arg is ITypeParameterSymbol,

@@ -1,3 +1,7 @@
+// ReSharper disable UnusedType.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedMember.Global
+
 namespace Perf.Holders.Generator.Internal;
 
 using System.Text;

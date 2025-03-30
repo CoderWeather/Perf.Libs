@@ -87,8 +87,18 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     DeclarationName: result.MinimalName(),
                     OnlyName: result.Name,
                     GlobalName: result.GlobalName(),
-                    TypeArgumentCount: result.TypeArguments.Length
+                    TypeArgumentCount: result.TypeArguments.Length,
+                    Accessibility: result.DeclaredAccessibility switch {
+                        Accessibility.Public   => TypeAccessibility.Public,
+                        Accessibility.Private  => TypeAccessibility.Private,
+                        Accessibility.Internal => TypeAccessibility.Internal,
+                        _                      => TypeAccessibility.None
+                    }
                 );
+                if (resultInfo.Accessibility is TypeAccessibility.None) {
+                    return default;
+                }
+
                 var okInfo = new ResultHolderContextInfo.OkInfo(
                     IsStruct: okArg.IsValueType,
                     IsTypeArgument: okArg is ITypeParameterSymbol,

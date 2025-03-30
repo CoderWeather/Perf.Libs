@@ -59,8 +59,8 @@ public readonly struct Option<T> :
     public T Some =>
         state switch {
             OptionState.Some => some,
-            OptionState.None => throw OptionHolderExceptions.SomeAccessWhenNone<Option<T>, T>(),
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>(state)
+            OptionState.None => throw OptionHolderExceptions.SomeAccessWhenNone<Option<T>, T>("Some"),
+            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
         };
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -68,7 +68,7 @@ public readonly struct Option<T> :
         state switch {
             OptionState.Some => true,
             OptionState.None => false,
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>(state)
+            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
         };
 
     public OptionState State => state;
@@ -101,7 +101,7 @@ public readonly struct Option<T> :
         (state, other.state) switch {
             (OptionState.Some, OptionState.Some) => EqualityComparer<T>.Default.Equals(some, other.some),
             (OptionState.None, OptionState.None) => true,
-            _                                    => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>(state)
+            _                                    => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
         };
 
     public bool Equals(T? v) => IsSome && EqualityComparer<T?>.Default.Equals(some, v);
@@ -111,7 +111,7 @@ public readonly struct Option<T> :
         return state switch {
             OptionState.Some => some.GetHashCode(),
             OptionState.None => Option.None.Value.GetHashCode(),
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>(state)
+            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
         };
     }
 
@@ -119,7 +119,7 @@ public readonly struct Option<T> :
         state switch {
             OptionState.Some => some.ToString(),
             OptionState.None => Option.None.Value.ToString(),
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>(state)
+            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
         };
 
     string DebugPrint() =>
@@ -162,7 +162,7 @@ public static class Option {
         public T? Value =>
             state switch {
                 ObjectState.Initialized   => value,
-                ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUnitialized<T>(),
+                ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUninitialized<T>(),
                 _                         => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
             };
 
@@ -172,7 +172,7 @@ public static class Option {
         public bool Equals(Some<T> other) =>
             (state, other.state) switch {
                 (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T?>.Default.Equals(value, other.value),
-                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw OptionHolderExceptions.SomeUnitialized<T>(),
+                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw OptionHolderExceptions.SomeUninitialized<T>(),
                 _                                                                => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
             };
 

@@ -8,19 +8,19 @@ public sealed class OptionStateOutOfValidValues(string message) : OptionHolderEx
 public sealed class OptionSomeAccessWhenNoneException(string message) : OptionHolderException(message);
 
 public static class OptionHolderExceptions {
-    public static OptionSomeUninitializedException SomeUnitialized<TSome>() =>
-        new($"{typeof(Option.Some<TSome>)} Cannot access state while state is Unitilized");
+    public static OptionSomeUninitializedException SomeUninitialized<TSome>() =>
+        new($"{typeof(Option.Some<TSome>)} Cannot access state while state is Uninitialized");
 
     public static OptionSomeStateOutOfValidValuesException SomeStateOutOfValidValues<TSome>(byte state) =>
         new($"{typeof(Option.Some<TSome>)} SomeState {state} is out of valid values");
 
-    public static OptionStateOutOfValidValues StateOutOfValidValues<TOption, TSome>(OptionState state)
+    public static OptionStateOutOfValidValues StateOutOfValidValues<TOption, TSome>(byte state)
         where TOption : struct, IOptionHolder<TSome>
         where TSome : notnull =>
-        new($"{typeof(TOption)} OptionState {(byte)state} is out of valid values");
+        new($"{typeof(TOption)} OptionState {state} is out of valid values");
 
-    public static OptionSomeAccessWhenNoneException SomeAccessWhenNone<TOption, TSome>()
+    public static OptionSomeAccessWhenNoneException SomeAccessWhenNone<TOption, TSome>(string someString)
         where TOption : struct, IOptionHolder<TSome>
         where TSome : notnull =>
-        new($"{typeof(TOption)} Cannot access Some while state is None");
+        new($"{typeof(TOption)} Cannot access {someString} while state is None");
 }

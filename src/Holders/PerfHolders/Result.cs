@@ -69,7 +69,7 @@ public readonly struct Result<TOk, TError> :
             ResultState.Ok            => ok,
             ResultState.Error         => throw ResultHolderExceptions.ErrorAccessWhenOk<Result<TOk, TError>, TOk, TError>("Ok", "Error"),
             ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
-            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>((byte)state)
         };
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -78,7 +78,7 @@ public readonly struct Result<TOk, TError> :
             ResultState.Ok            => throw ResultHolderExceptions.OkAccessWhenError<Result<TOk, TError>, TOk, TError>("Ok", "Error"),
             ResultState.Error         => error,
             ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
-            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>((byte)state)
         };
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -87,7 +87,7 @@ public readonly struct Result<TOk, TError> :
             ResultState.Ok            => true,
             ResultState.Error         => false,
             ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
-            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>((byte)state)
         };
 
     // public ResultState State => state;
@@ -115,7 +115,7 @@ public readonly struct Result<TOk, TError> :
             (ResultState.Error, ResultState.Error) => EqualityComparer<TError>.Default.Equals(error, other.error),
             (ResultState.Ok, ResultState.Error) or (ResultState.Error, ResultState.Ok) => false,
             (ResultState.Uninitialized, _) or (_, ResultState.Uninitialized) => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
-            _ => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
+            _ => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>((byte)state)
         };
 
     public bool Equals(TOk? v) => IsOk && EqualityComparer<TOk?>.Default.Equals(x: ok, y: v);
@@ -128,7 +128,7 @@ public readonly struct Result<TOk, TError> :
             ResultState.Ok            => ok.GetHashCode(),
             ResultState.Error         => error.GetHashCode(),
             ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
-            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>((byte)state)
         };
 
     public override string? ToString() =>
@@ -136,7 +136,7 @@ public readonly struct Result<TOk, TError> :
             ResultState.Ok            => ok.ToString(),
             ResultState.Error         => error.ToString(),
             ResultState.Uninitialized => throw ResultHolderExceptions.Uninitialized<Result<TOk, TError>, TOk, TError>(),
-            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>(state)
+            _                         => throw ResultHolderExceptions.StateOutOfValidValues<Result<TOk, TError>, TOk, TError>((byte)state)
         };
 
     string DebugPrint() =>

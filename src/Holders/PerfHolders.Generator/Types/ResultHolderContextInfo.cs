@@ -18,14 +18,18 @@ readonly record struct ResultHolderContextInfo(
         bool? ImplicitCastOkTypeToResult,
         bool? ImplicitCastErrorTypeToResult,
         bool? IncludeResultOkObject,
-        bool? IncludeResultErrorObject
+        bool? IncludeResultErrorObject,
+        bool? PublicState,
+        bool? AddCastByRefMethod
     ) {
         public ResultConfiguration MergeWithMajor(ResultConfiguration other) {
             return new() {
                 ImplicitCastOkTypeToResult = other.ImplicitCastOkTypeToResult ?? ImplicitCastOkTypeToResult ?? null,
                 ImplicitCastErrorTypeToResult = other.ImplicitCastErrorTypeToResult ?? ImplicitCastErrorTypeToResult ?? null,
                 IncludeResultOkObject = other.IncludeResultOkObject ?? IncludeResultOkObject ?? null,
-                IncludeResultErrorObject = other.IncludeResultErrorObject ?? IncludeResultErrorObject ?? null
+                IncludeResultErrorObject = other.IncludeResultErrorObject ?? IncludeResultErrorObject ?? null,
+                PublicState = other.PublicState ?? PublicState ?? null,
+                AddCastByRefMethod = other.AddCastByRefMethod ?? AddCastByRefMethod ?? null
             };
         }
 
@@ -34,7 +38,9 @@ readonly record struct ResultHolderContextInfo(
                 ImplicitCastOkTypeToResult = ImplicitCastOkTypeToResult ?? true,
                 ImplicitCastErrorTypeToResult = ImplicitCastErrorTypeToResult ?? true,
                 IncludeResultOkObject = IncludeResultOkObject ?? true,
-                IncludeResultErrorObject = IncludeResultErrorObject ?? true
+                IncludeResultErrorObject = IncludeResultErrorObject ?? true,
+                PublicState = PublicState ?? false,
+                AddCastByRefMethod = AddCastByRefMethod ?? false
             };
         }
     }
@@ -43,7 +49,8 @@ readonly record struct ResultHolderContextInfo(
         string DeclarationName,
         string OnlyName,
         string GlobalName,
-        int TypeArgumentCount
+        int TypeArgumentCount,
+        TypeAccessibility Accessibility
     );
 
     public readonly record struct OkInfo(
@@ -113,6 +120,16 @@ static class ResultConfigurationExt {
                         IncludeResultErrorObject = na.Value.Value is true
                     };
                     break;
+                case "PublicState":
+                    configuration = configuration with {
+                        PublicState = na.Value.Value is true
+                    };
+                    break;
+                case "AddCastByRefMethod":
+                    configuration = configuration with {
+                        AddCastByRefMethod = na.Value.Value is true
+                    };
+                    break;
                 default: continue;
             }
         }
@@ -155,6 +172,22 @@ static class ResultConfigurationExt {
                         IncludeResultErrorObject =
                         s4.Equals("enable", StringComparison.OrdinalIgnoreCase) || s4.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
                         s4.Equals("disable", StringComparison.OrdinalIgnoreCase) || s4.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                    };
+                }
+
+                if (options.TryGetValue("PerfHoldersResultPublicState", out var s5) && s5 is not null and not "") {
+                    configuration = configuration with {
+                        PublicState =
+                        s5.Equals("enable", StringComparison.OrdinalIgnoreCase) || s5.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
+                        s5.Equals("disable", StringComparison.OrdinalIgnoreCase) || s5.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                    };
+                }
+
+                if (options.TryGetValue("PerfHoldersResultAddCastByRefMethod", out var s6) && s6 is not null and not "") {
+                    configuration = configuration with {
+                        AddCastByRefMethod =
+                        s6.Equals("enable", StringComparison.OrdinalIgnoreCase) || s6.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
+                        s6.Equals("disable", StringComparison.OrdinalIgnoreCase) || s6.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
                     };
                 }
 

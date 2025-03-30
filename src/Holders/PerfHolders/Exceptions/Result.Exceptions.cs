@@ -32,21 +32,21 @@ public static class ResultHolderExceptions {
         where TError : notnull =>
         new($"{typeof(TResult)} Cannot access state while state is {nameof(ResultState.Uninitialized)}");
 
-    public static ResultStateOutOfValidValuesException StateOutOfValidValues<TResult, TOk, TError>(ResultState state)
+    public static ResultStateOutOfValidValuesException StateOutOfValidValues<TResult, TOk, TError>(byte state)
         where TResult : IResultHolder<TOk, TError>
         where TOk : notnull
         where TError : notnull =>
-        new($"{typeof(TResult)} ResultState {(byte)state} is out of valid values");
+        new($"{typeof(TResult)} ResultState {state} is out of valid values");
 
-    public static ResultOkAccessWhenErrorException OkAccessWhenError<TResult, TOk, TError>(string okState, string errorState)
+    public static ResultOkAccessWhenErrorException OkAccessWhenError<TResult, TOk, TError>(string okName, string errorName)
         where TResult : IResultHolder<TOk, TError>
         where TOk : notnull
         where TError : notnull =>
-        new($"{typeof(TResult)} Cannot access {okState} while state is {errorState}");
+        new($"{typeof(TResult)} Cannot access {okName} while state is {errorName}");
 
-    public static ResultErrorAccessWhenOkException ErrorAccessWhenOk<TResult, TOk, TError>(string okState, string errorState)
+    public static ResultErrorAccessWhenOkException ErrorAccessWhenOk<TResult, TOk, TError>(string okName, string errorName)
         where TResult : IResultHolder<TOk, TError>
         where TOk : notnull
         where TError : notnull =>
-        new($"{typeof(TResult)} Cannot access {errorState} while state is {okState}");
+        new($"{typeof(TResult)} Cannot access {errorName} while state is {okName}");
 }

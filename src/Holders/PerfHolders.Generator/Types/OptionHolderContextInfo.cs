@@ -15,19 +15,25 @@ readonly record struct OptionHolderContextInfo(
 ) {
     public readonly record struct OptionConfiguration(
         bool? ImplicitCastSomeTypeToOption,
-        bool? IncludeOptionSomeObject
+        bool? IncludeOptionSomeObject,
+        bool? PublicState,
+        bool? AddCastByRefMethod
     ) {
         public OptionConfiguration MergeWithMajor(OptionConfiguration other) {
             return new() {
                 ImplicitCastSomeTypeToOption = other.ImplicitCastSomeTypeToOption ?? ImplicitCastSomeTypeToOption ?? null,
-                IncludeOptionSomeObject = other.IncludeOptionSomeObject ?? IncludeOptionSomeObject ?? null
+                IncludeOptionSomeObject = other.IncludeOptionSomeObject ?? IncludeOptionSomeObject ?? null,
+                PublicState = other.PublicState ?? PublicState ?? null,
+                AddCastByRefMethod = other.AddCastByRefMethod ?? AddCastByRefMethod ?? null
             };
         }
 
         public OptionConfiguration ApplyDefaults() {
             return new() {
                 ImplicitCastSomeTypeToOption = ImplicitCastSomeTypeToOption ?? true,
-                IncludeOptionSomeObject = IncludeOptionSomeObject ?? true
+                IncludeOptionSomeObject = IncludeOptionSomeObject ?? true,
+                PublicState = PublicState ?? false,
+                AddCastByRefMethod = AddCastByRefMethod ?? false
             };
         }
     }
@@ -36,6 +42,7 @@ readonly record struct OptionHolderContextInfo(
         string DeclarationName,
         string OnlyName,
         string GlobalName,
+        TypeAccessibility Accessibility,
         int TypeArgumentCount
     );
 
@@ -83,6 +90,16 @@ static class OptionConfigurationExt {
                         IncludeOptionSomeObject = na.Value.Value is true
                     };
                     break;
+                case "PublicState":
+                    configuration = configuration with {
+                        PublicState = na.Value.Value is true
+                    };
+                    break;
+                case "AddCastByRefMethod":
+                    configuration = configuration with {
+                        AddCastByRefMethod = na.Value.Value is true
+                    };
+                    break;
                 default: continue;
             }
         }
@@ -109,6 +126,22 @@ static class OptionConfigurationExt {
                         IncludeOptionSomeObject =
                         s2.Equals("enable", StringComparison.OrdinalIgnoreCase) || s2.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
                         s2.Equals("disable", StringComparison.OrdinalIgnoreCase) || s2.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                    };
+                }
+
+                if (options.TryGetValue("PerfHoldersOptionPublicState", out var s3) && s3 is not null and not "") {
+                    configuration = configuration with {
+                        PublicState =
+                        s3.Equals("enable", StringComparison.OrdinalIgnoreCase) || s3.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
+                        s3.Equals("disable", StringComparison.OrdinalIgnoreCase) || s3.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                    };
+                }
+
+                if (options.TryGetValue("PerfHoldersOptionAddCastByRefMethod", out var s4) && s4 is not null and not "") {
+                    configuration = configuration with {
+                        AddCastByRefMethod =
+                        s4.Equals("enable", StringComparison.OrdinalIgnoreCase) || s4.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
+                        s4.Equals("disable", StringComparison.OrdinalIgnoreCase) || s4.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
                     };
                 }
 

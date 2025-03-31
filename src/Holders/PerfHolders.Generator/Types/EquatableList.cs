@@ -12,6 +12,7 @@ readonly struct EquatableList<T>(List<T> list) :
     IList<T>
     where T : IEquatable<T> {
     public EquatableList() : this([ ]) { }
+    public EquatableList(int size) : this(new List<T>(size)) { }
 
     public ReadOnlySpan<T> Span =>
         list != null!
@@ -47,4 +48,14 @@ readonly struct EquatableList<T>(List<T> list) :
     public void Insert(int index, T item) => list.Insert(index, item);
     public void RemoveAt(int index) => list.RemoveAt(index);
     public T this[int index] { get => list[index]; set => list[index] = value; }
+
+    public bool Any(Func<T, bool> predicate) {
+        foreach (ref readonly var item in Span) {
+            if (predicate(item)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

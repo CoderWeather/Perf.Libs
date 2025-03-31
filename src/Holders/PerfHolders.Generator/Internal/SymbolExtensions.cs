@@ -1,21 +1,19 @@
 // ReSharper disable UnusedMember.Local
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Perf.Holders.Generator;
+namespace Perf.Holders.Generator.Internal;
 
 using Microsoft.CodeAnalysis;
 
 static class SymbolExtensions {
-    public static string GlobalName(this ITypeSymbol type) {
-        return type.ToDisplayString(GlobalFormat);
-    }
-
     static readonly SymbolDisplayFormat GlobalFormat =
         SymbolDisplayFormat.FullyQualifiedFormat
             .WithMiscellaneousOptions(
                 SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
                 | SymbolDisplayMiscellaneousOptions.UseSpecialTypes
             );
+
+    public static string GlobalName(this ITypeSymbol type) => type.ToDisplayString(GlobalFormat);
 
     static readonly SymbolDisplayFormat FullPathFormat = new(
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
@@ -26,9 +24,23 @@ static class SymbolExtensions {
 
     public static string MinimalName(this ITypeSymbol type) => type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
-    static string MinimalName(this INamespaceSymbol ns, string ifResultEmpty = "Generated") {
-        var assemblyName = ns.ContainingAssembly.Name;
-        var result = ns.ToDisplayString().Replace($"{assemblyName}.", null);
-        return result.Length > 0 ? result : ifResultEmpty;
+    public static ITypeSymbol MakeNullable(this ITypeSymbol ts, Compilation compilation) {
+        if (ts.IsReferenceType) {
+            return ts.NullableAnnotation is NullableAnnotation.Annotated
+                ? ts
+                : ts.WithNullableAnnotation(NullableAnnotation.Annotated);
+        }
+
+        if (ts.MetadataName is "Nullable`1") {
+            return ts;
+        }
+
+        var nullableStruct = compilation.GetSpecialType(SpecialType.System_Nullable_T);
+        return nullableStruct.Construct(ts);
     }
+
+    public static string? GetNamespaceString(this INamedTypeSymbol ts) =>
+        ts.ContainingNamespace.IsGlobalNamespace
+            ? null
+            : ts.ContainingNamespace.ToDisplayString();
 }

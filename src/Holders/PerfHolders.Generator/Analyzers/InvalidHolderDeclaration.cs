@@ -1,6 +1,7 @@
 namespace Perf.Holders.Generator.Analyzers;
 
 using System.Collections.Immutable;
+using Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

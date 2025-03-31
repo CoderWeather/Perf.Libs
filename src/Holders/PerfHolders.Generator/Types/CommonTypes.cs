@@ -5,6 +5,13 @@ namespace Perf.Holders.Generator.Types;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
+enum TypeAccessibility {
+    None = 0,
+    Public = 1,
+    Internal = 2,
+    Private = 3
+}
+
 readonly record struct CompInfo(
     LanguageVersion Version,
     OptimizationLevel OptimizationLevel,
@@ -34,10 +41,3 @@ static class CompInfoExtensions {
 }
 
 readonly record struct HolderContainingType(string Kind, string Name);
-
-enum TypeAccessibility {
-    None = 0,
-    Public = 1,
-    Internal = 2,
-    Private = 3
-}

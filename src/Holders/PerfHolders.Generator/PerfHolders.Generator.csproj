@@ -16,15 +16,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <CompilerVisibleProperty Include="PerfHoldersOptionImplicitCastSomeTypeToOption" />
-        <CompilerVisibleProperty Include="PerfHoldersOptionIncludeOptionSomeObject" />
-        <CompilerVisibleProperty Include="PerfHoldersResultImplicitCastOkTypeToResult" />
-        <CompilerVisibleProperty Include="PerfHoldersResultImplicitCastErrorTypeToResult" />
-        <CompilerVisibleProperty Include="PerfHoldersResultIncludeResultOkObject" />
-        <CompilerVisibleProperty Include="PerfHoldersResultIncludeResultErrorObject" />
-    </ItemGroup>
-
-    <ItemGroup>
         <InternalsVisibleTo Include="GeneratorTester" />
     </ItemGroup>
 

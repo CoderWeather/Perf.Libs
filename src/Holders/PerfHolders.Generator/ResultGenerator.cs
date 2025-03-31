@@ -14,7 +14,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
     public void Initialize(IncrementalGeneratorInitializationContext context) {
         var types = context.SyntaxProvider.CreateSyntaxProvider(
             static (node, _) => node.IsResultHolder(),
-            static (context, ct) => {
+            static ResultHolderContextInfo (context, ct) => {
                 var syntax = (StructDeclarationSyntax)context.Node;
                 if (context.SemanticModel.GetDeclaredSymbol(syntax, ct) is not { } result) {
                     return default;
@@ -43,26 +43,6 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     return default;
                 }
 
-                EquatableList<HolderContainingType> containingTypes = default;
-                if (result.ContainingType != null) {
-                    containingTypes = [ ];
-                    var t = result;
-                    do {
-                        t = t.ContainingType;
-
-                        HolderContainingType containingType = t switch {
-                            { IsReferenceType: true, IsRecord: true } => new(Kind: "record", Name: t.Name),
-                            { IsReferenceType: true }                 => new(Kind: "class", Name: t.Name),
-                            { IsValueType: true, IsRecord: true }     => new(Kind: "record struct", Name: t.Name),
-                            { IsValueType: true }                     => new(Kind: "struct", Name: t.Name),
-                            _                                         => default
-                        };
-                        if (containingType != default) {
-                            containingTypes.Add(containingType);
-                        }
-                    } while (t.ContainingType != null);
-                }
-
                 var okArg = marker.TypeArguments[0];
                 var errorArg = marker.TypeArguments[1];
 
@@ -74,26 +54,14 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     return default;
                 }
 
-                var configuration = result.GetAttributes().ReadResultConfigurationFromAttributes();
-
-                var okArgNullable = okArg.IsValueType
-                    ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(okArg)
-                    : okArg.WithNullableAnnotation(NullableAnnotation.Annotated);
-                var errorArgNullable = errorArg.IsValueType
-                    ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(errorArg)
-                    : errorArg.WithNullableAnnotation(NullableAnnotation.Annotated);
+                var okArgNullable = okArg.MakeNullable(context.SemanticModel.Compilation);
+                var errorArgNullable = errorArg.MakeNullable(context.SemanticModel.Compilation);
 
                 var resultInfo = new ResultHolderContextInfo.ResultInfo(
                     DeclarationName: result.MinimalName(),
                     OnlyName: result.Name,
                     GlobalName: result.GlobalName(),
-                    TypeArgumentCount: result.TypeArguments.Length,
-                    Accessibility: result.DeclaredAccessibility switch {
-                        Accessibility.Public   => TypeAccessibility.Public,
-                        Accessibility.Private  => TypeAccessibility.Private,
-                        Accessibility.Internal => TypeAccessibility.Internal,
-                        _                      => TypeAccessibility.None
-                    }
+                    Accessibility: result.DeclaredAccessibility.MapToTypeAccessibility()
                 );
                 if (resultInfo.Accessibility is TypeAccessibility.None) {
                     return default;
@@ -101,7 +69,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
                 var okInfo = new ResultHolderContextInfo.OkInfo(
                     IsStruct: okArg.IsValueType,
-                    IsTypeArgument: okArg is ITypeParameterSymbol,
+                    IsTypeParameter: okArg is ITypeParameterSymbol,
                     Property: ResultHolderContextInfo.OkInfo.DefaultProperty,
                     Field: ResultHolderContextInfo.OkInfo.DefaultField,
                     Type: okArg.GlobalName(),
@@ -110,7 +78,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 );
                 var errorInfo = new ResultHolderContextInfo.ErrorInfo(
                     IsStruct: errorArg.IsValueType,
-                    IsTypeArgument: errorArg is ITypeParameterSymbol,
+                    IsTypeParameter: errorArg is ITypeParameterSymbol,
                     Property: ResultHolderContextInfo.ErrorInfo.DefaultProperty,
                     Field: ResultHolderContextInfo.ErrorInfo.DefaultField,
                     Type: errorArg.GlobalName(),
@@ -157,11 +125,12 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                     }
                 }
 
-                return new ResultHolderContextInfo(
-                    SourceFileName: SourceFileName(result),
-                    Namespace: result.ContainingNamespace.IsGlobalNamespace
-                        ? null
-                        : result.ContainingNamespace.ToDisplayString(),
+                var containingTypes = result.GetContainingTypeList();
+                var configuration = result.GetAttributes().ReadResultConfigurationFromAttributes();
+
+                return new(
+                    MetadataName: result.MetadataName,
+                    Namespace: result.GetNamespaceString(),
                     Result: resultInfo,
                     Ok: okInfo,
                     Error: errorInfo,
@@ -181,8 +150,8 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
         context.RegisterSourceOutput(
             final,
-            static (context, tuple1) => {
-                var ((resultInfo, compInfo), resultConfiguration) = tuple1;
+            static (context, final) => {
+                var ((resultInfo, compInfo), resultConfiguration) = final;
 
                 resultInfo = resultInfo with {
                     Configuration = resultInfo.Configuration.MergeWithMajor(resultConfiguration).ApplyDefaults()
@@ -190,16 +159,12 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
                 var sourceText = new ResultSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
 
-                if (compInfo.OptimizationLevel is OptimizationLevel.Debug) {
-                    context.AddSource($"{resultInfo.SourceFileName}.cs", SourceText.From(sourceText, Encoding.UTF8));
-                } else if (compInfo.OptimizationLevel is OptimizationLevel.Release) {
-                    context.AddSource($"{resultInfo.SourceFileName}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
-                }
+                var fileName = compInfo.OptimizationLevel is OptimizationLevel.Debug
+                    ? $"{resultInfo.MetadataName}.cs"
+                    : $"{resultInfo.MetadataName}.g.cs";
+
+                context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
             }
         );
-    }
-
-    static string SourceFileName(INamedTypeSymbol symbol) {
-        return symbol.IsGenericType ? $"{symbol.Name}`{symbol.TypeParameters.Length}" : symbol.Name;
     }
 }

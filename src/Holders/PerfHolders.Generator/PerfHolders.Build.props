@@ -1,0 +1,11 @@
+<Project>
+    <ItemGroup>
+        <CompilerVisibleProperty Include="PerfHoldersOptionImplicitCastSomeTypeToOption" />
+        <CompilerVisibleProperty Include="PerfHoldersOptionIncludeOptionSomeObject" />
+        <CompilerVisibleProperty Include="PerfHoldersResultImplicitCastOkTypeToResult" />
+        <CompilerVisibleProperty Include="PerfHoldersResultImplicitCastErrorTypeToResult" />
+        <CompilerVisibleProperty Include="PerfHoldersResultIncludeResultOkObject" />
+        <CompilerVisibleProperty Include="PerfHoldersResultIncludeResultErrorObject" />
+        <CompilerVisibleProperty Include="PerfHoldersMultiResultAddIsProperties" />
+    </ItemGroup>
+</Project>

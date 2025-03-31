@@ -16,16 +16,12 @@ sealed class ResultSourceBuilder(
 
     readonly string baseType = $"{BaseResult}<{contextInfo.Ok.Type}, {contextInfo.Error.Type}>";
 
-    readonly string throwUninitialized =
-        $"throw {Exceptions}.Uninitialized<{contextInfo.Result.DeclarationName}, {contextInfo.Ok.Type}, {contextInfo.Error.Type}>()";
-
-    readonly string throwStateOutOfValidValues =
-        $"throw {Exceptions}.StateOutOfValidValues<{contextInfo.Result.DeclarationName}, {contextInfo.Ok.Type}, {contextInfo.Error.Type}>((byte)state)";
+    readonly string throwDefault = $"throw {Exceptions}.Default<{contextInfo.Result.DeclarationName}, {contextInfo.Ok.Type}, {contextInfo.Error.Type}>()";
 
     readonly string enumState = $"{contextInfo.Result.OnlyName}State";
     readonly string enumStateOk = $"{contextInfo.Result.OnlyName}State.{contextInfo.Ok.Property}";
     readonly string enumStateError = $"{contextInfo.Result.OnlyName}State.{contextInfo.Error.Property}";
-    readonly string enumStateUninitialized = $"{contextInfo.Result.OnlyName}State.Uninitialized";
+    readonly string enumStateDefault = $"{contextInfo.Result.OnlyName}State.Default";
 
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(12000));
     ResultHolderContextInfo context = contextInfo;
@@ -51,6 +47,13 @@ sealed class ResultSourceBuilder(
                 };
             }
         }
+    }
+
+    public string WriteAllAndBuild() {
+        WriteAll();
+        var result = sb.ToString();
+        sb.Clear();
+        return result;
     }
 
     void WriteAll() {
@@ -107,16 +110,16 @@ sealed class ResultSourceBuilder(
         }
 
         var typeArgs = context switch {
-            { Ok.IsTypeArgument: true, Error.IsTypeArgument: true } => $"<{context.Ok.Type}, {context.Error.Type}>",
-            { Ok.IsTypeArgument: true }                             => $"<{context.Ok.Type}>",
-            { Error.IsTypeArgument: true }                          => $"<{context.Error.Type}>",
-            _                                                       => ""
+            { Ok.IsTypeParameter: true, Error.IsTypeParameter: true } => $"<{context.Ok.Type}, {context.Error.Type}>",
+            { Ok.IsTypeParameter: true }                              => $"<{context.Ok.Type}>",
+            { Error.IsTypeParameter: true }                           => $"<{context.Error.Type}>",
+            _                                                         => ""
         };
         var typeArgsConstraints = context switch {
-            { Ok.IsTypeArgument: true, Error.IsTypeArgument: true } => $"where {context.Ok.Type} : notnull where {context.Error.Type} : notnull",
-            { Ok.IsTypeArgument: true }                             => $"where {context.Ok.Type} : notnull",
-            { Error.IsTypeArgument: true }                          => $"where {context.Error.Type} : notnull",
-            _                                                       => ""
+            { Ok.IsTypeParameter: true, Error.IsTypeParameter: true } => $"where {context.Ok.Type} : notnull where {context.Error.Type} : notnull",
+            { Ok.IsTypeParameter: true }                              => $"where {context.Ok.Type} : notnull",
+            { Error.IsTypeParameter: true }                           => $"where {context.Error.Type} : notnull",
+            _                                                         => ""
         };
         sb.AppendInterpolatedLine(
             $$"""
@@ -128,8 +131,7 @@ sealed class ResultSourceBuilder(
                     this.Value = global::System.Enum.Format(stateField.FieldType, this.State, "G") switch {
                         "{{context.Ok.Property}}" => result.{{context.Ok.Property}},
                         "{{context.Error.Property}}" => result.{{context.Error.Property}},
-                        "Uninitialized" => "Uninitialized",
-                        _ => "!!! Incorrect State !!!"
+                        _ => "Default"
                     };
                 }
                 public object State { get; }
@@ -148,7 +150,7 @@ sealed class ResultSourceBuilder(
         sb.AppendInterpolatedLine(
             $$"""
             {{accessibilityModifier}}enum {{context.Result.OnlyName}}State : byte {
-                Uninitialized = 0,
+                Default = 0,
                 {{context.Ok.Property}} = 1,
                 {{context.Error.Property}} = 2
             }
@@ -170,9 +172,9 @@ sealed class ResultSourceBuilder(
 
     void WriteTypeAttributes() {
         var typeArg = context switch {
-            { Ok.IsTypeArgument: true, Error.IsTypeArgument: true }       => "<,>",
-            { Ok.IsTypeArgument: true } or { Error.IsTypeArgument: true } => "<>",
-            _                                                             => ""
+            { Ok.IsTypeParameter: true, Error.IsTypeParameter: true }       => "<,>",
+            { Ok.IsTypeParameter: true } or { Error.IsTypeParameter: true } => "<>",
+            _                                                               => ""
         };
         sb.AppendInterpolatedLine(
             $"""
@@ -219,11 +221,11 @@ sealed class ResultSourceBuilder(
 
         sb.AppendLine();
 
-        if (context.Ok.IsTypeArgument) {
+        if (context.Ok.IsTypeParameter) {
             sb.AppendInterpolatedLine($"where {context.Ok.Type} : notnull");
         }
 
-        if (context.Error.IsTypeArgument) {
+        if (context.Error.IsTypeParameter) {
             sb.AppendInterpolatedLine($"where {context.Error.Type} : notnull");
         }
 
@@ -242,7 +244,7 @@ sealed class ResultSourceBuilder(
         sb.AppendInterpolatedLine(
             $$"""
             public {{option}}() {
-                this.state = {{enumStateUninitialized}};
+                this.state = {{enumStateDefault}};
                 this.{{okField}} = default!;
                 this.{{errorField}} = default!;
             }
@@ -338,9 +340,8 @@ sealed class ResultSourceBuilder(
             $$"""
             state switch {
                 {{enumStateOk}} => {{context.Ok.Field}},
-                {{enumStateError}} => throw {{Exceptions}}.ErrorAccessWhenOk<{{context.Result.DeclarationName}}, {{context.Ok.Type}}, {{context.Error.Type}}>("{{context.Ok.Property}}", "{{context.Error.Property}}"),
-                {{enumStateUninitialized}} => {{throwUninitialized}},
-                _ => {{throwStateOutOfValidValues}}
+                {{enumStateError}} => throw {{Exceptions}}.WrongAccess<{{context.Result.DeclarationName}}, {{context.Ok.Type}}, {{context.Error.Type}}>("{{context.Error.Property}}", "{{context.Ok.Property}}"),
+                _ => {{throwDefault}}
             };
             """
         );
@@ -366,10 +367,9 @@ sealed class ResultSourceBuilder(
         sb.AppendInterpolatedLine(
             $$"""
             state switch {
-                {{enumStateOk}} => throw {{Exceptions}}.ErrorAccessWhenOk<{{context.Result.DeclarationName}}, {{context.Ok.Type}}, {{context.Error.Type}}>("{{context.Ok.Property}}", "{{context.Error.Property}}"),
+                {{enumStateOk}} => throw {{Exceptions}}.WrongAccess<{{context.Result.DeclarationName}}, {{context.Ok.Type}}, {{context.Error.Type}}>("{{context.Ok.Property}}", "{{context.Error.Property}}"),
                 {{enumStateError}} => {{context.Error.Field}},
-                {{enumStateUninitialized}} => {{throwUninitialized}},
-                _ => {{throwStateOutOfValidValues}}
+                _ => {{throwDefault}}
             };
             """
         );
@@ -379,30 +379,17 @@ sealed class ResultSourceBuilder(
             sb.AppendInterpolatedLine(
                 $$"""
                 {{DebuggerBrowsableNever}}
-                public partial bool {{context.IsOk.Property}} =>
+                public partial bool {{context.IsOk.Property}} => state == {{enumStateOk}};
                 """
             );
         } else {
             sb.AppendInterpolatedLine(
                 $$"""
                 {{DebuggerBrowsableNever}}
-                public bool {{context.IsOk.Property}} =>
+                public bool {{context.IsOk.Property}} => state == {{enumStateOk}};
                 """
             );
         }
-
-        sb.Indent++;
-        sb.AppendInterpolatedLine(
-            $$"""
-            state switch {
-                {{enumStateOk}} => true,
-                {{enumStateError}} => false,
-                {{enumStateUninitialized}} => {{throwUninitialized}},
-                _ => {{throwStateOutOfValidValues}}
-            };
-            """
-        );
-        sb.Indent--;
     }
 
     void WriteCastOperators() {
@@ -516,28 +503,27 @@ sealed class ResultSourceBuilder(
                 (state, other.state) switch {
                     ({{enumStateOk}}, {{enumStateOk}}) => {{context.Ok.Field}}.Equals(other.{{context.Ok.Field}}),
                     ({{enumStateError}}, {{enumStateError}}) => {{context.Error.Field}}.Equals(other.{{context.Error.Field}}),
-                    ({{enumStateOk}}, {{enumStateError}}) or ({{enumStateError}}, {{enumStateOk}}) => false,
-                    ({{enumStateUninitialized}}, _) or (_, {{enumStateUninitialized}}) => {{throwUninitialized}},
-                    _ => {{throwStateOutOfValidValues}}
+                    ({{enumStateDefault}}, {{enumStateDefault}}) => true,
+                    _ => false
                 };
             """
         );
         sb.AppendInterpolatedLine(
             $$"""
             public bool Equals({{baseType}} other) => other.Equals(({{baseType}})this);
-            public bool Equals({{okTypeForEquals}} other) => {{context.IsOk.Property}} && {{EqualityComparer}}<{{okType}}>.Default.Equals({{context.Ok.Field}}, other);
-            public bool Equals({{errorTypeForEquals}} other) => {{context.IsOk.Property}} == false && {{EqualityComparer}}<{{errorType}}>.Default.Equals({{context.Error.Field}}, other);
+            public bool Equals({{okTypeForEquals}} other) => {{context.IsOk.Property}} && {{EqualityComparer}}<{{okTypeForEquals}}>.Default.Equals({{context.Ok.Field}}, other);
+            public bool Equals({{errorTypeForEquals}} other) => {{context.IsOk.Property}} == false && {{EqualityComparer}}<{{errorTypeForEquals}}>.Default.Equals({{context.Error.Field}}, other);
             """
         );
         if (context.Configuration.IncludeResultOkObject is true) {
             sb.AppendInterpolatedLine(
-                $"public bool Equals({BaseResult}.Ok<{okType}> okObject) => {context.IsOk.Property} && {EqualityComparer}<{okType}>.Default.Equals({context.Ok.Field}, okObject.Value);"
+                $"public bool Equals({BaseResult}.Ok<{okType}> okObject) => {context.IsOk.Property} && {EqualityComparer}<{okTypeForEquals}>.Default.Equals({context.Ok.Field}, okObject.Value);"
             );
         }
 
         if (context.Configuration.IncludeResultErrorObject is true) {
             sb.AppendInterpolatedLine(
-                $"public bool Equals({BaseResult}.Error<{errorType}> errorObject) => {context.IsOk.Property} == false && {EqualityComparer}<{errorType}>.Default.Equals({context.Error.Field}, errorObject.Value);"
+                $"public bool Equals({BaseResult}.Error<{errorType}> errorObject) => {context.IsOk.Property} == false && {EqualityComparer}<{errorTypeForEquals}>.Default.Equals({context.Error.Field}, errorObject.Value);"
             );
         }
 
@@ -557,8 +543,7 @@ sealed class ResultSourceBuilder(
                 state switch {
                     {{enumStateOk}} => {{context.Ok.Field}}.GetHashCode(),
                     {{enumStateError}} => {{context.Error.Field}}.GetHashCode(),
-                    {{enumStateUninitialized}} => {{throwUninitialized}},
-                    _ => {{throwStateOutOfValidValues}}
+                    _ => 0
                 };
             """
         );
@@ -572,8 +557,7 @@ sealed class ResultSourceBuilder(
                 state switch {
                     {{enumStateOk}} => {{context.Ok.Field}}.ToString(),
                     {{enumStateError}} => {{context.Error.Field}}.ToString(),
-                    {{enumStateUninitialized}} => {{throwUninitialized}},
-                    _ => {{throwStateOutOfValidValues}}
+                    _ => ""
                 };
             """
         );
@@ -584,10 +568,9 @@ sealed class ResultSourceBuilder(
             $$"""
             string DebugPrint() =>
                 state switch {
-                    {{enumStateOk}} => $"{{context.Ok.Property}}({{{context.Ok.Field}}})",
-                    {{enumStateError}} => $"{{context.Error.Property}}({{{context.Error.Field}}})",
-                    {{enumStateUninitialized}} => "Uninitialized",
-                    _ => "!!! Incorrect State !!!"
+                    {{enumStateOk}} => $"{{context.Ok.Property}}={{{context.Ok.Field}}}",
+                    {{enumStateError}} => $"{{context.Error.Property}}={{{context.Error.Field}}}",
+                    _ => "Default"
                 };
             """
         );
@@ -638,12 +621,5 @@ sealed class ResultSourceBuilder(
                 sb.AppendLine();
             }
         }
-    }
-
-    public string WriteAllAndBuild() {
-        WriteAll();
-        var result = sb.ToString();
-        sb.Clear();
-        return result;
     }
 }

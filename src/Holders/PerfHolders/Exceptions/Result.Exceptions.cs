@@ -1,52 +1,31 @@
+// ReSharper disable UnusedMember.Global
+
 namespace Perf.Holders.Exceptions;
 
-public abstract class ResultObjectException(string message) : Exception(message);
-public sealed class ResultObjectUninitializedException(string message) : ResultObjectException(message);
-public sealed class ResultObjectStateOutOfValidValuesException(string message) : ResultObjectException(message);
+public abstract class ResultObjectException(string message) : ResultHolderException(message);
+public sealed class ResultObjectDefaultException(string message) : ResultObjectException(message);
 public abstract class ResultHolderException(string message) : Exception(message);
-public sealed class ResultUninitializedException(string message) : ResultHolderException(message);
-public sealed class ResultStateOutOfValidValuesException(string message) : ResultHolderException(message);
-public sealed class ResultOkAccessWhenErrorException(string message) : ResultHolderException(message);
-public sealed class ResultErrorAccessWhenOkException(string message) : ResultHolderException(message);
+public sealed class ResultDefaultException(string message) : ResultHolderException(message);
+public sealed class ResultWrongAccessException(string message) : ResultHolderException(message);
 
 public static class ResultHolderExceptions {
-    public static ResultObjectUninitializedException UninitializedOk<TOk>()
+    public static ResultObjectDefaultException OkObjectDefault<TOk>()
         where TOk : notnull =>
-        new($"{typeof(Result.Ok<TOk>)} Cannot access state while state is {nameof(ResultState.Uninitialized)}");
+        new($"{typeof(Result.Ok<TOk>)} Cannot access values while state is Default");
 
-    public static ResultObjectUninitializedException UninitializedError<TError>()
+    public static ResultObjectDefaultException ErrorObjectDefault<TError>()
         where TError : notnull =>
-        new($"{typeof(Result.Error<TError>)} Cannot access state while state is {nameof(ResultState.Uninitialized)}");
+        new($"{typeof(Result.Error<TError>)} Cannot access values while state is Default");
 
-    public static ResultObjectStateOutOfValidValuesException OkStateOutOfValidValues<TOk>(byte state)
-        where TOk : notnull =>
-        new($"{typeof(Result.Ok<TOk>)} ObjectState {state} is out of valid values");
-
-    public static ResultObjectStateOutOfValidValuesException ErrorStateOutOfValidValues<TError>(byte state)
-        where TError : notnull =>
-        new($"{typeof(Result.Error<TError>)} ObjectState {state} is out of valid values");
-
-    public static ResultUninitializedException Uninitialized<TResult, TOk, TError>()
-        where TResult : IResultHolder<TOk, TError>
+    public static ResultDefaultException Default<TResult, TOk, TError>()
+        where TResult : struct, IResultHolder<TOk, TError>
         where TOk : notnull
         where TError : notnull =>
-        new($"{typeof(TResult)} Cannot access state while state is {nameof(ResultState.Uninitialized)}");
+        new($"{typeof(TResult)} Cannot access values while state is Default");
 
-    public static ResultStateOutOfValidValuesException StateOutOfValidValues<TResult, TOk, TError>(byte state)
-        where TResult : IResultHolder<TOk, TError>
+    public static ResultWrongAccessException WrongAccess<TResult, TOk, TError>(string accessedState, string expectedState)
+        where TResult : struct, IResultHolder<TOk, TError>
         where TOk : notnull
         where TError : notnull =>
-        new($"{typeof(TResult)} ResultState {state} is out of valid values");
-
-    public static ResultOkAccessWhenErrorException OkAccessWhenError<TResult, TOk, TError>(string okName, string errorName)
-        where TResult : IResultHolder<TOk, TError>
-        where TOk : notnull
-        where TError : notnull =>
-        new($"{typeof(TResult)} Cannot access {okName} while state is {errorName}");
-
-    public static ResultErrorAccessWhenOkException ErrorAccessWhenOk<TResult, TOk, TError>(string okName, string errorName)
-        where TResult : IResultHolder<TOk, TError>
-        where TOk : notnull
-        where TError : notnull =>
-        new($"{typeof(TResult)} Cannot access {errorName} while state is {okName}");
+        new($"{typeof(TResult)} Cannot access {accessedState} while state is {expectedState}");
 }

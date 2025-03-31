@@ -1,3 +1,5 @@
+// ReSharper disable UnusedMember.Global
+
 namespace Perf.Holders.Generator.Internal;
 
 using System.Runtime.CompilerServices;
@@ -58,13 +60,32 @@ sealed class InterpolatedStringBuilder(
 
     public void Append(string s) {
         ValidateIndent();
-        sb.Append(s);
-        shouldIndent = false;
+
+        var span = s.AsSpan();
+        if (span.IndexOf('\n') >= 0) {
+            while (span.Length > 0) {
+                var newLineIndex = span.IndexOf('\n');
+                if (newLineIndex is -1) {
+                    sb.Append(span);
+                    break;
+                }
+
+                sb.Append(span[..newLineIndex]);
+                sb.AppendLine();
+                shouldIndent = true;
+                ValidateIndent();
+                span = span[(newLineIndex + 1)..];
+            }
+        } else {
+            sb.Append(s);
+            shouldIndent = false;
+        }
     }
 
     public void AppendLine(string s) {
         ValidateIndent();
-        sb.AppendLine(s);
+        Append(s);
+        sb.AppendLine();
         shouldIndent = true;
     }
 
@@ -77,18 +98,22 @@ sealed class InterpolatedStringBuilder(
         ValidateIndent();
 
         var span = interpolatedString.Text;
-        while (span.Length > 0) {
-            var newLineIndex = span.IndexOf('\n');
-            if (newLineIndex is -1) {
-                sb.Append(span);
-                break;
-            }
+        if (span.IndexOf('\n') >= 0) {
+            while (span.Length > 0) {
+                var newLineIndex = span.IndexOf('\n');
+                if (newLineIndex is -1) {
+                    sb.Append(span);
+                    break;
+                }
 
-            sb.Append(span[..newLineIndex]);
-            sb.AppendLine();
-            shouldIndent = true;
-            ValidateIndent();
-            span = span[(newLineIndex + 1)..];
+                sb.Append(span[..newLineIndex]);
+                sb.AppendLine();
+                shouldIndent = true;
+                ValidateIndent();
+                span = span[(newLineIndex + 1)..];
+            }
+        } else {
+            sb.Append(span);
         }
 
         interpolatedString.Clear();
@@ -99,6 +124,8 @@ sealed class InterpolatedStringBuilder(
         AppendInterpolated(interpolatedString);
         sb.AppendLine();
     }
+
+    public int Length { get => sb.Length; set => sb.Length = value; }
 
     public override string ToString() => sb.ToString();
     public void Clear() => sb.Clear();

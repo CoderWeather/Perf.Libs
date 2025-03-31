@@ -12,4 +12,10 @@ static class HolderTypeNames {
     public const string OptionConfigurationFullName = "Perf.Holders.Attributes.OptionHolderConfigurationAttribute";
     public const string OptionSerializationSystemTextJson = "Perf.Holders.Serialization.SystemTextJson.OptionHolderJsonConverterFactory";
     public const string OptionSerializationMessagePack = "Perf.Holders.Serialization.MessagePack.OptionHolderFormatterResolver";
+
+    public const string MultiResultMarkerName = "IMultiResultHolder";
+    public const string MultiResultMarkerFullName = "Perf.Holders.IMultiResultHolder";
+    public const string MultiResultConfigurationFullName = "Perf.Holders.Attributes.MultiResultHolderConfigurationAttribute";
+    public const string MultiResultSerializationSystemTextJson = "Perf.Holders.Serialization.SystemTextJson.MultiResultHolderJsonConverterFactory";
+    public const string MultiResultSerializationMessagePack = "Perf.Holders.Serialization.MessagePack.MultiResultHolderFormatterResolver";
 }

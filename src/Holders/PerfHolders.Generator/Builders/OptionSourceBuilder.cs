@@ -16,11 +16,7 @@ sealed class OptionSourceBuilder(
 
     readonly string baseType = $"{BaseOption}<{contextInfo.Some.Type}>";
 
-    readonly string throwSomeWhenNone =
-        $"throw {Exceptions}.SomeAccessWhenNone<{contextInfo.Option.DeclarationName}, {contextInfo.Some.Type}>(\"{contextInfo.Some.Property}\")";
-
-    readonly string throwStateOutOfValidValues =
-        $"throw {Exceptions}.StateOutOfValidValues<{contextInfo.Option.DeclarationName}, {contextInfo.Some.Type}>((byte)state)";
+    readonly string throwDefault = $"throw {Exceptions}.Default<{contextInfo.Option.DeclarationName}, {contextInfo.Some.Type}>()";
 
     readonly string enumState = $"{contextInfo.Option.OnlyName}State";
     readonly string enumSome = $"{contextInfo.Option.OnlyName}State.{contextInfo.Some.Property}";
@@ -40,6 +36,13 @@ sealed class OptionSourceBuilder(
                 }
             };
         }
+    }
+
+    public string WriteAllAndBuild() {
+        WriteAll();
+        var result = sb.ToString();
+        sb.Clear();
+        return result;
     }
 
     void WriteAll() {
@@ -95,8 +98,8 @@ sealed class OptionSourceBuilder(
             sb.AppendLine(EditorBrowsable);
         }
 
-        var typeArgs = context.Some.IsTypeArgument ? $"<{context.Some.Type}>" : "";
-        var typeArgsConstraints = context.Some.IsTypeArgument ? $"where {context.Some.Type} : notnull " : "";
+        var typeArgs = context.Some.IsTypeParameter ? $"<{context.Some.Type}>" : "";
+        var typeArgsConstraints = context.Some.IsTypeParameter ? $"where {context.Some.Type} : notnull " : "";
         sb.AppendInterpolatedLine(
             $$"""
             sealed class {{context.Option.OnlyName}}_DebugView{{typeArgs}} {{typeArgsConstraints}}{
@@ -107,7 +110,7 @@ sealed class OptionSourceBuilder(
                     this.Value = global::System.Enum.Format(stateField.FieldType, this.State, "G") switch {
                         "{{context.Some.Property}}" => opt.{{context.Some.Property}},
                         "{{context.IsSome.Property}}" => "{{context.IsSome.Property}}",
-                        _ => "!!! Incorrect State !!!"
+                        _ => "Default"
                     };
                 }
                 public object State { get; }
@@ -146,7 +149,7 @@ sealed class OptionSourceBuilder(
     }
 
     void WriteTypeAttributes() {
-        var typeArg = context.Some.IsTypeArgument ? "<>" : "";
+        var typeArg = context.Some.IsTypeParameter ? "<>" : "";
         sb.AppendInterpolatedLine(
             $"""
             [global::System.Diagnostics.DebuggerTypeProxy(typeof({context.Option.OnlyName}_DebugView{typeArg}))]
@@ -196,7 +199,7 @@ sealed class OptionSourceBuilder(
 
         sb.AppendLine();
 
-        if (context.Some.IsTypeArgument) {
+        if (context.Some.IsTypeParameter) {
             sb.AppendInterpolatedLine($"where {context.Some.Type} : notnull");
         }
 
@@ -333,8 +336,8 @@ sealed class OptionSourceBuilder(
             $$"""
             state switch {
                 {{enumSome}} => {{context.Some.Field}},
-                {{enumNone}} => {{throwSomeWhenNone}},
-                _ => {{throwStateOutOfValidValues}}
+                {{enumNone}} => throw {{Exceptions}}.SomeAccessWhenNone<{{context.Option.DeclarationName}}, {{context.Some.Type}}>("{{context.Some.Property}}"),
+                _ => {{throwDefault}}
             };
             """
         );
@@ -344,31 +347,17 @@ sealed class OptionSourceBuilder(
             sb.AppendInterpolatedLine(
                 $$"""
                 {{DebuggerBrowsableNever}}
-                public partial bool {{context.IsSome.Property}} =>
+                public partial bool {{context.IsSome.Property}} => state == {{enumSome}};
                 """
             );
         } else {
             sb.AppendInterpolatedLine(
                 $$"""
                 {{DebuggerBrowsableNever}}
-                public bool {{context.IsSome.Property}} =>
+                public bool {{context.IsSome.Property}} => state == {{enumSome}};
                 """
             );
         }
-
-        sb.Indent++;
-
-        sb.AppendInterpolatedLine(
-            $$"""
-            state switch {
-                {{enumSome}} => true,
-                {{enumNone}} => false,
-                _ => {{throwStateOutOfValidValues}}
-            };
-            """
-        );
-
-        sb.Indent--;
     }
 
     void WriteCastOperators() {
@@ -509,7 +498,7 @@ sealed class OptionSourceBuilder(
                 (state, other.state) switch {
                     ({{enumSome}}, {{enumSome}}) => {{context.Some.Field}}.Equals(other.{{context.Some.Field}}),
                     ({{enumNone}}, {{enumNone}}) => true,
-                    _ => {{throwStateOutOfValidValues}}
+                    _ => false
                 };
             public bool Equals({{BaseOption}}<{{context.Some.Type}}> other) => other.Equals(this.AsBase());
             public bool Equals({{context.Some.TypeNullable}} v) => {{context.IsSome.Property}} && {{EqualityComparer}}<{{context.Some.TypeNullable}}>.Default.Equals({{context.Some.Field}}, v);
@@ -538,7 +527,7 @@ sealed class OptionSourceBuilder(
                 state switch {
                     {{enumSome}} => {{context.Some.Field}}.GetHashCode(),
                     {{enumNone}} => {{BaseOption}}.None.Value.GetHashCode(),
-                    _ => {{throwStateOutOfValidValues}}
+                    _ => 0
                 };
             """
         );
@@ -552,7 +541,7 @@ sealed class OptionSourceBuilder(
                 state switch {
                     {{enumSome}} => {{context.Some.Field}}.ToString(),
                     {{enumNone}} => {{BaseOption}}.None.Value.ToString(),
-                    _ => {{throwStateOutOfValidValues}}
+                    _ => ""
                 };
             """
         );
@@ -565,7 +554,7 @@ sealed class OptionSourceBuilder(
                 state switch {
                     {{enumSome}} => $"{{context.Some.Property}}={{{context.Some.Field}}}",
                     {{enumNone}} => "{{context.IsSome.Property}}",
-                    _ => "!!! Incorrect State !!!"
+                    _ => "Default"
                 };
             """
         );
@@ -591,12 +580,5 @@ sealed class OptionSourceBuilder(
                 sb.AppendLine();
             }
         }
-    }
-
-    public string WriteAllAndBuild() {
-        WriteAll();
-        var result = sb.ToString();
-        sb.Clear();
-        return result;
     }
 }

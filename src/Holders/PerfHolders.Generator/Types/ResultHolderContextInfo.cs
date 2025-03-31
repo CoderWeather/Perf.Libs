@@ -1,11 +1,12 @@
 namespace Perf.Holders.Generator.Types;
 
 using System.Collections.Immutable;
+using Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 readonly record struct ResultHolderContextInfo(
-    string SourceFileName,
+    string MetadataName,
     string? Namespace,
     ResultHolderContextInfo.ResultInfo Result,
     ResultHolderContextInfo.OkInfo Ok,
@@ -49,13 +50,12 @@ readonly record struct ResultHolderContextInfo(
         string DeclarationName,
         string OnlyName,
         string GlobalName,
-        int TypeArgumentCount,
         TypeAccessibility Accessibility
     );
 
     public readonly record struct OkInfo(
         bool IsStruct,
-        bool IsTypeArgument,
+        bool IsTypeParameter,
         string Property,
         string Field,
         string Type,
@@ -68,7 +68,7 @@ readonly record struct ResultHolderContextInfo(
 
     public readonly record struct ErrorInfo(
         bool IsStruct,
-        bool IsTypeArgument,
+        bool IsTypeParameter,
         string Property,
         string Field,
         string Type,
@@ -143,51 +143,40 @@ static class ResultConfigurationExt {
         optionsProvider.Select(static (x, _) => {
                 var options = x.GlobalOptions;
                 ResultHolderContextInfo.ResultConfiguration configuration = default;
-                if (options.TryGetValue("PerfHoldersResultImplicitCastOkTypeToResult", out var s1) && s1 is not null and not "") {
+
+                if (options.TryGetBool("PerfHoldersResultImplicitCastOkTypeToResult", out var b1)) {
                     configuration = configuration with {
-                        ImplicitCastOkTypeToResult =
-                        s1.Equals("enable", StringComparison.OrdinalIgnoreCase) || s1.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
-                        s1.Equals("disable", StringComparison.OrdinalIgnoreCase) || s1.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                        ImplicitCastOkTypeToResult = b1
                     };
                 }
 
-                if (options.TryGetValue("PerfHoldersResultImplicitCastErrorTypeToResult", out var s2) && s2 is not null and not "") {
+                if (options.TryGetBool("PerfHoldersResultImplicitCastErrorTypeToResult", out var b2)) {
                     configuration = configuration with {
-                        ImplicitCastErrorTypeToResult =
-                        s2.Equals("enable", StringComparison.OrdinalIgnoreCase) || s2.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
-                        s2.Equals("disable", StringComparison.OrdinalIgnoreCase) || s2.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                        ImplicitCastErrorTypeToResult = b2
                     };
                 }
 
-                if (options.TryGetValue("PerfHoldersResultIncludeResultOkObject", out var s3) && s3 is not null and not "") {
+                if (options.TryGetBool("PerfHoldersResultIncludeResultOkObject", out var b3)) {
                     configuration = configuration with {
-                        IncludeResultOkObject =
-                        s3.Equals("enable", StringComparison.OrdinalIgnoreCase) || s3.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
-                        s3.Equals("disable", StringComparison.OrdinalIgnoreCase) || s3.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                        IncludeResultOkObject = b3
                     };
                 }
 
-                if (options.TryGetValue("PerfHoldersResultIncludeResultErrorObject", out var s4) && s4 is not null and not "") {
+                if (options.TryGetBool("PerfHoldersResultIncludeResultErrorObject", out var b4)) {
                     configuration = configuration with {
-                        IncludeResultErrorObject =
-                        s4.Equals("enable", StringComparison.OrdinalIgnoreCase) || s4.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
-                        s4.Equals("disable", StringComparison.OrdinalIgnoreCase) || s4.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                        IncludeResultErrorObject = b4
                     };
                 }
 
-                if (options.TryGetValue("PerfHoldersResultPublicState", out var s5) && s5 is not null and not "") {
+                if (options.TryGetBool("PerfHoldersResultPublicState", out var b5)) {
                     configuration = configuration with {
-                        PublicState =
-                        s5.Equals("enable", StringComparison.OrdinalIgnoreCase) || s5.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
-                        s5.Equals("disable", StringComparison.OrdinalIgnoreCase) || s5.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                        PublicState = b5
                     };
                 }
 
-                if (options.TryGetValue("PerfHoldersResultAddCastByRefMethod", out var s6) && s6 is not null and not "") {
+                if (options.TryGetBool("PerfHoldersResultAddCastByRefMethod", out var b6)) {
                     configuration = configuration with {
-                        AddCastByRefMethod =
-                        s6.Equals("enable", StringComparison.OrdinalIgnoreCase) || s6.Equals("true", StringComparison.OrdinalIgnoreCase)   ? true :
-                        s6.Equals("disable", StringComparison.OrdinalIgnoreCase) || s6.Equals("false", StringComparison.OrdinalIgnoreCase) ? false : null
+                        AddCastByRefMethod = b6
                     };
                 }
 

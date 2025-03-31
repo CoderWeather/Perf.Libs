@@ -60,16 +60,11 @@ public readonly struct Option<T> :
         state switch {
             OptionState.Some => some,
             OptionState.None => throw OptionHolderExceptions.SomeAccessWhenNone<Option<T>, T>("Some"),
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
+            _                => throw OptionHolderExceptions.Default<Option<T>, T>()
         };
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    public bool IsSome =>
-        state switch {
-            OptionState.Some => true,
-            OptionState.None => false,
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
-        };
+    public bool IsSome => state is OptionState.Some;
 
     public OptionState State => state;
     public static implicit operator Option<T>(T? some) => new(some);
@@ -101,7 +96,7 @@ public readonly struct Option<T> :
         (state, other.state) switch {
             (OptionState.Some, OptionState.Some) => EqualityComparer<T>.Default.Equals(some, other.some),
             (OptionState.None, OptionState.None) => true,
-            _                                    => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
+            _                                    => false
         };
 
     public bool Equals(T? v) => IsSome && EqualityComparer<T?>.Default.Equals(some, v);
@@ -111,7 +106,7 @@ public readonly struct Option<T> :
         return state switch {
             OptionState.Some => some.GetHashCode(),
             OptionState.None => Option.None.Value.GetHashCode(),
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
+            _                => 0
         };
     }
 
@@ -119,14 +114,14 @@ public readonly struct Option<T> :
         state switch {
             OptionState.Some => some.ToString(),
             OptionState.None => Option.None.Value.ToString(),
-            _                => throw OptionHolderExceptions.StateOutOfValidValues<Option<T>, T>((byte)state)
+            _                => ""
         };
 
     string DebugPrint() =>
         state switch {
             OptionState.Some => $"Some={some}",
             OptionState.None => "None",
-            _                => "!!! Incorrect State !!!"
+            _                => "Default"
         };
 
     public Option<TNew> Map<TNew>(Func<T, TNew> map)
@@ -140,19 +135,19 @@ public readonly struct Option<T> :
 
 public static class Option {
     enum ObjectState : byte {
-        Uninitialized = 0,
-        Initialized = 1
+        Default = 0,
+        Value = 1
     }
 
     [StructLayout(LayoutKind.Auto)]
     public readonly struct Some<T> : IEquatable<Some<T>> {
         public Some() {
-            state = ObjectState.Uninitialized;
+            state = ObjectState.Default;
             value = default!;
         }
 
         public Some(T? value) {
-            state = ObjectState.Initialized;
+            state = ObjectState.Value;
             this.value = value;
         }
 
@@ -161,9 +156,8 @@ public static class Option {
 
         public T? Value =>
             state switch {
-                ObjectState.Initialized   => value,
-                ObjectState.Uninitialized => throw OptionHolderExceptions.SomeUninitialized<T>(),
-                _                         => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
+                ObjectState.Value => value,
+                _                 => throw OptionHolderExceptions.SomeObjectDefault<T>()
             };
 
         public static implicit operator Some<T>(T? value) => new(value);
@@ -171,9 +165,8 @@ public static class Option {
 
         public bool Equals(Some<T> other) =>
             (state, other.state) switch {
-                (ObjectState.Initialized, ObjectState.Initialized)               => EqualityComparer<T?>.Default.Equals(value, other.value),
-                (ObjectState.Uninitialized, _) or (_, ObjectState.Uninitialized) => throw OptionHolderExceptions.SomeUninitialized<T>(),
-                _                                                                => throw OptionHolderExceptions.SomeStateOutOfValidValues<T>((byte)state)
+                (ObjectState.Value, ObjectState.Value) => EqualityComparer<T?>.Default.Equals(value, other.value),
+                _                                      => false
             };
 
         public override bool Equals(object? obj) => obj is Some<T> other && Equals(other);
@@ -182,7 +175,7 @@ public static class Option {
         public static bool operator ==(Some<T> left, Some<T> right) => left.Equals(right);
         public static bool operator !=(Some<T> left, Some<T> right) => left.Equals(right) is false;
 
-        public override string? ToString() => Value as string ?? value?.ToString();
+        public override string ToString() => Value as string ?? value?.ToString() ?? "";
     }
 
     [StructLayout(LayoutKind.Auto)]
@@ -194,8 +187,8 @@ public static class Option {
         public static implicit operator Unit(None _) => default;
         public static implicit operator None(Unit _) => default;
         public override int GetHashCode() => 0;
-        public static bool operator ==(None left, None right) => left.Equals(right);
-        public static bool operator !=(None left, None right) => left.Equals(right) is false;
+        public static bool operator ==(None left, None right) => true;
+        public static bool operator !=(None left, None right) => false;
     }
 }
 

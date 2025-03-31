@@ -44,48 +44,19 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                 }
                 // check for type arguments zero or one and this one should be argument for marker
 
-                EquatableList<HolderContainingType> containingTypes = default;
-                if (option.ContainingType != null) {
-                    containingTypes = [ ];
-                    var t = option;
-                    do {
-                        t = t.ContainingType;
-
-                        HolderContainingType containingType = t switch {
-                            { IsReferenceType: true, IsRecord: true } => new(Kind: "record", Name: t.Name),
-                            { IsReferenceType: true }                 => new(Kind: "class", Name: t.Name),
-                            { IsValueType: true, IsRecord: true }     => new(Kind: "record struct", Name: t.Name),
-                            { IsValueType: true }                     => new(Kind: "struct", Name: t.Name),
-                            _                                         => default
-                        };
-                        if (containingType != default) {
-                            containingTypes.Add(containingType);
-                        }
-                    } while (t.ContainingType != null);
-                }
-
                 var arg = marker.TypeArguments[0];
                 if (arg.NullableAnnotation is NullableAnnotation.Annotated) {
                     return default;
                 }
 
-                var configuration = option.GetAttributes().ReadOptionConfigurationFromAttributes();
-
-                var argNullable = arg.IsValueType
-                    ? context.SemanticModel.Compilation.GetSpecialType(SpecialType.System_Nullable_T).Construct(arg)
-                    : arg.WithNullableAnnotation(NullableAnnotation.Annotated);
+                var argNullable = arg.MakeNullable(context.SemanticModel.Compilation);
 
                 var optionInfo = new OptionHolderContextInfo.OptionInfo(
                     DeclarationName: option.MinimalName(),
                     OnlyName: option.Name,
                     GlobalName: option.GlobalName(),
                     TypeArgumentCount: option.TypeArguments.Length,
-                    Accessibility: option.DeclaredAccessibility switch {
-                        Accessibility.Public   => TypeAccessibility.Public,
-                        Accessibility.Private  => TypeAccessibility.Private,
-                        Accessibility.Internal => TypeAccessibility.Internal,
-                        _                      => TypeAccessibility.None
-                    }
+                    Accessibility: option.DeclaredAccessibility.MapToTypeAccessibility()
                 );
                 if (optionInfo.Accessibility is TypeAccessibility.None) {
                     return default;
@@ -93,7 +64,7 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 var someInfo = new OptionHolderContextInfo.SomeInfo(
                     IsStruct: arg.IsValueType,
-                    IsTypeArgument: arg is ITypeParameterSymbol,
+                    IsTypeParameter: arg is ITypeParameterSymbol,
                     Property: OptionHolderContextInfo.SomeInfo.DefaultProperty,
                     Field: OptionHolderContextInfo.SomeInfo.DefaultField,
                     Type: arg.GlobalName(),
@@ -134,8 +105,11 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     }
                 }
 
+                var containingTypes = option.GetContainingTypeList();
+                var configuration = option.GetAttributes().ReadOptionConfigurationFromAttributes();
+
                 return new OptionHolderContextInfo(
-                    SourceFileName: SourceFileName(option),
+                    MetadataName: option.MetadataName,
                     Namespace: option.ContainingNamespace.IsGlobalNamespace
                         ? null
                         : option.ContainingNamespace.ToDisplayString(),
@@ -157,9 +131,8 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
         context.RegisterSourceOutput(
             final,
-            static (context, tuple1) => {
-                var ((optionInfo, compInfo), optionConfiguration) = tuple1;
-                var sourceFileName = optionInfo.SourceFileName;
+            static (context, final) => {
+                var ((optionInfo, compInfo), optionConfiguration) = final;
 
                 optionInfo = optionInfo with {
                     Configuration = optionInfo.Configuration.MergeWithMajor(optionConfiguration).ApplyDefaults()
@@ -167,16 +140,11 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 var sourceText = new OptionSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();
 
-                if (compInfo.OptimizationLevel is OptimizationLevel.Debug) {
-                    context.AddSource($"{sourceFileName}.cs", SourceText.From(sourceText, Encoding.UTF8));
-                } else if (compInfo.OptimizationLevel is OptimizationLevel.Release) {
-                    context.AddSource($"{sourceFileName}.g.cs", SourceText.From(sourceText, Encoding.UTF8));
-                }
+                var fileName = compInfo.OptimizationLevel is OptimizationLevel.Debug
+                    ? $"{optionInfo.MetadataName}.cs"
+                    : $"{optionInfo.MetadataName}.g.cs";
+                context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
             }
         );
-    }
-
-    static string SourceFileName(INamedTypeSymbol symbol) {
-        return symbol.IsGenericType ? $"{symbol.Name}`{symbol.TypeParameters.Length}" : symbol.Name;
     }
 }

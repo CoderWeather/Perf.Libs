@@ -54,7 +54,7 @@ public interface IResultHolder<out TOk, out TError>
 }
 
 public enum ResultState : byte {
-    Uninitialized = 0,
+    Default = 0,
     Ok = 1,
     Error = 2
 }

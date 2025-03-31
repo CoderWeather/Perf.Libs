@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 static class CollectionExtensions {
     public static ImmutableArray<T> WhereOfType<T>(this ImmutableArray<ISymbol> symbols, Func<T, bool> predicate)
@@ -78,7 +79,7 @@ static class StringExtensions {
             return s;
         }
 
-        if (s!.Length is 1) {
+        if (s.Length is 1) {
             return char.IsLower(s[0]) ? $"_{s[0]}" : char.ToLower(s[0]).ToString();
         }
 
@@ -109,6 +110,7 @@ static class StringExtensions {
 
         var i = 0;
         var length = span.Length;
+#region Very long 'while'
         while (i < length) {
             if (length - i >= 4) {
                 var c0 = span[i];
@@ -161,6 +163,7 @@ static class StringExtensions {
                 i++;
             }
         }
+#endregion
 
         return -1;
     }
@@ -201,5 +204,22 @@ static class StringBuilderExtensions {
         AppendInterpolated(sb, interpolatedStringHandler);
         sb.AppendLine();
         return sb;
+    }
+}
+
+static class AnalyzerConfigExtensions {
+    public static bool TryGetBool(this AnalyzerConfigOptions options, string key, out bool? value) {
+        if (key.StartsWith("build_property.", StringComparison.OrdinalIgnoreCase) is false) {
+            key = "build_property." + key;
+        }
+
+        if (options.TryGetValue(key, out var s) && s is not null and not "") {
+            value = s.Equals("enable", StringComparison.OrdinalIgnoreCase) || s.Equals("true", StringComparison.OrdinalIgnoreCase) ? true :
+                s.Equals("disable", StringComparison.OrdinalIgnoreCase) || s.Equals("false", StringComparison.OrdinalIgnoreCase)   ? false : null;
+            return true;
+        }
+
+        value = null;
+        return false;
     }
 }

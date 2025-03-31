@@ -129,7 +129,7 @@ sealed class MultiResultGenerator : IIncrementalGenerator {
 
         var filtered = types.Where(static x => x != default);
 
-        var compInfo = context.CompilationProvider.SelectCompInfo();
+        var compInfo = context.CompilationProvider.SelectCompInfo(HolderType.MultiResult);
 
         var multiResultHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadMultiResultConfiguration();
 
@@ -139,6 +139,9 @@ sealed class MultiResultGenerator : IIncrementalGenerator {
             final,
             static (context, final) => {
                 var ((mrInfo, compInfo), mrConfiguration) = final;
+                if (compInfo == default) {
+                    return;
+                }
 
                 mrInfo = mrInfo with {
                     Configuration = mrInfo.Configuration.MergeWithMajor(mrConfiguration).ApplyDefaults()

@@ -83,7 +83,7 @@ sealed class ResultSourceBuilder(
         WriteToString();
         WriteDebugPrint();
         WriteMapMethods();
-        WriteEndOfFile();
+        WriteEndOfType();
     }
 
     void DeclareTopLevelStatements() {
@@ -187,13 +187,13 @@ sealed class ResultSourceBuilder(
             [global::System.Diagnostics.DebuggerDisplay("{DebugPrint()}")]
             """
         );
-        if (compInfo.SerializationSystemTextJsonAvailable) {
+        if (compInfo.SerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.ResultHolderJsonConverterFactory))]"
             );
         }
 
-        if (compInfo.SerializationMessagePackAvailable) {
+        if (compInfo.SerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.ResultHolderFormatterResolver))]"
             );
@@ -613,7 +613,7 @@ sealed class ResultSourceBuilder(
         );
     }
 
-    void WriteEndOfFile() {
+    void WriteEndOfType() {
         sb.Indent--;
         for (var i = 0; i < bracesToCloseOnEnd; i++) {
             sb.Append('}');

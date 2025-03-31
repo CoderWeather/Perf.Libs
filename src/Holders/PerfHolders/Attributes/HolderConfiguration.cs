@@ -65,4 +65,29 @@ public sealed class MultiResultHolderConfigurationAttribute : Attribute {
     /// Default true
     /// </summary>
     public bool AddIsProperties { get; set; } = true;
+
+    /// <summary>
+    /// Default true
+    /// </summary>
+    public bool OpenState { get; set; } = true;
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool SetSystemTextJsonConverterAttribute { get; set; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool GenerateJsonConverter { get; set; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool SetMessagePackFormatterAttribute { get; set; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool GenerateMessagePackFormatter { get; set; }
 }

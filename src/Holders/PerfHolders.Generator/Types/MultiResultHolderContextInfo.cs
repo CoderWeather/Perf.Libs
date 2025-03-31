@@ -21,15 +21,19 @@ readonly record struct MultiResultHolderContextInfo(
     public readonly record struct MultiResultConfiguration(
         bool? AddIsProperties,
         bool? OpenState,
-        bool? AddJsonConverterAttribute,
-        bool? AddMessagePackFormatterAttribute
+        bool? SetSystemTextJsonConverterAttribute,
+        bool? GenerateJsonConverter,
+        bool? SetMessagePackFormatterAttribute,
+        bool? GenerateMessagePackFormatter
     ) {
         public MultiResultConfiguration MergeWithMajor(MultiResultConfiguration other) {
             return new() {
                 AddIsProperties = other.AddIsProperties ?? AddIsProperties ?? null,
                 OpenState = other.OpenState ?? OpenState ?? null,
-                AddJsonConverterAttribute = other.AddJsonConverterAttribute ?? AddJsonConverterAttribute ?? null,
-                AddMessagePackFormatterAttribute = other.AddMessagePackFormatterAttribute ?? AddMessagePackFormatterAttribute ?? null
+                SetSystemTextJsonConverterAttribute = other.SetSystemTextJsonConverterAttribute ?? SetSystemTextJsonConverterAttribute ?? null,
+                GenerateJsonConverter = other.GenerateJsonConverter ?? GenerateJsonConverter ?? null,
+                SetMessagePackFormatterAttribute = other.SetMessagePackFormatterAttribute ?? SetMessagePackFormatterAttribute ?? null,
+                GenerateMessagePackFormatter = other.GenerateMessagePackFormatter ?? GenerateMessagePackFormatter ?? null
             };
         }
 
@@ -37,8 +41,10 @@ readonly record struct MultiResultHolderContextInfo(
             return new() {
                 AddIsProperties = AddIsProperties ?? true,
                 OpenState = OpenState ?? true,
-                AddJsonConverterAttribute = AddJsonConverterAttribute ?? false,
-                AddMessagePackFormatterAttribute = AddMessagePackFormatterAttribute ?? false
+                SetSystemTextJsonConverterAttribute = SetSystemTextJsonConverterAttribute ?? false,
+                GenerateJsonConverter = GenerateJsonConverter ?? false,
+                SetMessagePackFormatterAttribute = SetMessagePackFormatterAttribute ?? false,
+                GenerateMessagePackFormatter = GenerateMessagePackFormatter ?? false
             };
         }
     }
@@ -151,14 +157,24 @@ static class MultiResultConfigurationExt {
                         OpenState = na.Value.Value is true
                     };
                     break;
-                case "AddJsonConverterAttribute":
+                case "SetSystemTextJsonConverterAttribute":
                     configuration = configuration with {
-                        AddJsonConverterAttribute = na.Value.Value is true
+                        SetSystemTextJsonConverterAttribute = na.Value.Value is true
                     };
                     break;
-                case "AddMessagePackFormatterAttribute":
+                case "GenerateJsonConverter":
                     configuration = configuration with {
-                        AddMessagePackFormatterAttribute = na.Value.Value is true
+                        GenerateJsonConverter = na.Value.Value is true
+                    };
+                    break;
+                case "SetMessagePackFormatterAttribute":
+                    configuration = configuration with {
+                        SetMessagePackFormatterAttribute = na.Value.Value is true
+                    };
+                    break;
+                case "GenerateMessagePackFormatter":
+                    configuration = configuration with {
+                        GenerateMessagePackFormatter = na.Value.Value is true
                     };
                     break;
                 default: continue;
@@ -187,15 +203,27 @@ static class MultiResultConfigurationExt {
                     };
                 }
 
-                if (options.TryGetBool("PerfHoldersMultiResultAddJsonConverterAttribute", out var b3)) {
+                if (options.TryGetBool("PerfHoldersMultiResultSetSystemTextJsonConverterAttribute", out var b3)) {
                     configuration = configuration with {
-                        AddJsonConverterAttribute = b3
+                        SetSystemTextJsonConverterAttribute = b3
                     };
                 }
 
-                if (options.TryGetBool("PerfHoldersMultiResultAddMessagePackFormatterAttribute", out var b4)) {
+                if (options.TryGetBool("PerfHoldersMultiResultGenerateJsonConverter", out var b4)) {
                     configuration = configuration with {
-                        AddMessagePackFormatterAttribute = b4
+                        GenerateJsonConverter = b4
+                    };
+                }
+
+                if (options.TryGetBool("PerfHoldersMultiResultSetMessagePackFormatterAttribute", out var b5)) {
+                    configuration = configuration with {
+                        SetMessagePackFormatterAttribute = b5
+                    };
+                }
+
+                if (options.TryGetBool("PerfHoldersMultiResultGenerateMessagePackFormatter", out var b6)) {
+                    configuration = configuration with {
+                        GenerateMessagePackFormatter = b6
                     };
                 }
 

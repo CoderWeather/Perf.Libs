@@ -32,7 +32,7 @@ public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
         var arg1 = i.GenericTypeArguments[0];
         var arg2 = i.GenericTypeArguments[1];
 
-        var t = typeof(HolderResultJsonConverter<,,>).MakeGenericType(typeToConvert, arg1, arg2);
+        var t = typeof(ResultHolderJsonConverter<,,>).MakeGenericType(typeToConvert, arg1, arg2);
         var f = t.GetField("Instance", BindingFlags.Public | BindingFlags.Static)!;
         Converters[typeToConvert] = converter = (JsonConverter)f.GetValue(null)!;
         return converter;
@@ -42,11 +42,11 @@ public sealed class ResultHolderJsonConverterFactory : JsonConverterFactory {
 #if NET7_0_OR_GREATER
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-sealed class HolderResultJsonConverter<TResult, TOk, TError> : JsonConverter<TResult>
+sealed class ResultHolderJsonConverter<TResult, TOk, TError> : JsonConverter<TResult>
     where TResult : struct, IResultHolder<TOk, TError>
     where TOk : notnull
     where TError : notnull {
-    public static readonly HolderResultJsonConverter<TResult, TOk, TError> Instance = new();
+    public static readonly ResultHolderJsonConverter<TResult, TOk, TError> Instance = new();
 
     public override void Write(Utf8JsonWriter writer, TResult value, JsonSerializerOptions options) {
         writer.WriteStartObject();

@@ -31,7 +31,7 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
         var i = typeToConvert.GetInterface("IOptionHolder`1")!;
         var arg1 = i.GenericTypeArguments[0];
 
-        var t = typeof(HolderOptionJsonConverter<,>).MakeGenericType(typeToConvert, arg1);
+        var t = typeof(OptionHolderJsonConverter<,>).MakeGenericType(typeToConvert, arg1);
         var f = t.GetField("Instance", BindingFlags.Public | BindingFlags.Static)!;
         Converters[typeToConvert] = converter = (JsonConverter)f.GetValue(null)!;
         return converter;
@@ -41,10 +41,10 @@ public sealed class OptionHolderJsonConverterFactory : JsonConverterFactory {
 #if NET7_0_OR_GREATER
 [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-sealed class HolderOptionJsonConverter<TOption, TValue> : JsonConverter<TOption>
+sealed class OptionHolderJsonConverter<TOption, TValue> : JsonConverter<TOption>
     where TOption : struct, IOptionHolder<TValue>
     where TValue : notnull {
-    public static readonly HolderOptionJsonConverter<TOption, TValue> Instance = new();
+    public static readonly OptionHolderJsonConverter<TOption, TValue> Instance = new();
 
     public override void Write(Utf8JsonWriter writer, TOption value, JsonSerializerOptions options) {
         if (value.IsSome) {

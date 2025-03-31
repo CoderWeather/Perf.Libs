@@ -123,7 +123,7 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
         );
         var filtered = types.Where(static x => x != default);
 
-        var compInfo = context.CompilationProvider.SelectCompInfo();
+        var compInfo = context.CompilationProvider.SelectCompInfo(HolderType.Option);
 
         var optionHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadOptionConfiguration();
 
@@ -133,6 +133,9 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
             final,
             static (context, final) => {
                 var ((optionInfo, compInfo), optionConfiguration) = final;
+                if (compInfo == default) {
+                    return;
+                }
 
                 optionInfo = optionInfo with {
                     Configuration = optionInfo.Configuration.MergeWithMajor(optionConfiguration).ApplyDefaults()

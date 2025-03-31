@@ -142,7 +142,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
         );
         var filtered = types.Where(static x => x != default);
 
-        var compInfo = context.CompilationProvider.SelectCompInfo();
+        var compInfo = context.CompilationProvider.SelectCompInfo(HolderType.Result);
 
         var resultHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadResultConfiguration();
 
@@ -152,6 +152,9 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
             final,
             static (context, final) => {
                 var ((resultInfo, compInfo), resultConfiguration) = final;
+                if (compInfo == default) {
+                    return;
+                }
 
                 resultInfo = resultInfo with {
                     Configuration = resultInfo.Configuration.MergeWithMajor(resultConfiguration).ApplyDefaults()

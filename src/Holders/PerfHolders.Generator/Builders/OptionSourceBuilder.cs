@@ -72,7 +72,7 @@ sealed class OptionSourceBuilder(
         WriteToString();
         WriteDebugPrint();
         WriteMapMethods();
-        WriteEndOfFile();
+        WriteEndOfType();
     }
 
     void DeclareTopLevelStatements() {
@@ -161,13 +161,13 @@ sealed class OptionSourceBuilder(
             [global::System.Diagnostics.DebuggerDisplay("{DebugPrint()}")]
             """
         );
-        if (compInfo.SerializationSystemTextJsonAvailable) {
+        if (compInfo.SerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.OptionHolderJsonConverterFactory))]"
             );
         }
 
-        if (compInfo.SerializationMessagePackAvailable) {
+        if (compInfo.SerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.OptionHolderFormatterResolver))]"
             );
@@ -572,7 +572,7 @@ sealed class OptionSourceBuilder(
         );
     }
 
-    void WriteEndOfFile() {
+    void WriteEndOfType() {
         sb.Indent--;
         for (var i = 0; i < bracesToCloseOnEnd; i++) {
             sb.Append('}');

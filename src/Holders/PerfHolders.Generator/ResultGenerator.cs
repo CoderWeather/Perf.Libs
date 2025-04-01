@@ -157,7 +157,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 }
 
                 resultInfo = resultInfo with {
-                    Configuration = resultInfo.Configuration.MergeWithMajor(resultConfiguration).ApplyDefaults()
+                    Configuration = resultConfiguration.MergeWithMajor(resultInfo.Configuration).ApplyDefaults()
                 };
 
                 var sourceText = new ResultSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();

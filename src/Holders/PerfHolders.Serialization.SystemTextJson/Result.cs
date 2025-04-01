@@ -51,10 +51,10 @@ sealed class ResultHolderJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
     public override void Write(Utf8JsonWriter writer, TResult value, JsonSerializerOptions options) {
         writer.WriteStartObject();
         if (value.IsOk) {
-            writer.WritePropertyName("ok");
+            writer.WritePropertyName("ok"u8);
             JsonSerializer.Serialize(writer, value.Ok, options);
         } else {
-            writer.WritePropertyName("error");
+            writer.WritePropertyName("error"u8);
             JsonSerializer.Serialize(writer, value.Error, options);
         }
 
@@ -68,13 +68,14 @@ sealed class ResultHolderJsonConverter<TResult, TOk, TError> : JsonConverter<TRe
 
         reader.Read();
 
-        if (reader.ValueSpan.SequenceEqual("ok"u8)) {
+        var span = reader.ValueSpan;
+        if (span.SequenceEqual("ok"u8)) {
             var value = JsonSerializer.Deserialize<TOk>(ref reader, options)!;
             reader.Read();
             return DynamicCast.Cast<TOk, TResult>(ref value);
         }
 
-        if (reader.ValueSpan.SequenceEqual("error"u8)) {
+        if (span.SequenceEqual("error"u8)) {
             var value = JsonSerializer.Deserialize<TError>(ref reader, options)!;
             reader.Read();
             return DynamicCast.Cast<TError, TResult>(ref value);

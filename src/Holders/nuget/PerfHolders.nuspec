@@ -2,7 +2,7 @@
     <metadata>
         <id>PerfHolders</id>
         <title>Perf.Holders</title>
-        <version>1.4.2</version>
+        <version>1.4.4</version>
         <authors>coderweather</authors>
         <description>Struct based value holders for C#.</description>
         <license type="file">LICENSE</license>
@@ -22,14 +22,10 @@
     <files>
         <file src="../../../LICENSE" target="LICENSE" />
         <file src="../PerfHolders/bin/Release/net7.0/Perf.Holders.dll" target="lib/net7.0" />
-        <file src="../PerfHolders/bin/Release/net7.0/Perf.Holders.pdb" target="lib/net7.0" />
         <file src="../PerfHolders/bin/Release/net8.0/Perf.Holders.dll" target="lib/net8.0" />
-        <file src="../PerfHolders/bin/Release/net8.0/Perf.Holders.pdb" target="lib/net8.0" />
         <file src="../PerfHolders/bin/Release/net9.0/Perf.Holders.dll" target="lib/net9.0" />
-        <file src="../PerfHolders/bin/Release/net9.0/Perf.Holders.pdb" target="lib/net9.0" />
         <file src="../PerfHolders/bin/Release/netstandard2.0/Perf.Holders.dll" target="lib/netstandard2.0" />
-        <file src="../PerfHolders/bin/Release/netstandard2.0/Perf.Holders.pdb" target="lib/netstandard2.0" />
         <file src="../PerfHolders.Generator/bin/Release/netstandard2.0/Perf.Holders.Generator.dll" target="analyzers/dotnet/cs" />
-        <file src="../PerfHolders.Generator/PerfHolders.Build.props" target="build" />
+        <file src="../PerfHolders.Generator/PerfHolders.props" target="build" />
     </files>
 </package>

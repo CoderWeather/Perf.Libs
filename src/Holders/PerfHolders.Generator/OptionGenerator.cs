@@ -55,7 +55,7 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                     DeclarationName: option.MinimalName(),
                     OnlyName: option.Name,
                     GlobalName: option.GlobalName(),
-                    TypeArgumentCount: option.TypeArguments.Length,
+                    TypeParameterCount: option.TypeArguments.Length,
                     Accessibility: option.DeclaredAccessibility.MapToTypeAccessibility()
                 );
                 if (optionInfo.Accessibility is TypeAccessibility.None) {
@@ -138,7 +138,7 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                 }
 
                 optionInfo = optionInfo with {
-                    Configuration = optionInfo.Configuration.MergeWithMajor(optionConfiguration).ApplyDefaults()
+                    Configuration = optionConfiguration.MergeWithMajor(optionInfo.Configuration).ApplyDefaults()
                 };
 
                 var sourceText = new OptionSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();

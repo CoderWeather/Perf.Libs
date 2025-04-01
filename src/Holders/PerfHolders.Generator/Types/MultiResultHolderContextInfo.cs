@@ -21,31 +21,25 @@ readonly record struct MultiResultHolderContextInfo(
     public readonly record struct MultiResultConfiguration(
         bool? AddIsProperties,
         bool? OpenState,
-        bool? SetSystemTextJsonConverterAttribute,
-        bool? GenerateJsonConverter,
-        bool? SetMessagePackFormatterAttribute,
+        bool? GenerateSystemTextJsonConverter,
         bool? GenerateMessagePackFormatter
     ) {
         public MultiResultConfiguration MergeWithMajor(MultiResultConfiguration other) {
-            return new() {
-                AddIsProperties = other.AddIsProperties ?? AddIsProperties ?? null,
-                OpenState = other.OpenState ?? OpenState ?? null,
-                SetSystemTextJsonConverterAttribute = other.SetSystemTextJsonConverterAttribute ?? SetSystemTextJsonConverterAttribute ?? null,
-                GenerateJsonConverter = other.GenerateJsonConverter ?? GenerateJsonConverter ?? null,
-                SetMessagePackFormatterAttribute = other.SetMessagePackFormatterAttribute ?? SetMessagePackFormatterAttribute ?? null,
-                GenerateMessagePackFormatter = other.GenerateMessagePackFormatter ?? GenerateMessagePackFormatter ?? null
-            };
+            return new(
+                AddIsProperties: other.AddIsProperties ?? AddIsProperties ?? null,
+                OpenState: other.OpenState ?? OpenState ?? null,
+                GenerateSystemTextJsonConverter: other.GenerateSystemTextJsonConverter ?? GenerateSystemTextJsonConverter ?? null,
+                GenerateMessagePackFormatter: other.GenerateMessagePackFormatter ?? GenerateMessagePackFormatter ?? null
+            );
         }
 
         public MultiResultConfiguration ApplyDefaults() {
-            return new() {
-                AddIsProperties = AddIsProperties ?? true,
-                OpenState = OpenState ?? true,
-                SetSystemTextJsonConverterAttribute = SetSystemTextJsonConverterAttribute ?? false,
-                GenerateJsonConverter = GenerateJsonConverter ?? false,
-                SetMessagePackFormatterAttribute = SetMessagePackFormatterAttribute ?? false,
-                GenerateMessagePackFormatter = GenerateMessagePackFormatter ?? false
-            };
+            return new(
+                AddIsProperties: AddIsProperties ?? true,
+                OpenState: OpenState ?? true,
+                GenerateSystemTextJsonConverter: GenerateSystemTextJsonConverter ?? false,
+                GenerateMessagePackFormatter: GenerateMessagePackFormatter ?? false
+            );
         }
     }
 
@@ -80,6 +74,10 @@ readonly record struct MultiResultHolderContextInfo(
         bool HavePartial
     );
 
+    /// <summary>
+    /// &lt;,,,&gt;
+    /// </summary>
+    /// <returns></returns>
     public string OpenTypeParameters() {
         if (MultiResult.TypeParameterCount is 0) {
             return "";
@@ -98,6 +96,10 @@ readonly record struct MultiResultHolderContextInfo(
         return sb.ToString();
     }
 
+    /// <summary>
+    /// &lt;T1,T2,T3&gt;
+    /// </summary>
+    /// <returns></returns>
     public string TypeParameters() {
         if (MultiResult.TypeParameterCount is 0) {
             return "";
@@ -118,7 +120,11 @@ readonly record struct MultiResultHolderContextInfo(
         return sb.ToString();
     }
 
-    public string TypeParametersConstraints() {
+    /// <summary>
+    /// where T1 : notnull \n where T2 : notnull
+    /// </summary>
+    /// <returns></returns>
+    public string TypeParametersConstraints(char delimiter = '\n') {
         if (MultiResult.TypeParameterCount is 0) {
             return "";
         }
@@ -126,7 +132,8 @@ readonly record struct MultiResultHolderContextInfo(
         var sb = new StringBuilder();
         foreach (var el in Elements) {
             if (el.IsTypeParameter) {
-                sb.AppendInterpolatedLine($"where {el.Type} : notnull");
+                sb.AppendInterpolated($"where {el.Type} : notnull");
+                sb.Append(delimiter);
             }
         }
 
@@ -157,19 +164,9 @@ static class MultiResultConfigurationExt {
                         OpenState = na.Value.Value is true
                     };
                     break;
-                case "SetSystemTextJsonConverterAttribute":
+                case "GenerateSystemTextJsonConverter":
                     configuration = configuration with {
-                        SetSystemTextJsonConverterAttribute = na.Value.Value is true
-                    };
-                    break;
-                case "GenerateJsonConverter":
-                    configuration = configuration with {
-                        GenerateJsonConverter = na.Value.Value is true
-                    };
-                    break;
-                case "SetMessagePackFormatterAttribute":
-                    configuration = configuration with {
-                        SetMessagePackFormatterAttribute = na.Value.Value is true
+                        GenerateSystemTextJsonConverter = na.Value.Value is true
                     };
                     break;
                 case "GenerateMessagePackFormatter":
@@ -203,21 +200,9 @@ static class MultiResultConfigurationExt {
                     };
                 }
 
-                if (options.TryGetBool("PerfHoldersMultiResultSetSystemTextJsonConverterAttribute", out var b3)) {
-                    configuration = configuration with {
-                        SetSystemTextJsonConverterAttribute = b3
-                    };
-                }
-
                 if (options.TryGetBool("PerfHoldersMultiResultGenerateJsonConverter", out var b4)) {
                     configuration = configuration with {
-                        GenerateJsonConverter = b4
-                    };
-                }
-
-                if (options.TryGetBool("PerfHoldersMultiResultSetMessagePackFormatterAttribute", out var b5)) {
-                    configuration = configuration with {
-                        SetMessagePackFormatterAttribute = b5
+                        GenerateSystemTextJsonConverter = b4
                     };
                 }
 

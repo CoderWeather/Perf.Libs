@@ -1,0 +1,24 @@
+<Project>
+    <ItemGroup>
+        <CompilerVisibleProperty Include="PerfHoldersResultImplicitCastOkTypeToResult" />
+        <CompilerVisibleProperty Include="PerfHoldersResultImplicitCastErrorTypeToResult" />
+        <CompilerVisibleProperty Include="PerfHoldersResultIncludeResultOkObject" />
+        <CompilerVisibleProperty Include="PerfHoldersResultIncludeResultErrorObject" />
+        <CompilerVisibleProperty Include="PerfHoldersResultPublicState" />
+        <CompilerVisibleProperty Include="PerfHoldersResultAddCastByRefMethod" />
+        <CompilerVisibleProperty Include="PerfHoldersResultGenerateJsonConverter" />
+        <CompilerVisibleProperty Include="PerfHoldersResultGenerateMessagePackFormatter" />
+
+        <CompilerVisibleProperty Include="PerfHoldersOptionImplicitCastSomeTypeToOption" />
+        <CompilerVisibleProperty Include="PerfHoldersOptionIncludeOptionSomeObject" />
+        <CompilerVisibleProperty Include="PerfHoldersOptionPublicState" />
+        <CompilerVisibleProperty Include="PerfHoldersOptionAddCastByRefMethod" />
+        <CompilerVisibleProperty Include="PerfHoldersOptionGenerateJsonConverter" />
+        <CompilerVisibleProperty Include="PerfHoldersOptionGenerateMessagePackFormatter" />
+
+        <CompilerVisibleProperty Include="PerfHoldersMultiResultAddIsProperties" />
+        <CompilerVisibleProperty Include="PerfHoldersMultiResultOpenState" />
+        <CompilerVisibleProperty Include="PerfHoldersMultiResultGenerateJsonConverter" />
+        <CompilerVisibleProperty Include="PerfHoldersMultiResultGenerateMessagePackFormatter" />
+    </ItemGroup>
+</Project>

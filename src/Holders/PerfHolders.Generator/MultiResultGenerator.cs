@@ -144,7 +144,7 @@ sealed class MultiResultGenerator : IIncrementalGenerator {
                 }
 
                 mrInfo = mrInfo with {
-                    Configuration = mrInfo.Configuration.MergeWithMajor(mrConfiguration).ApplyDefaults()
+                    Configuration = mrConfiguration.MergeWithMajor(mrInfo.Configuration).ApplyDefaults()
                 };
 
                 var sourceText = new MultiResultSourceBuilder(mrInfo, compInfo).WriteAllAndBuild();

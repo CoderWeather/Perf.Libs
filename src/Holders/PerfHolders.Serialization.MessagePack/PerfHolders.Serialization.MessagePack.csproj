@@ -12,7 +12,7 @@
 
     <PropertyGroup>
         <PackageId>PerfHolders.Serialization.MessagePack</PackageId>
-        <Version>1.4.0</Version>
+        <Version>1.4.3</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based value holders for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>

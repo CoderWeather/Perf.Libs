@@ -61,9 +61,7 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
     }
 
     public TResult Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
-        if (reader.IsNil
-            || reader.TryReadMapHeader(out var mapHeader)
-        ) {
+        if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader)) {
             throw new MessagePackSerializationException($"Expected '{MessagePackType.Map}' but got '{reader.NextMessagePackType}'");
         }
 

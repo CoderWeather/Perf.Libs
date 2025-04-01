@@ -7,7 +7,7 @@
         <NoWarn>$(NoWarn);RS2000,RS2008</NoWarn>
 
         <PackageId>PerfHolders</PackageId>
-        <Version>1.4.2</Version>
+        <Version>1.4.3</Version>
     </PropertyGroup>
 
     <ItemGroup>

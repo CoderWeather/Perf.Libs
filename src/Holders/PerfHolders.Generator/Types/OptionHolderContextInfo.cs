@@ -18,24 +18,30 @@ readonly record struct OptionHolderContextInfo(
         bool? ImplicitCastSomeTypeToOption,
         bool? IncludeOptionSomeObject,
         bool? PublicState,
-        bool? AddCastByRefMethod
+        bool? AddCastByRefMethod,
+        bool? GenerateSystemTextJsonConverter,
+        bool? GenerateMessagePackFormatter
     ) {
         public OptionConfiguration MergeWithMajor(OptionConfiguration other) {
-            return new() {
-                ImplicitCastSomeTypeToOption = other.ImplicitCastSomeTypeToOption ?? ImplicitCastSomeTypeToOption ?? null,
-                IncludeOptionSomeObject = other.IncludeOptionSomeObject ?? IncludeOptionSomeObject ?? null,
-                PublicState = other.PublicState ?? PublicState ?? null,
-                AddCastByRefMethod = other.AddCastByRefMethod ?? AddCastByRefMethod ?? null
-            };
+            return new(
+                ImplicitCastSomeTypeToOption: other.ImplicitCastSomeTypeToOption ?? ImplicitCastSomeTypeToOption ?? null,
+                IncludeOptionSomeObject: other.IncludeOptionSomeObject ?? IncludeOptionSomeObject ?? null,
+                PublicState: other.PublicState ?? PublicState ?? null,
+                AddCastByRefMethod: other.AddCastByRefMethod ?? AddCastByRefMethod ?? null,
+                GenerateSystemTextJsonConverter: other.GenerateSystemTextJsonConverter ?? GenerateSystemTextJsonConverter ?? null,
+                GenerateMessagePackFormatter: other.GenerateMessagePackFormatter ?? GenerateMessagePackFormatter ?? null
+            );
         }
 
         public OptionConfiguration ApplyDefaults() {
-            return new() {
-                ImplicitCastSomeTypeToOption = ImplicitCastSomeTypeToOption ?? true,
-                IncludeOptionSomeObject = IncludeOptionSomeObject ?? true,
-                PublicState = PublicState ?? false,
-                AddCastByRefMethod = AddCastByRefMethod ?? false
-            };
+            return new(
+                ImplicitCastSomeTypeToOption: ImplicitCastSomeTypeToOption ?? true,
+                IncludeOptionSomeObject: IncludeOptionSomeObject ?? true,
+                PublicState: PublicState ?? false,
+                AddCastByRefMethod: AddCastByRefMethod ?? false,
+                GenerateSystemTextJsonConverter: GenerateSystemTextJsonConverter ?? false,
+                GenerateMessagePackFormatter: GenerateMessagePackFormatter ?? false
+            );
         }
     }
 
@@ -44,7 +50,7 @@ readonly record struct OptionHolderContextInfo(
         string OnlyName,
         string GlobalName,
         TypeAccessibility Accessibility,
-        int TypeArgumentCount
+        int TypeParameterCount
     );
 
     public readonly record struct SomeInfo(
@@ -101,6 +107,16 @@ static class OptionConfigurationExt {
                         AddCastByRefMethod = na.Value.Value is true
                     };
                     break;
+                case "GenerateSystemTextJsonConverter":
+                    configuration = configuration with {
+                        GenerateSystemTextJsonConverter = na.Value.Value is true
+                    };
+                    break;
+                case "GenerateMessagePackFormatter":
+                    configuration = configuration with {
+                        GenerateMessagePackFormatter = na.Value.Value is true
+                    };
+                    break;
                 default: continue;
             }
         }
@@ -136,6 +152,18 @@ static class OptionConfigurationExt {
                 if (options.TryGetBool("PerfHoldersOptionAddCastByRefMethod", out var b4)) {
                     configuration = configuration with {
                         AddCastByRefMethod = b4
+                    };
+                }
+
+                if (options.TryGetBool("PerfHoldersOptionGenerateJsonConverter", out var b5)) {
+                    configuration = configuration with {
+                        GenerateSystemTextJsonConverter = b5
+                    };
+                }
+
+                if (options.TryGetBool("PerfHoldersOptionGenerateMessagePackFormatter", out var b6)) {
+                    configuration = configuration with {
+                        GenerateMessagePackFormatter = b6
                     };
                 }
 

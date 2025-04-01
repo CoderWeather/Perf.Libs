@@ -21,28 +21,34 @@ readonly record struct ResultHolderContextInfo(
         bool? IncludeResultOkObject,
         bool? IncludeResultErrorObject,
         bool? PublicState,
-        bool? AddCastByRefMethod
+        bool? AddCastByRefMethod,
+        bool? GenerateSystemTextJsonConverter,
+        bool? GenerateMessagePackFormatter
     ) {
         public ResultConfiguration MergeWithMajor(ResultConfiguration other) {
-            return new() {
-                ImplicitCastOkTypeToResult = other.ImplicitCastOkTypeToResult ?? ImplicitCastOkTypeToResult ?? null,
-                ImplicitCastErrorTypeToResult = other.ImplicitCastErrorTypeToResult ?? ImplicitCastErrorTypeToResult ?? null,
-                IncludeResultOkObject = other.IncludeResultOkObject ?? IncludeResultOkObject ?? null,
-                IncludeResultErrorObject = other.IncludeResultErrorObject ?? IncludeResultErrorObject ?? null,
-                PublicState = other.PublicState ?? PublicState ?? null,
-                AddCastByRefMethod = other.AddCastByRefMethod ?? AddCastByRefMethod ?? null
-            };
+            return new(
+                ImplicitCastOkTypeToResult: other.ImplicitCastOkTypeToResult ?? ImplicitCastOkTypeToResult ?? null,
+                ImplicitCastErrorTypeToResult: other.ImplicitCastErrorTypeToResult ?? ImplicitCastErrorTypeToResult ?? null,
+                IncludeResultOkObject: other.IncludeResultOkObject ?? IncludeResultOkObject ?? null,
+                IncludeResultErrorObject: other.IncludeResultErrorObject ?? IncludeResultErrorObject ?? null,
+                PublicState: other.PublicState ?? PublicState ?? null,
+                AddCastByRefMethod: other.AddCastByRefMethod ?? AddCastByRefMethod ?? null,
+                GenerateSystemTextJsonConverter: other.GenerateSystemTextJsonConverter ?? GenerateSystemTextJsonConverter ?? null,
+                GenerateMessagePackFormatter: other.GenerateMessagePackFormatter ?? GenerateMessagePackFormatter ?? null
+            );
         }
 
         public ResultConfiguration ApplyDefaults() {
-            return new() {
-                ImplicitCastOkTypeToResult = ImplicitCastOkTypeToResult ?? true,
-                ImplicitCastErrorTypeToResult = ImplicitCastErrorTypeToResult ?? true,
-                IncludeResultOkObject = IncludeResultOkObject ?? true,
-                IncludeResultErrorObject = IncludeResultErrorObject ?? true,
-                PublicState = PublicState ?? false,
-                AddCastByRefMethod = AddCastByRefMethod ?? false
-            };
+            return new(
+                ImplicitCastOkTypeToResult: ImplicitCastOkTypeToResult ?? true,
+                ImplicitCastErrorTypeToResult: ImplicitCastErrorTypeToResult ?? true,
+                IncludeResultOkObject: IncludeResultOkObject ?? true,
+                IncludeResultErrorObject: IncludeResultErrorObject ?? true,
+                PublicState: PublicState ?? false,
+                AddCastByRefMethod: AddCastByRefMethod ?? false,
+                GenerateSystemTextJsonConverter: GenerateSystemTextJsonConverter ?? false,
+                GenerateMessagePackFormatter: GenerateMessagePackFormatter ?? false
+            );
         }
     }
 
@@ -130,6 +136,16 @@ static class ResultConfigurationExt {
                         AddCastByRefMethod = na.Value.Value is true
                     };
                     break;
+                case "GenerateSystemTextJsonConverter":
+                    configuration = configuration with {
+                        GenerateSystemTextJsonConverter = na.Value.Value is true
+                    };
+                    break;
+                case "GenerateMessagePackFormatter":
+                    configuration = configuration with {
+                        GenerateMessagePackFormatter = na.Value.Value is true
+                    };
+                    break;
                 default: continue;
             }
         }
@@ -177,6 +193,18 @@ static class ResultConfigurationExt {
                 if (options.TryGetBool("PerfHoldersResultAddCastByRefMethod", out var b6)) {
                     configuration = configuration with {
                         AddCastByRefMethod = b6
+                    };
+                }
+
+                if (options.TryGetBool("PerfHoldersResultGenerateJsonConverter", out var b7)) {
+                    configuration = configuration with {
+                        GenerateSystemTextJsonConverter = b7
+                    };
+                }
+
+                if (options.TryGetBool("PerfHoldersResultGenerateMessagePackFormatter", out var b8)) {
+                    configuration = configuration with {
+                        GenerateMessagePackFormatter = b8
                     };
                 }
 

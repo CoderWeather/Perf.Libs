@@ -34,6 +34,16 @@ public sealed class ResultHolderConfigurationAttribute : Attribute {
     /// Default false
     /// </summary>
     public bool AddCastByRefMethod { get; init; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool GenerateSystemTextJsonConverter { get; set; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool GenerateMessagePackFormatter { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Struct)]
@@ -57,6 +67,16 @@ public sealed class OptionHolderConfigurationAttribute : Attribute {
     /// Default false
     /// </summary>
     public bool AddCastByRefMethod { get; init; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool GenerateSystemTextJsonConverter { get; set; }
+
+    /// <summary>
+    /// Default false
+    /// </summary>
+    public bool GenerateMessagePackFormatter { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Struct)]
@@ -74,17 +94,7 @@ public sealed class MultiResultHolderConfigurationAttribute : Attribute {
     /// <summary>
     /// Default false
     /// </summary>
-    public bool SetSystemTextJsonConverterAttribute { get; set; }
-
-    /// <summary>
-    /// Default false
-    /// </summary>
-    public bool GenerateJsonConverter { get; set; }
-
-    /// <summary>
-    /// Default false
-    /// </summary>
-    public bool SetMessagePackFormatterAttribute { get; set; }
+    public bool GenerateSystemTextJsonConverter { get; set; }
 
     /// <summary>
     /// Default false

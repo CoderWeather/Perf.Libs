@@ -130,7 +130,7 @@ public readonly struct Option<T> :
 
     public async ValueTask<Option<TNew>> Map<TNew>(Func<T, ValueTask<TNew>> map)
         where TNew : notnull =>
-        IsSome ? await map(some) : default(Option<TNew>);
+        IsSome ? await map(some).ConfigureAwait(false) : default(Option<TNew>);
 }
 
 public static class Option {

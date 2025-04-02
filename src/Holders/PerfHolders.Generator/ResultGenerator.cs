@@ -146,12 +146,12 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
         var resultHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadResultConfiguration();
 
-        var final = filtered.Combine(compInfo).Combine(resultHolderConfiguration);
+        var final = filtered.Combine(resultHolderConfiguration).Combine(compInfo);
 
         context.RegisterSourceOutput(
             final,
             static (context, final) => {
-                var ((resultInfo, compInfo), resultConfiguration) = final;
+                var ((resultInfo, resultConfiguration), compInfo) = final;
                 if (compInfo == default) {
                     return;
                 }
@@ -162,9 +162,7 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
                 var sourceText = new ResultSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
 
-                var fileName = compInfo.OptimizationLevel is OptimizationLevel.Debug
-                    ? $"{resultInfo.MetadataName}.cs"
-                    : $"{resultInfo.MetadataName}.g.cs";
+                var fileName = $"{resultInfo.MetadataName}.g.cs";
 
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
             }

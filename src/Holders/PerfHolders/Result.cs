@@ -149,7 +149,7 @@ public readonly struct Result<TOk, TError> :
 
     public async ValueTask<Result<TNewOk, TError>> Map<TNewOk>(Func<TOk, ValueTask<TNewOk>> mapOk)
         where TNewOk : notnull =>
-        IsOk ? await mapOk(ok) : error;
+        IsOk ? await mapOk(ok).ConfigureAwait(false) : error;
 
     public Result<TOk, TNewError> MapError<TNewError>(Func<TError, TNewError> mapError)
         where TNewError : notnull =>
@@ -157,7 +157,7 @@ public readonly struct Result<TOk, TError> :
 
     public async ValueTask<Result<TOk, TNewError>> MapError<TNewError>(Func<TError, ValueTask<TNewError>> mapError)
         where TNewError : notnull =>
-        IsOk ? ok : await mapError(error);
+        IsOk ? ok : await mapError(error).ConfigureAwait(false);
 
     public Result<TNewOk, TNewError> Map<TNewOk, TNewError>(
         Func<TOk, TNewOk> mapOk,
@@ -173,7 +173,7 @@ public readonly struct Result<TOk, TError> :
     )
         where TNewOk : notnull
         where TNewError : notnull =>
-        IsOk ? await mapOk(ok) : await mapError(error);
+        IsOk ? await mapOk(ok).ConfigureAwait(false) : await mapError(error).ConfigureAwait(false);
 }
 
 public static class Result {

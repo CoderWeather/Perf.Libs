@@ -3,7 +3,6 @@
 
 namespace Perf.Holders.Serialization.MessagePack;
 
-using System.Collections.Concurrent;
 using System.Reflection;
 using global::MessagePack;
 using global::MessagePack.Formatters;
@@ -16,24 +15,24 @@ using System.Diagnostics.CodeAnalysis;
 public sealed class OptionHolderFormatterResolver : IFormatterResolver {
     public static readonly OptionHolderFormatterResolver Instance = new();
 
-    static readonly ConcurrentDictionary<Type, IMessagePackFormatter> Converters = new();
+    public IMessagePackFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
-    public IMessagePackFormatter<T>? GetFormatter<T>() {
-        var t = typeof(T);
-        if (t.IsGenericTypeDefinition || t.IsValueType is false || t.GetInterface("IOptionHolder`1") is not { } i) {
-            return null;
+    static class Cache<T> {
+        public static readonly IMessagePackFormatter<T>? Formatter;
+
+        static Cache() {
+            var t = typeof(T);
+            if (t.IsGenericTypeDefinition || t.IsValueType is false || t.GetInterface("IOptionHolder`1") is not { } i) {
+                Formatter = null;
+                return;
+            }
+
+            var arg1 = i.GenericTypeArguments[0];
+
+            var t2 = typeof(OptionHolderFormatter<,>).MakeGenericType(t, arg1);
+            var f = t2.GetField("Instance", BindingFlags.Public | BindingFlags.Static)!;
+            Formatter = (IMessagePackFormatter<T>)f.GetValue(null)!;
         }
-
-        if (Converters.TryGetValue(t, out var formatter)) {
-            return (IMessagePackFormatter<T>)formatter;
-        }
-
-        var arg1 = i.GenericTypeArguments[0];
-
-        var t2 = typeof(OptionHolderFormatter<,>).MakeGenericType(t, arg1);
-        var f = t2.GetField("Instance", BindingFlags.Public | BindingFlags.Static)!;
-        Converters[t] = formatter = (IMessagePackFormatter)f.GetValue(null)!;
-        return (IMessagePackFormatter<T>)formatter;
     }
 }
 

@@ -3,7 +3,6 @@
 
 namespace Perf.Holders.Serialization.MessagePack;
 
-using System.Collections.Concurrent;
 using System.Reflection;
 using global::MessagePack;
 using global::MessagePack.Formatters;
@@ -16,25 +15,25 @@ using System.Diagnostics.CodeAnalysis;
 public sealed class ResultHolderFormatterResolver : IFormatterResolver {
     public static readonly ResultHolderFormatterResolver Instance = new();
 
-    static readonly ConcurrentDictionary<Type, IMessagePackFormatter> Converters = new();
+    public IMessagePackFormatter<T>? GetFormatter<T>() => Cache<T>.Formatter;
 
-    public IMessagePackFormatter<T>? GetFormatter<T>() {
-        var t = typeof(T);
-        if (t.IsGenericTypeDefinition || t.IsValueType is false || t.GetInterface("IResultHolder`2") is not { } i) {
-            return null;
+    static class Cache<T> {
+        public static readonly IMessagePackFormatter<T>? Formatter;
+
+        static Cache() {
+            var t = typeof(T);
+            if (t.IsGenericTypeDefinition || t.IsValueType is false || t.GetInterface("IResultHolder`2") is not { } i) {
+                Formatter = null;
+                return;
+            }
+
+            var arg1 = i.GenericTypeArguments[0];
+            var arg2 = i.GenericTypeArguments[1];
+
+            var t2 = typeof(HolderResultFormatter<,,>).MakeGenericType(t, arg1, arg2);
+            var f = t2.GetField("Instance", BindingFlags.Public | BindingFlags.Static)!;
+            Formatter = (IMessagePackFormatter<T>)f.GetValue(null)!;
         }
-
-        if (Converters.TryGetValue(t, out var formatter)) {
-            return (IMessagePackFormatter<T>)formatter;
-        }
-
-        var arg1 = i.GenericTypeArguments[0];
-        var arg2 = i.GenericTypeArguments[1];
-
-        var t2 = typeof(HolderResultFormatter<,,>).MakeGenericType(t, arg1, arg2);
-        var f = t2.GetField("Instance", BindingFlags.Public | BindingFlags.Static)!;
-        Converters[t] = formatter = (IMessagePackFormatter)f.GetValue(null)!;
-        return (IMessagePackFormatter<T>)formatter;
     }
 }
 
@@ -61,7 +60,7 @@ sealed class HolderResultFormatter<TResult, TOk, TError> : IMessagePackFormatter
     }
 
     public TResult Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options) {
-        if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader)) {
+        if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader) == false) {
             throw new MessagePackSerializationException($"Expected '{MessagePackType.Map}' but got '{reader.NextMessagePackType}'");
         }
 

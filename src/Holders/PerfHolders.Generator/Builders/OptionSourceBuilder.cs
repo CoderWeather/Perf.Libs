@@ -612,10 +612,9 @@ sealed class OptionSourceBuilder(
     void WriteEndOfFile() {
         for (var i = 0; i < bracesToCloseOnEnd; i++) {
             sb.Append('}');
-            if (i == bracesToCloseOnEnd - 1) {
-                sb.AppendLine();
-            }
         }
+
+        sb.AppendLine();
     }
 
     void WriteJsonConverter() {

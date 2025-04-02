@@ -21,7 +21,6 @@ enum HolderType {
 
 readonly record struct CompInfo(
     LanguageVersion Version,
-    OptimizationLevel OptimizationLevel,
     bool SystemTextJsonAvailable = false,
     bool GenericSerializerSystemTextJsonAvailable = false,
     bool MessagePackAvailable = false,
@@ -40,7 +39,6 @@ static class CompInfoExtensions {
         compilationProvider.Select((c, _) => c is CSharpCompilation comp
             ? new CompInfo(
                 Version: comp.LanguageVersion,
-                OptimizationLevel: comp.Options.OptimizationLevel,
                 SystemTextJsonAvailable: comp.GetTypeByMetadataName("System.Text.Json.Serialization.JsonConverterAttribute") is not null,
                 GenericSerializerSystemTextJsonAvailable: holderType switch {
                     HolderType.Result      => comp.GetTypeByMetadataName(HolderTypeNames.ResultSerializationSystemTextJson) is not null,
@@ -60,4 +58,4 @@ static class CompInfoExtensions {
         );
 }
 
-readonly record struct HolderContainingType(string Kind, string Name);
+readonly record struct HolderContainingType(TypeAccessibility Accessibility, string Kind, string Name);

@@ -11,19 +11,13 @@ sealed class MultiResultSourceBuilder(
     /*
      * Fun things:
      *   no baseType - like cast to base object, at this moment I don't want to write a 2-8 multiresult copy-paste types
-     *   no typed exceptions, just will add them later
      */
-    // const string BaseMr = "";
     const string MrMarker = "global::Perf.Holders.IMultiResultHolder";
 
     const string Exceptions = "global::Perf.Holders.Exceptions.MultiResultHolderExceptions";
     const string DebuggerBrowsableNever = "[global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]";
     const string EditorBrowsable = "[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]";
     const string EqualityComparer = "global::System.Collections.Generic.EqualityComparer";
-
-    // readonly string baseType = $"{BaseMr}<>";
-
-    // readonly string throwDefault = "throw new Exception(\"Default\")";
 
     readonly string enumState = $"{context.MultiResult.OnlyName}State";
 
@@ -76,16 +70,25 @@ sealed class MultiResultSourceBuilder(
         WriteDebugPrint();
         WriteMapMethods();
         WriteEndOfType();
+
+        WriteEndOfFile();
+
         if (compInfo.SystemTextJsonAvailable && context.Configuration.GenerateSystemTextJsonConverter is true) {
+            sb.AppendLine("namespace Internal.Perf.Holders.Serialization.SystemTextJson\n{");
+            bracesToCloseOnEnd++;
             // WriteJsonConverter();
-            WriteGenericJsonConverter();
+            // WriteGenericJsonConverter();
+            sb.AppendLine("}");
+            bracesToCloseOnEnd--;
         }
 
         if (compInfo.MessagePackAvailable && context.Configuration.GenerateMessagePackFormatter is true) {
-            WriteMessagePackFormatter();
+            sb.AppendLine("namespace Internal.Perf.Holders.Serialization.MessagePack\n{");
+            bracesToCloseOnEnd++;
+            // WriteMessagePackFormatter();
+            sb.AppendLine("}");
+            bracesToCloseOnEnd--;
         }
-
-        WriteEndOfFile();
     }
 
     void DeclareTopLevelStatements() {
@@ -104,7 +107,6 @@ sealed class MultiResultSourceBuilder(
         }
     }
 
-    // ReSharper disable ConvertIfStatementToConditionalTernaryExpression
     void WriteDebugView() {
         if (compInfo.SupportFileVisibilityModifier() && context.ContainingTypes == default) {
             sb.Append("file ");
@@ -115,7 +117,7 @@ sealed class MultiResultSourceBuilder(
         var typeParameters = context.TypeParameters();
         var typeParametersConstraints = context.TypeParametersConstraints();
 
-        sb.AppendInterpolated($"sealed class {context.MultiResult.OnlyName}_DebugView");
+        sb.AppendInterpolated($"sealed class DebugView_{context.MultiResult.OnlyName}");
 
         if (context.MultiResult.TypeParameterCount == 0) {
             sb.AppendLine(" {");
@@ -130,7 +132,7 @@ sealed class MultiResultSourceBuilder(
         sb.Indent++;
         sb.AppendInterpolatedLine(
             $$"""
-            public {{context.MultiResult.OnlyName}}_DebugView({{context.MultiResult.DeclarationName}} mr) {
+            public DebugView_{{context.MultiResult.OnlyName}}({{context.MultiResult.DeclarationName}} mr) {
                 var stateField = typeof({{context.MultiResult.DeclarationName}})
                     .GetField("state", global::System.Reflection.BindingFlags.NonPublic | global::System.Reflection.BindingFlags.Instance)!;
                 this.State = stateField.GetValue(mr)!;
@@ -187,7 +189,7 @@ sealed class MultiResultSourceBuilder(
 
         sb.AppendInterpolatedLine(
             $"""
-            [global::System.Diagnostics.DebuggerTypeProxy(typeof({context.MultiResult.OnlyName}_DebugView{openTypeParameters}))]
+            [global::System.Diagnostics.DebuggerTypeProxy(typeof(DebugView_{context.MultiResult.OnlyName}{openTypeParameters}))]
             """
         );
 
@@ -201,7 +203,9 @@ sealed class MultiResultSourceBuilder(
             && context.Configuration.GenerateSystemTextJsonConverter is true
             && context.MultiResult.TypeParameterCount is 0
         ) {
-            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.MultiResult.OnlyName}_JsonConverter))]");
+            sb.AppendInterpolatedLine(
+                $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.SystemTextJson.JsonConverter_{context.MultiResult.OnlyName}))]"
+            );
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.MultiResultHolderJsonConverterFactory))]"
@@ -212,10 +216,8 @@ sealed class MultiResultSourceBuilder(
             && context.Configuration.GenerateMessagePackFormatter is true
             && context.MultiResult.TypeParameterCount is 0
         ) {
-            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.MultiResult.OnlyName}_MessagePackFormatter))]");
-        } else if (compInfo.GenericSerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
-                $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.MultiResultHolderFormatterResolver))]"
+                $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.MessagePack.MessagePackFormatter_{context.MultiResult.OnlyName}))]"
             );
         }
 
@@ -530,284 +532,8 @@ sealed class MultiResultSourceBuilder(
     void WriteEndOfFile() {
         for (var i = 0; i < bracesToCloseOnEnd; i++) {
             sb.Append('}');
-            if (i == bracesToCloseOnEnd - 1) {
-                sb.AppendLine();
-            }
-        }
-    }
-
-    void WriteJsonConverter() {
-        if (context.MultiResult.TypeParameterCount > 0) {
-            return;
         }
 
-        var accessibility = context.MultiResult.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string stj = "global::System.Text.Json";
-        const string stjSer = "global::System.Text.Json.Serialization";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}}sealed class {{context.MultiResult.OnlyName}}_JsonConverter : {{stjSer}}.JsonConverter<{{context.MultiResult.DeclarationName}}> {
-                public static readonly {{context.MultiResult.OnlyName}}_JsonConverter Instance = new();
-            """
-        );
-        sb.AppendInterpolatedLine(
-            $"public override void Write({stj}.Utf8JsonWriter writer, {context.MultiResult.DeclarationName} value, {stj}.JsonSerializerOptions options) {{"
-        );
-        sb.Indent++;
-        sb.AppendLine("writer.WriteStartObject();");
-        sb.Indent++;
-
-        if (context.Configuration.OpenState is true) {
-            sb.AppendLine("var state = (byte)value.State;");
-        } else if (context.Configuration.AddIsProperties is true) {
-            sb.Append("byte state = ");
-            foreach (var el in context.Elements) {
-                sb.AppendInterpolated($"value.{el.StateCheck.Property} ? (byte){el.Index + 1} : ");
-            }
-
-            sb.AppendLine("(byte)0;");
-        }
-
-        sb.AppendLine("switch(state) {");
-        sb.Indent++;
-        foreach (var el in context.Elements) {
-            sb.AppendInterpolatedLine($"case {el.Index + 1}:");
-            sb.Indent++;
-            sb.AppendInterpolatedLine($"writer.WritePropertyName({MultiResultHolderContextInfo.MultiResultElementInfo.Fields[el.Index]}Bytes);");
-            sb.AppendInterpolatedLine($"{stj}.JsonSerializer.Serialize(writer, value.{el.Property}, options);");
-            sb.Indent--;
-            sb.AppendLine("break;");
-        }
-
-        sb.AppendInterpolatedLine($"default: throw {Exceptions}.Default<{context.MultiResult.DeclarationName}>();");
-        sb.Indent--;
-        sb.AppendLine("}");
-        sb.AppendLine("writer.WriteEndObject();");
-        //
-        sb.Indent--;
-        sb.AppendLine("}");
-        sb.AppendInterpolatedLine(
-            $"public override {context.MultiResult.DeclarationName} Read(ref {stj}.Utf8JsonReader reader, global::System.Type typeToConvert, {stj}.JsonSerializerOptions options) {{"
-        );
-        sb.Indent++;
-        sb.AppendInterpolatedLine(
-            $$"""
-            if (reader.TokenType != {{stj}}.JsonTokenType.StartObject) throw new {{stj}}.JsonException($"Expected '{({{stj}}.JsonTokenType.StartObject)}' but got '{reader.TokenType}'");
-            reader.Read();
-            var span = reader.ValueSpan;
-            """
-        );
-        foreach (var el in context.Elements) {
-            sb.AppendInterpolatedLine(
-                $$"""
-                if (span.SequenceEqual({{MultiResultHolderContextInfo.MultiResultElementInfo.Fields[el.Index]}}Bytes)) {
-                    var value = {{stj}}.JsonSerializer.Deserialize<{{el.Type}}>(ref reader, options)!;
-                    reader.Read();
-                    return value;
-                }
-                """
-            );
-        }
-
-        sb.AppendInterpolatedLine($$"""throw new {{stj}}.JsonException("Expected MultiResult ordinal field name property");""");
-
-        sb.Indent--;
-        sb.AppendLine("}");
-
-        sb.AppendLine("#region Property names");
-
-        foreach (var el in context.Elements) {
-            var fieldDefaultString = MultiResultHolderContextInfo.MultiResultElementInfo.Fields[el.Index];
-            sb.Append($"public static readonly byte[] {fieldDefaultString}Bytes = new byte[] {{");
-            foreach (var c in fieldDefaultString) {
-                sb.Append($"{(byte)c},");
-            }
-
-            sb.Length--;
-            sb.AppendLine("};");
-        }
-
-        sb.AppendLine("#endregion");
-
-        sb.Indent--;
-        sb.AppendLine("}");
-    }
-
-    void WriteMessagePackFormatter() {
-        if (context.MultiResult.TypeParameterCount > 0) {
-            return;
-        }
-
-        var accessibility = context.MultiResult.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string msgPack = "global::MessagePack";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}}sealed class {{context.MultiResult.OnlyName}}_MessagePackFormatter : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.MultiResult.DeclarationName}}> {
-                public static readonly {{context.MultiResult.OnlyName}}_MessagePackFormatter Instance = new();
-            """
-        );
-        sb.Indent++;
-        sb.AppendInterpolatedLine(
-            $"public void Serialize(ref {msgPack}.MessagePackWriter writer, {context.MultiResult.DeclarationName} value, {msgPack}.MessagePackSerializerOptions options) {{"
-        );
-        sb.Indent++;
-        sb.AppendLine("writer.WriteMapHeader(1);");
-
-        if (context.Configuration.OpenState is true) {
-            sb.AppendLine("var state = (byte)value.State;");
-        } else if (context.Configuration.AddIsProperties is true) {
-            sb.Append("byte state = ");
-            foreach (var el in context.Elements) {
-                sb.AppendInterpolated($"value.{el.StateCheck.Property} ? (byte){el.Index + 1} : ");
-            }
-
-            sb.AppendLine("(byte)0;");
-        }
-
-        sb.AppendLine("switch(state) {");
-        sb.Indent++;
-        foreach (var el in context.Elements) {
-            sb.AppendInterpolatedLine($"case {el.Index + 1}:");
-            sb.Indent++;
-            sb.AppendInterpolatedLine($"writer.WriteUInt8({el.Index + 1});");
-            sb.AppendInterpolatedLine($"{msgPack}.MessagePackSerializer.Serialize(ref writer, value.{el.Property}, options);");
-            sb.Indent--;
-            sb.AppendLine("break;");
-        }
-
-        sb.AppendInterpolatedLine($"default: throw {Exceptions}.Default<{context.MultiResult.DeclarationName}>();");
-        sb.Indent--;
-        sb.AppendLine("}");
         sb.AppendLine();
-        sb.Indent--;
-        sb.AppendLine("}");
-
-        sb.AppendInterpolatedLine(
-            $"public {context.MultiResult.DeclarationName} Deserialize(ref {msgPack}.MessagePackReader reader, {msgPack}.MessagePackSerializerOptions options) {{"
-        );
-        sb.Indent++;
-        sb.AppendInterpolatedLine(
-            $$"""
-            if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader)) {
-                throw new {{msgPack}}.MessagePackSerializationException($"Expected '{({{msgPack}}.MessagePackType.Map)}' but got '{reader.NextMessagePackType}'");
-            }
-            if (mapHeader is not 1) {
-                throw new {{msgPack}}.MessagePackSerializationException($"Expected map header 1 but got '{mapHeader}'");
-            }
-
-            var key = reader.ReadByte();
-            switch (key) {
-            """
-        );
-        sb.Indent++;
-        foreach (var el in context.Elements) {
-            sb.AppendInterpolatedLine(
-                $"case {el.Index + 1}: return {msgPack}.MessagePackSerializer.Deserialize<{context.MultiResult.DeclarationName}>(ref reader, options);"
-            );
-        }
-
-        sb.AppendLine($"default: throw new {msgPack}.MessagePackSerializationException($\"Expected key 1 or 2 but got '{{key}}'\");");
-
-        sb.Indent--;
-        sb.AppendLine("}");
-        sb.Indent--;
-        sb.AppendLine("}");
-        sb.Indent--;
-        sb.AppendLine("}");
-    }
-
-    void WriteGenericJsonConverter() {
-        var typeParameters = context.TypeParameters();
-        var typeParametersConstraints = context.TypeParametersConstraints(' ');
-        var accessibility = context.MultiResult.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string stj = "global::System.Text.Json";
-        const string stjSer = "global::System.Text.Json.Serialization";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}}sealed class {{context.MultiResult.OnlyName}}_JsonConverter{{typeParameters}} : {{stjSer}}.JsonConverter<{{context.MultiResult.DeclarationName}}> {{typeParametersConstraints}}{
-                public static readonly {{context.MultiResult.OnlyName}}_JsonConverter{{typeParameters}} Instance = new();
-            """
-        );
-        sb.AppendInterpolatedLine(
-            $"public override void Write({stj}.Utf8JsonWriter writer, {context.MultiResult.DeclarationName} value, {stj}.JsonSerializerOptions options) {{"
-        );
-        sb.Indent++;
-        sb.AppendLine("writer.WriteStartObject();");
-        sb.Indent++;
-
-        if (context.Configuration.OpenState is true) {
-            sb.AppendLine("var state = (byte)value.State;");
-        } else if (context.Configuration.AddIsProperties is true) {
-            sb.Append("byte state = ");
-            foreach (var el in context.Elements) {
-                sb.AppendInterpolated($"value.{el.StateCheck.Property} ? (byte){el.Index + 1} : ");
-            }
-
-            sb.AppendLine("(byte)0;");
-        }
-
-        sb.AppendLine("switch(state) {");
-        sb.Indent++;
-        foreach (var el in context.Elements) {
-            sb.AppendInterpolatedLine($"case {el.Index + 1}:");
-            sb.Indent++;
-            sb.AppendInterpolatedLine($"writer.WritePropertyName({MultiResultHolderContextInfo.MultiResultElementInfo.Fields[el.Index]}Bytes);");
-            sb.AppendInterpolatedLine($"{stj}.JsonSerializer.Serialize(writer, value.{el.Property}, options);");
-            sb.Indent--;
-            sb.AppendLine("break;");
-        }
-
-        sb.AppendInterpolatedLine($"default: throw {Exceptions}.Default<{context.MultiResult.DeclarationName}>();");
-        sb.Indent--;
-        sb.AppendLine("}");
-        sb.AppendLine("writer.WriteEndObject();");
-        //
-        sb.Indent--;
-        sb.AppendLine("}");
-        sb.AppendInterpolatedLine(
-            $"public override {context.MultiResult.DeclarationName} Read(ref {stj}.Utf8JsonReader reader, global::System.Type typeToConvert, {stj}.JsonSerializerOptions options) {{"
-        );
-        sb.Indent++;
-        sb.AppendInterpolatedLine(
-            $$"""
-            if (reader.TokenType != {{stj}}.JsonTokenType.StartObject) throw new {{stj}}.JsonException($"Expected '{({{stj}}.JsonTokenType.StartObject)}' but got '{reader.TokenType}'");
-            reader.Read();
-            var span = reader.ValueSpan;
-            """
-        );
-        foreach (var el in context.Elements) {
-            sb.AppendInterpolatedLine(
-                $$"""
-                if (span.SequenceEqual({{MultiResultHolderContextInfo.MultiResultElementInfo.Fields[el.Index]}}Bytes)) {
-                    var value = {{stj}}.JsonSerializer.Deserialize<{{el.Type}}>(ref reader, options)!;
-                    reader.Read();
-                    return value;
-                }
-                """
-            );
-        }
-
-        sb.AppendInterpolatedLine($$"""throw new {{stj}}.JsonException("Expected MultiResult ordinal field name property");""");
-
-        sb.Indent--;
-        sb.AppendLine("}");
-
-        sb.AppendLine("#region Property names");
-
-        foreach (var el in context.Elements) {
-            var fieldDefaultString = MultiResultHolderContextInfo.MultiResultElementInfo.Fields[el.Index];
-            sb.Append($"public static readonly byte[] {fieldDefaultString}Bytes = new byte[] {{");
-            foreach (var c in fieldDefaultString) {
-                sb.Append($"{(byte)c},");
-            }
-
-            sb.Length--;
-            sb.AppendLine("};");
-        }
-
-        sb.AppendLine("#endregion");
-
-        sb.Indent--;
-        sb.AppendLine("}");
     }
 }

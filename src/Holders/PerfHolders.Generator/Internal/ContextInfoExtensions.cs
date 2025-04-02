@@ -14,12 +14,30 @@ static class ContextInfoExtensions {
         do {
             t = t.ContainingType;
 
+            var accessibility = t.DeclaredAccessibility.MapToTypeAccessibility();
+
             HolderContainingType containingType = t switch {
-                { IsReferenceType: true, IsRecord: true } => new(Kind: "record", Name: t.Name),
-                { IsReferenceType: true }                 => new(Kind: "class", Name: t.Name),
-                { IsValueType: true, IsRecord: true }     => new(Kind: "record struct", Name: t.Name),
-                { IsValueType: true }                     => new(Kind: "struct", Name: t.Name),
-                _                                         => default
+                { IsReferenceType: true, IsRecord: true } => new(
+                    Accessibility: accessibility,
+                    Kind: "record",
+                    Name: t.Name
+                ),
+                { IsReferenceType: true } => new(
+                    Accessibility: accessibility,
+                    Kind: "class",
+                    Name: t.Name
+                ),
+                { IsValueType: true, IsRecord: true } => new(
+                    Accessibility: accessibility,
+                    Kind: "record struct",
+                    Name: t.Name
+                ),
+                { IsValueType: true } => new(
+                    Accessibility: accessibility,
+                    Kind: "struct",
+                    Name: t.Name
+                ),
+                _ => default
             };
 
             if (containingType != default) {

@@ -139,6 +139,42 @@ readonly record struct MultiResultHolderContextInfo(
 
         return sb.ToString();
     }
+
+    public bool ShouldGenerateJsonConverters() {
+        if (Configuration.GenerateSystemTextJsonConverter is not true) {
+            return false;
+        }
+
+        if (MultiResult.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+            return false;
+        }
+
+        foreach (var ct in ContainingTypes) {
+            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public bool ShouldGenerateMessagePackConverters() {
+        if (Configuration.GenerateMessagePackFormatter is not true) {
+            return false;
+        }
+
+        if (MultiResult.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+            return false;
+        }
+
+        foreach (var ct in ContainingTypes) {
+            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 static class MultiResultConfigurationExt {

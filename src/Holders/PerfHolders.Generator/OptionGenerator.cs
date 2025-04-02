@@ -127,12 +127,12 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
         var optionHolderConfiguration = context.AnalyzerConfigOptionsProvider.ReadOptionConfiguration();
 
-        var final = filtered.Combine(compInfo).Combine(optionHolderConfiguration);
+        var final = filtered.Combine(optionHolderConfiguration).Combine(compInfo);
 
         context.RegisterSourceOutput(
             final,
             static (context, final) => {
-                var ((optionInfo, compInfo), optionConfiguration) = final;
+                var ((optionInfo, optionConfiguration), compInfo) = final;
                 if (compInfo == default) {
                     return;
                 }
@@ -143,9 +143,8 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 var sourceText = new OptionSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();
 
-                var fileName = compInfo.OptimizationLevel is OptimizationLevel.Debug
-                    ? $"{optionInfo.MetadataName}.cs"
-                    : $"{optionInfo.MetadataName}.g.cs";
+                var fileName = $"{optionInfo.MetadataName}.g.cs";
+
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
             }
         );

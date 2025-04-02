@@ -9,6 +9,7 @@
         <AnalysisModePerformance>All</AnalysisModePerformance>
         <AnalysisModeInteroperability>All</AnalysisModeInteroperability>
         <AnalysisModeMaintainability>All</AnalysisModeMaintainability>
+        <AnalysisModeReliability>All</AnalysisModeReliability>
         <NoWarn>CA1515,CA1815,CA1852,CA1812,CA1810</NoWarn>
     </PropertyGroup>
 </Project>

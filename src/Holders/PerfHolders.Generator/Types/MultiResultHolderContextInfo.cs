@@ -158,7 +158,7 @@ readonly record struct MultiResultHolderContextInfo(
         return true;
     }
 
-    public bool ShouldGenerateMessagePackConverters() {
+    public bool ShouldGenerateMessagePackFormatters() {
         if (Configuration.GenerateMessagePackFormatter is not true) {
             return false;
         }

@@ -44,9 +44,9 @@ sealed class MultiResultSystemTextJsonSourceBuilder(
         }
 
         if (compInfo.SupportFileScopedNamespace()) {
-            sb.AppendLine($"namespace Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.SystemTextJson;");
+            sb.AppendLine("namespace Perf.Holders.Serialization.SystemTextJson;");
         } else {
-            sb.AppendLine($"namespace Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.SystemTextJson\n{{");
+            sb.AppendLine("namespace Perf.Holders.Serialization.SystemTextJson\n{");
             bracesToCloseOnEnd++;
         }
     }
@@ -61,13 +61,17 @@ sealed class MultiResultSystemTextJsonSourceBuilder(
         const string stjSer = "global::System.Text.Json.Serialization";
         sb.AppendInterpolatedLine(
             $$"""
-            {{accessibility}}sealed class JsonConverter_{{context.MultiResult.OnlyName}} : {{stjSer}}.JsonConverter<{{context.MultiResult.GlobalName}}> {
+            [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Never)]
+            {{accessibility}}sealed class JsonConverter_{{context.MultiResult.OnlyName}} : {{stjSer}}.JsonConverter<{{context.MultiResult.GlobalName}}>
+            {
                 public static readonly JsonConverter_{{context.MultiResult.OnlyName}} Instance = new();
             """
         );
+        sb.Indent++;
         sb.AppendInterpolatedLine(
-            $"public override void Write({stj}.Utf8JsonWriter writer, {context.MultiResult.GlobalName} value, {stj}.JsonSerializerOptions options) {{"
+            $"public override void Write({stj}.Utf8JsonWriter writer, {context.MultiResult.GlobalName} value, {stj}.JsonSerializerOptions options)"
         );
+        sb.AppendLine("{");
         sb.Indent++;
         sb.AppendLine("writer.WriteStartObject();");
         sb.Indent++;
@@ -102,8 +106,9 @@ sealed class MultiResultSystemTextJsonSourceBuilder(
         sb.Indent--;
         sb.AppendLine("}");
         sb.AppendInterpolatedLine(
-            $"public override {context.MultiResult.GlobalName} Read(ref {stj}.Utf8JsonReader reader, global::System.Type typeToConvert, {stj}.JsonSerializerOptions options) {{"
+            $"public override {context.MultiResult.GlobalName} Read(ref {stj}.Utf8JsonReader reader, global::System.Type typeToConvert, {stj}.JsonSerializerOptions options)"
         );
+        sb.AppendLine("{");
         sb.Indent++;
         sb.AppendInterpolatedLine(
             $$"""

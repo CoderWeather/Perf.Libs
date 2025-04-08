@@ -84,27 +84,6 @@ sealed class ResultSourceBuilder(
         WriteDebugPrint();
         WriteMapMethods();
         WriteEndOfType();
-
-        if (compInfo.SystemTextJsonAvailable
-            && context is {
-                Configuration.GenerateSystemTextJsonConverter: true,
-                Ok.IsTypeParameter: false,
-                Error.IsTypeParameter: false
-            }
-        ) {
-            WriteJsonConverter();
-        }
-
-        if (compInfo.MessagePackAvailable
-            && context is {
-                Configuration.GenerateMessagePackFormatter: true,
-                Ok.IsTypeParameter: false,
-                Error.IsTypeParameter: false
-            }
-        ) {
-            WriteMessagePackFormatter();
-        }
-
         WriteEndOfFile();
     }
 
@@ -215,7 +194,7 @@ sealed class ResultSourceBuilder(
             && context.Ok.IsTypeParameter is false
             && context.Error.IsTypeParameter is false
         ) {
-            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.Result.OnlyName}_JsonConverter))]");
+            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(JsonConverter_{context.Result.OnlyName}))]");
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.ResultHolderJsonConverterFactory))]"
@@ -227,7 +206,7 @@ sealed class ResultSourceBuilder(
             && context.Ok.IsTypeParameter is false
             && context.Error.IsTypeParameter is false
         ) {
-            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.Result.OnlyName}_MessagePackFormatter))]");
+            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof(MessagePackFormatter_{context.Result.OnlyName}))]");
         } else if (compInfo.GenericSerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.ResultHolderFormatterResolver))]"
@@ -660,95 +639,5 @@ sealed class ResultSourceBuilder(
         }
 
         sb.AppendLine();
-    }
-
-    void WriteJsonConverter() {
-        var accessibility = context.Result.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string stj = "global::System.Text.Json";
-        const string stjSer = "global::System.Text.Json.Serialization";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}}sealed class {{context.Result.DeclarationName}}_JsonConverter : {{stjSer}}.JsonConverter<{{context.Result.DeclarationName}}> {
-                public static readonly {{context.Result.DeclarationName}}_JsonConverter Instance = new();
-                
-                public override void Write({{stj}}.Utf8JsonWriter writer, {{context.Result.DeclarationName}} value, {{stj}}.JsonSerializerOptions options) {
-                    writer.WriteStartObject();
-                    if (value.{{context.IsOk.Property}}) {
-                        writer.WritePropertyName(okPropertyBytes);
-                        {{stj}}.JsonSerializer.Serialize(writer, value.{{context.Ok.Property}}, options);
-                    } else {
-                        writer.WritePropertyName(errorPropertyBytes);
-                        {{stj}}.JsonSerializer.Serialize(writer, value.{{context.Error.Property}}, options);
-                    }
-                    writer.WriteEndObject();
-                }
-                
-                public override {{context.Result.DeclarationName}} Read(ref {{stj}}.Utf8JsonReader reader, Type typeToConvert, {{stj}}.JsonSerializerOptions options) {
-                    if (reader.TokenType != {{stj}}.JsonTokenType.StartObject) {
-                        throw new {{stj}}.JsonException($"Expected '{({{stj}}.JsonTokenType.StartObject)}' but got '{reader.TokenType}'");
-                    }
-                    reader.Read();
-                    var span = reader.ValueSpan;
-                    if (span.SequenceEqual(okPropertyBytes)) {
-                        var value = {{stj}}.JsonSerializer.Deserialize<{{context.Ok.Type}}>(ref reader, options)!;
-                        reader.Read();
-                        return value;
-                    }
-                    if (span.SequenceEqual(errorPropertyBytes)) {
-                        var value = {{stj}}.JsonSerializer.Deserialize<{{context.Error.Type}}>(ref reader, options)!;
-                        reader.Read();
-                        return value;
-                    }
-                    throw new {{stj}}.JsonException($"Expected 'ok' or 'error' but got '{reader.GetString()}'");
-                }
-                
-                static readonly byte[] okPropertyBytes = new byte[] { (byte)'o', (byte)'k' };
-                static readonly byte[] errorPropertyBytes = new byte[] { (byte)'e', (byte)'r', (byte)'r', (byte)'o', (byte)'r' };
-            }
-            """
-        );
-    }
-
-    void WriteMessagePackFormatter() {
-        var accessibility = context.Result.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string msgPack = "global::MessagePack";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}} sealed class {{context.Result.DeclarationName}}_MessagePackFormatter : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.Result.DeclarationName}}> {
-                public static readonly {{context.Result.DeclarationName}}_MessagePackFormatter Instance = new();
-                
-                public void Serialize(ref {{msgPack}}.MessagePackWriter writer, {{context.Result.DeclarationName}} value, {{msgPack}}.MessagePackSerializerOptions options) {
-                    var isOk = value.{{context.IsOk.Property}};
-                    writer.WriteMapHeader(1);
-                    if (isOk) {
-                        writer.Write(1);
-                        {{msgPack}}.MessagePackSerializer.Serialize(ref writer, value.{{context.Ok.Property}}, options);
-                    } else {
-                        writer.Write(2);
-                        {{msgPack}}.MessagePackSerializer.Serialize(ref writer, value.{{context.Error.Property}}, options);
-                    }
-                }
-                
-                public {{context.Result.DeclarationName}} Deserialize(ref {{msgPack}}.MessagePackReader reader, {{msgPack}}.MessagePackSerializerOptions options) {
-                    if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader)) {
-                        throw new {{msgPack}}.MessagePackSerializationException($"Expected '{({{msgPack}}.MessagePackType.Map)}' but got '{reader.NextMessagePackType}'");
-                    }
-                    
-                    if (mapHeader is not 1) {
-                        throw new {{msgPack}}.MessagePackSerializationException($"Expected map header 1 but got '{mapHeader}'");
-                    }
-                    
-                    var key = reader.ReadByte();
-                    {{context.Result.DeclarationName}} result = key switch {
-                        1 => {{msgPack}}.MessagePackSerializer.Deserialize<{{context.Ok.Type}}>(ref reader, options),
-                        2 => {{msgPack}}.MessagePackSerializer.Deserialize<{{context.Error.Type}}>(ref reader, options),
-                        _ => throw new {{msgPack}}.MessagePackSerializationException($"Expected key 1 or 2 but got '{key}'")
-                    };
-                    
-                    return result;
-                }
-            }
-            """
-        );
     }
 }

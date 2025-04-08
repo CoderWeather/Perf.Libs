@@ -204,7 +204,7 @@ sealed class MultiResultSourceBuilder(
             && context.MultiResult.TypeParameterCount is 0
         ) {
             sb.AppendInterpolatedLine(
-                $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.SystemTextJson.JsonConverter_{context.MultiResult.OnlyName}))]"
+                $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.JsonConverter_{context.MultiResult.OnlyName}))]"
             );
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
@@ -217,7 +217,7 @@ sealed class MultiResultSourceBuilder(
             && context.MultiResult.TypeParameterCount is 0
         ) {
             sb.AppendInterpolatedLine(
-                $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.MessagePack.MessagePackFormatter_{context.MultiResult.OnlyName}))]"
+                $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{context.MultiResult.OnlyName}))]"
             );
         }
 

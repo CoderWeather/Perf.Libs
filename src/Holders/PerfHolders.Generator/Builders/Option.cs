@@ -73,25 +73,6 @@ sealed class OptionSourceBuilder(
         WriteDebugPrint();
         WriteMapMethods();
         WriteEndOfType();
-
-        if (compInfo.SystemTextJsonAvailable
-            && context is {
-                Configuration.GenerateSystemTextJsonConverter: true,
-                Some.IsTypeParameter: false
-            }
-        ) {
-            WriteJsonConverter();
-        }
-
-        if (compInfo.MessagePackAvailable
-            && context is {
-                Configuration.GenerateMessagePackFormatter: true,
-                Some.IsTypeParameter: false
-            }
-        ) {
-            WriteMessagePackFormatter();
-        }
-
         WriteEndOfFile();
     }
 
@@ -186,7 +167,7 @@ sealed class OptionSourceBuilder(
             && context.Configuration.GenerateSystemTextJsonConverter is true
             && context.Some.IsTypeParameter is false
         ) {
-            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.Option.OnlyName}_JsonConverter))]");
+            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(JsonConverter_{context.Option.OnlyName}))]");
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.OptionHolderJsonConverterFactory))]"
@@ -197,7 +178,7 @@ sealed class OptionSourceBuilder(
             && context.Configuration.GenerateMessagePackFormatter is true
             && context.Some.IsTypeParameter is false
         ) {
-            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.Option.OnlyName}_MessagePackFormatter))]");
+            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof(MessagePackFormatter_{context.Option.OnlyName}))]");
         } else if (compInfo.GenericSerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.OptionHolderFormatterResolver))]"
@@ -615,64 +596,5 @@ sealed class OptionSourceBuilder(
         }
 
         sb.AppendLine();
-    }
-
-    void WriteJsonConverter() {
-        var accessibility = context.Option.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string stj = "global::System.Text.Json";
-        const string stjSer = "global::System.Text.Json.Serialization";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}}sealed class {{context.Option.DeclarationName}}_JsonConverter : {{stjSer}}.JsonConverter<{{context.Option.DeclarationName}}> {
-                public static readonly {{context.Option.DeclarationName}}_JsonConverter Instance = new();
-                
-                public override void Write({{stj}}.Utf8JsonWriter writer, {{context.Option.DeclarationName}} value, {{stj}}.JsonSerializerOptions options) {
-                    if(value.{{context.IsSome.Property}}) {
-                        {{stj}}.JsonSerializer.Serialize(writer, value.{{context.Some.Property}}, options);
-                    } else {
-                        writer.WriteNullValue();
-                    }
-                }
-                
-                public override {{context.Option.DeclarationName}} Read(ref {{stj}}.Utf8JsonReader reader, Type typeToConvert, {{stj}}.JsonSerializerOptions options) {
-                    if (reader.TokenType == {{stj}}.JsonTokenType.Null) {
-                        reader.Read();
-                        return default;
-                    }
-                    
-                    var value = {{stj}}.JsonSerializer.Deserialize<{{context.Some.Type}}>(ref reader, options)!;
-                    return value;
-                }
-            }
-            """
-        );
-    }
-
-    void WriteMessagePackFormatter() {
-        var accessibility = context.Option.Accessibility is TypeAccessibility.Public ? "public " : "";
-        const string msgPack = "global::MessagePack";
-        sb.AppendInterpolatedLine(
-            $$"""
-            {{accessibility}}sealed class {{context.Option.DeclarationName}}_MessagePackFormatter : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.Option.DeclarationName}}> {
-                public static readonly {{context.Option.DeclarationName}}_MessagePackFormatter Instance = new();
-                
-                public void Serialize(ref {{msgPack}}.MessagePackWriter writer, {{context.Option.DeclarationName}} value, {{msgPack}}.MessagePackSerializerOptions options) {
-                    if(value.{{context.IsSome.Property}}) {
-                        {{msgPack}}.MessagePackSerializer.Serialize(ref writer, value.{{context.Some.Property}}, options);
-                    } else {
-                        writer.WriteNil();
-                    }
-                }
-                
-                public {{context.Option.DeclarationName}} Deserialize(ref {{msgPack}}.MessagePackReader reader, {{msgPack}}.MessagePackSerializerOptions options) {
-                    if (reader.TryReadNil()) {
-                        return default;
-                    }
-                    var value = {{msgPack}}.MessagePackSerializer.Deserialize<{{context.Some.Type}}>(ref reader, options);
-                    return value;
-                }
-            }
-            """
-        );
     }
 }

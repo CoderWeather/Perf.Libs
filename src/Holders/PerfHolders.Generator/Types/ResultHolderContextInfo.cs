@@ -91,6 +91,42 @@ readonly record struct ResultHolderContextInfo(
     ) {
         public const string DefaultProperty = "IsOk";
     }
+
+    public bool ShouldGenerateJsonConverters() {
+        if (Configuration.GenerateSystemTextJsonConverter is not true) {
+            return false;
+        }
+
+        if (Result.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+            return false;
+        }
+
+        foreach (var ct in ContainingTypes) {
+            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public bool ShouldGenerateMessagePackFormatters() {
+        if (Configuration.GenerateMessagePackFormatter is not true) {
+            return false;
+        }
+
+        if (Result.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+            return false;
+        }
+
+        foreach (var ct in ContainingTypes) {
+            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 static class ResultConfigurationExt {

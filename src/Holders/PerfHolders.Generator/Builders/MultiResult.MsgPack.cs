@@ -42,9 +42,9 @@ sealed class MultiResultMessagePackSourceBuilder(
         }
 
         if (compInfo.SupportFileScopedNamespace()) {
-            sb.AppendLine($"namespace Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.MessagePack;");
+            sb.AppendLine("namespace Perf.Holders.Serialization.MessagePack;");
         } else {
-            sb.AppendLine($"namespace Internal.Perf.Holders.{context.MultiResult.OnlyName}.Serialization.MessagePack\n{{");
+            sb.AppendLine("namespace Perf.Holders.Serialization.MessagePack\n{");
             bracesToCloseOnEnd++;
         }
     }
@@ -59,14 +59,16 @@ sealed class MultiResultMessagePackSourceBuilder(
         sb.AppendInterpolatedLine(
             $$"""
             [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Never)]
-            {{accessibility}}sealed class MessagePackFormatter_{{context.MultiResult.OnlyName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.MultiResult.GlobalName}}> {
+            {{accessibility}}sealed class MessagePackFormatter_{{context.MultiResult.OnlyName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.MultiResult.GlobalName}}>
+            {
                 public static readonly MessagePackFormatter_{{context.MultiResult.OnlyName}} Instance = new();
             """
         );
         sb.Indent++;
         sb.AppendInterpolatedLine(
-            $"public void Serialize(ref {msgPack}.MessagePackWriter writer, {context.MultiResult.GlobalName} value, {msgPack}.MessagePackSerializerOptions options) {{"
+            $"public void Serialize(ref {msgPack}.MessagePackWriter writer, {context.MultiResult.GlobalName} value, {msgPack}.MessagePackSerializerOptions options)"
         );
+        sb.AppendLine("{");
         sb.Indent++;
         sb.AppendLine("writer.WriteMapHeader(1);");
 
@@ -100,8 +102,9 @@ sealed class MultiResultMessagePackSourceBuilder(
         sb.AppendLine("}");
 
         sb.AppendInterpolatedLine(
-            $"public {context.MultiResult.GlobalName} Deserialize(ref {msgPack}.MessagePackReader reader, {msgPack}.MessagePackSerializerOptions options) {{"
+            $"public {context.MultiResult.GlobalName} Deserialize(ref {msgPack}.MessagePackReader reader, {msgPack}.MessagePackSerializerOptions options)"
         );
+        sb.AppendLine("{");
         sb.Indent++;
         sb.AppendInterpolatedLine(
             $$"""
@@ -132,14 +135,9 @@ sealed class MultiResultMessagePackSourceBuilder(
         sb.AppendLine("}");
     }
 
-    void WriteEndOfType() {
-        sb.Indent--;
-        bracesToCloseOnEnd--;
-        sb.AppendLine("}");
-    }
-
     void WriteEndOfFile() {
         for (var i = 0; i < bracesToCloseOnEnd; i++) {
+            sb.Indent--;
             sb.Append('}');
         }
 

@@ -3,13 +3,11 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class OptionSystemTextJsonSourceBuilder(
-    OptionHolderContextInfo contextInfo,
-    CompInfo compInfo
-) {
+sealed class OptionSystemTextJsonSourceBuilder(OptionHolderContextInfo contextInfo) {
     const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
 
+    readonly CompInfo compInfo = contextInfo.CompInfo;
     int bracesToCloseOnEnd;
     OptionHolderContextInfo context = contextInfo;
 

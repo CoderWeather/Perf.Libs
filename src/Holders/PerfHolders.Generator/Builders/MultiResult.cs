@@ -4,10 +4,7 @@ using System.Text;
 using Internal;
 using Types;
 
-sealed class MultiResultSourceBuilder(
-    MultiResultHolderContextInfo context,
-    CompInfo compInfo
-) {
+sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
     /*
      * Fun things:
      *   no baseType - like cast to base object, at this moment I don't want to write a 2-8 multiresult copy-paste types
@@ -23,6 +20,7 @@ sealed class MultiResultSourceBuilder(
 
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
 
+    readonly CompInfo compInfo = context.CompInfo;
     // minimum at 1 because of generated type braces
     int bracesToCloseOnEnd = 1;
 
@@ -199,12 +197,9 @@ sealed class MultiResultSourceBuilder(
             """
         );
 
-        if (compInfo.SystemTextJsonAvailable
-            && context.Configuration.GenerateSystemTextJsonConverter is true
-            && context.MultiResult.TypeParameterCount is 0
-        ) {
+        if (context.ShouldGenerateJsonConverters()) {
             sb.AppendInterpolatedLine(
-                $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.JsonConverter_{context.MultiResult.OnlyName}))]"
+                $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.GeneratedJsonConverterTypeForAttribute}))]"
             );
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
@@ -212,12 +207,9 @@ sealed class MultiResultSourceBuilder(
             );
         }
 
-        if (compInfo.GenericSerializerMessagePackAvailable
-            && context.Configuration.GenerateMessagePackFormatter is true
-            && context.MultiResult.TypeParameterCount is 0
-        ) {
+        if (context.ShouldGenerateMessagePackFormatters()) {
             sb.AppendInterpolatedLine(
-                $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{context.MultiResult.OnlyName}))]"
+                $"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.GeneratedMessagePackFormatterTypeForAttribute()}))]"
             );
         }
 

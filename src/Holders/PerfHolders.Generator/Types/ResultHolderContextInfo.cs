@@ -13,7 +13,8 @@ readonly record struct ResultHolderContextInfo(
     ResultHolderContextInfo.ErrorInfo Error,
     ResultHolderContextInfo.IsOkInfo IsOk,
     EquatableList<HolderContainingType> ContainingTypes = default,
-    ResultHolderContextInfo.ResultConfiguration Configuration = default
+    ResultHolderContextInfo.ResultConfiguration Configuration = default,
+    CompInfo CompInfo = default
 ) {
     public readonly record struct ResultConfiguration(
         bool? ImplicitCastOkTypeToResult,
@@ -93,6 +94,10 @@ readonly record struct ResultHolderContextInfo(
     }
 
     public bool ShouldGenerateJsonConverters() {
+        if (CompInfo.SystemTextJsonAvailable is false) {
+            return false;
+        }
+
         if (Configuration.GenerateSystemTextJsonConverter is not true) {
             return false;
         }
@@ -110,7 +115,14 @@ readonly record struct ResultHolderContextInfo(
         return true;
     }
 
+    public string GeneratedJsonConverterTypeForAttribute { get; } =
+        $"global::Perf.Holders.Serialization.SystemTextJson.{(Ok.IsTypeParameter || Error.IsTypeParameter ? $"JsonConverterFactory_{Result.OnlyName}" : $"JsonConverter_{Result.OnlyName}")}";
+
     public bool ShouldGenerateMessagePackFormatters() {
+        if (CompInfo.MessagePackAvailable is false) {
+            return false;
+        }
+
         if (Configuration.GenerateMessagePackFormatter is not true) {
             return false;
         }
@@ -127,6 +139,18 @@ readonly record struct ResultHolderContextInfo(
 
         return true;
     }
+
+    public string GeneratedMessagePackFormatterTypeForAttribute() {
+        var openTypeArgs = (Ok.IsTypeParameter, Error.IsTypeParameter) switch {
+            (true, true)                   => "<,>",
+            (true, false) or (false, true) => "<>",
+            (false, false)                 => ""
+        };
+        return $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{Result.OnlyName}{openTypeArgs}";
+    }
+
+    public TypeAccessibility InheritedAccessibility { get; } =
+        (TypeAccessibility)Math.Max((int)Result.Accessibility, (int)ContainingTypes.Max(x => x.Accessibility));
 }
 
 static class ResultConfigurationExt {

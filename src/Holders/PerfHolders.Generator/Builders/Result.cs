@@ -3,10 +3,7 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class ResultSourceBuilder(
-    ResultHolderContextInfo contextInfo,
-    CompInfo compInfo
-) {
+sealed class ResultSourceBuilder(ResultHolderContextInfo contextInfo) {
     const string BaseResult = "global::Perf.Holders.Result";
     const string ResultMarker = "global::Perf.Holders.IResultHolder";
     const string Exceptions = "global::Perf.Holders.Exceptions.ResultHolderExceptions";
@@ -26,6 +23,7 @@ sealed class ResultSourceBuilder(
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(12000));
     ResultHolderContextInfo context = contextInfo;
 
+    readonly CompInfo compInfo = contextInfo.CompInfo;
     // minimum at 1 because of generated type braces
     int bracesToCloseOnEnd = 1;
 
@@ -189,24 +187,16 @@ sealed class ResultSourceBuilder(
             """
         );
 
-        if (compInfo.SystemTextJsonAvailable
-            && context.Configuration.GenerateSystemTextJsonConverter is true
-            && context.Ok.IsTypeParameter is false
-            && context.Error.IsTypeParameter is false
-        ) {
-            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(JsonConverter_{context.Result.OnlyName}))]");
+        if (context.ShouldGenerateJsonConverters()) {
+            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.GeneratedJsonConverterTypeForAttribute}))]");
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.ResultHolderJsonConverterFactory))]"
             );
         }
 
-        if (compInfo.MessagePackAvailable
-            && context.Configuration.GenerateMessagePackFormatter is true
-            && context.Ok.IsTypeParameter is false
-            && context.Error.IsTypeParameter is false
-        ) {
-            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof(MessagePackFormatter_{context.Result.OnlyName}))]");
+        if (context.ShouldGenerateMessagePackFormatters()) {
+            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.GeneratedMessagePackFormatterTypeForAttribute()}))]");
         } else if (compInfo.GenericSerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.ResultHolderFormatterResolver))]"

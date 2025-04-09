@@ -41,24 +41,25 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
                 }
 
                 resultInfo = resultInfo with {
-                    Configuration = resultConfiguration.MergeWithMajor(resultInfo.Configuration).ApplyDefaults()
+                    Configuration = resultConfiguration.MergeWithMajor(resultInfo.Configuration).ApplyDefaults(),
+                    CompInfo = compInfo
                 };
 
-                var sourceText = new ResultSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
+                var sourceText = new ResultSourceBuilder(resultInfo).WriteAllAndBuild();
 
                 var fileName = $"{resultInfo.MetadataName}.g.cs";
 
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
 
                 if (resultInfo.ShouldGenerateJsonConverters()) {
-                    var sourceStj = new ResultSystemTextJsonSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
-                    var fileNameStj = $"{resultInfo.MetadataName}.g.Stj.cs";
+                    var sourceStj = new ResultSystemTextJsonSourceBuilder(resultInfo).WriteAllAndBuild();
+                    var fileNameStj = $"{resultInfo.MetadataName}.Stj.g.cs";
                     context.AddSource(fileNameStj, SourceText.From(sourceStj, Encoding.UTF8));
                 }
 
                 if (resultInfo.ShouldGenerateMessagePackFormatters()) {
-                    var sourceMsgPack = new ResultMessagePackSourceBuilder(resultInfo, compInfo).WriteAllAndBuild();
-                    var fileNameMsgPack = $"{resultInfo.MetadataName}.g.MsgPack.cs";
+                    var sourceMsgPack = new ResultMessagePackSourceBuilder(resultInfo).WriteAllAndBuild();
+                    var fileNameMsgPack = $"{resultInfo.MetadataName}.MsgPack.g.cs";
                     context.AddSource(fileNameMsgPack, SourceText.From(sourceMsgPack, Encoding.UTF8));
                 }
             }

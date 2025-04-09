@@ -3,13 +3,11 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class OptionMessagePackSourceBuilder(
-    OptionHolderContextInfo context,
-    CompInfo compInfo
-) {
+sealed class OptionMessagePackSourceBuilder(OptionHolderContextInfo context) {
     const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new());
 
+    readonly CompInfo compInfo = context.CompInfo;
     int bracesToCloseOnEnd;
 
     void Preparation() {

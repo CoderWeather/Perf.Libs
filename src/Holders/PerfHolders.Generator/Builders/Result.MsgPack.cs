@@ -3,13 +3,11 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class ResultMessagePackSourceBuilder(
-    ResultHolderContextInfo context,
-    CompInfo compInfo
-) {
-    const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
+sealed class ResultMessagePackSourceBuilder(ResultHolderContextInfo contextInfo) {
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new());
 
+    ResultHolderContextInfo context = contextInfo;
+    readonly CompInfo compInfo = contextInfo.CompInfo;
     int bracesToCloseOnEnd;
 
     void Preparation() {
@@ -36,7 +34,6 @@ sealed class ResultMessagePackSourceBuilder(
         Preparation();
         DeclareTopLevelStatements();
         WriteMessagePackFormatter();
-        // WriteEndOfType();
         WriteEndOfFile();
         return sb.ToString();
     }
@@ -56,14 +53,22 @@ sealed class ResultMessagePackSourceBuilder(
     }
 
     void WriteMessagePackFormatter() {
-        var accessibility = context.Result.Accessibility is TypeAccessibility.Public ? "public " : "";
+        var accessibility = context.InheritedAccessibility is TypeAccessibility.Public ? "public " : "";
         const string msgPack = "global::MessagePack";
+        var typeParametersConstraints = (context.Ok.IsTypeParameter, context.Error.IsTypeParameter) switch {
+            (true, true)  => $"    where {context.Ok.Type} : notnull where {context.Error.Type} : notnull ",
+            (true, false) => $"    where {context.Ok.Type} : notnull ",
+            (false, true) => $"    where {context.Error.Type} : notnull ",
+            _             => ""
+        };
         sb.AppendInterpolatedLine(
             $$"""
-            {{accessibility}}sealed class MessagePackFormatter_{{context.Result.OnlyName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.Result.GlobalName}}> {
-                public static readonly MessagePackFormatter_{{context.Result.OnlyName}} Instance = new();
+            {{accessibility}}sealed class MessagePackFormatter_{{context.Result.DeclarationName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.Result.GlobalName}}>
+            {{typeParametersConstraints}}{
+                public static readonly MessagePackFormatter_{{context.Result.DeclarationName}} Instance = new();
                 
-                public void Serialize(ref {{msgPack}}.MessagePackWriter writer, {{context.Result.GlobalName}} value, {{msgPack}}.MessagePackSerializerOptions options) {
+                public void Serialize(ref {{msgPack}}.MessagePackWriter writer, {{context.Result.GlobalName}} value, {{msgPack}}.MessagePackSerializerOptions options)
+                {
                     var isOk = value.{{context.IsOk.Property}};
                     writer.WriteMapHeader(1);
                     if (isOk) {
@@ -75,8 +80,9 @@ sealed class ResultMessagePackSourceBuilder(
                     }
                 }
                 
-                public {{context.Result.GlobalName}} Deserialize(ref {{msgPack}}.MessagePackReader reader, {{msgPack}}.MessagePackSerializerOptions options) {
-                    if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader)) {
+                public {{context.Result.GlobalName}} Deserialize(ref {{msgPack}}.MessagePackReader reader, {{msgPack}}.MessagePackSerializerOptions options)
+                {
+                    if (reader.IsNil || reader.TryReadMapHeader(out var mapHeader) == false) {
                         throw new {{msgPack}}.MessagePackSerializationException($"Expected '{({{msgPack}}.MessagePackType.Map)}' but got '{reader.NextMessagePackType}'");
                     }
                     

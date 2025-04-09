@@ -3,13 +3,11 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class MultiResultMessagePackSourceBuilder(
-    MultiResultHolderContextInfo context,
-    CompInfo compInfo
-) {
+sealed class MultiResultMessagePackSourceBuilder(MultiResultHolderContextInfo context) {
     const string Exceptions = "global::Perf.Holders.Exceptions.MultiResultHolderExceptions";
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
 
+    readonly CompInfo compInfo = context.CompInfo;
     int bracesToCloseOnEnd;
 
     void Preparation() {

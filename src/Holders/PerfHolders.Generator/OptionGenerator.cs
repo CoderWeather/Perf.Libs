@@ -41,24 +41,25 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
                 }
 
                 optionInfo = optionInfo with {
-                    Configuration = optionConfiguration.MergeWithMajor(optionInfo.Configuration).ApplyDefaults()
+                    Configuration = optionConfiguration.MergeWithMajor(optionInfo.Configuration).ApplyDefaults(),
+                    CompInfo = compInfo
                 };
 
-                var sourceText = new OptionSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();
+                var sourceText = new OptionSourceBuilder(optionInfo).WriteAllAndBuild();
 
                 var fileName = $"{optionInfo.MetadataName}.g.cs";
 
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
 
                 if (optionInfo.ShouldGenerateJsonConverters()) {
-                    var sourceStj = new OptionSystemTextJsonSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();
-                    var fileNameStj = $"{optionInfo.MetadataName}.g.Stj.cs";
+                    var sourceStj = new OptionSystemTextJsonSourceBuilder(optionInfo).WriteAllAndBuild();
+                    var fileNameStj = $"{optionInfo.MetadataName}.Stj.g.cs";
                     context.AddSource(fileNameStj, SourceText.From(sourceStj, Encoding.UTF8));
                 }
 
                 if (optionInfo.ShouldGenerateMessagePackFormatters()) {
-                    var sourceMsgPack = new OptionMessagePackSourceBuilder(optionInfo, compInfo).WriteAllAndBuild();
-                    var fileNameMsgPack = $"{optionInfo.MetadataName}.g.MsgPack.cs";
+                    var sourceMsgPack = new OptionMessagePackSourceBuilder(optionInfo).WriteAllAndBuild();
+                    var fileNameMsgPack = $"{optionInfo.MetadataName}.MsgPack.g.cs";
                     context.AddSource(fileNameMsgPack, SourceText.From(sourceMsgPack, Encoding.UTF8));
                 }
             }

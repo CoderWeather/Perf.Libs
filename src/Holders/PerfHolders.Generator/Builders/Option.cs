@@ -3,10 +3,7 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class OptionSourceBuilder(
-    OptionHolderContextInfo contextInfo,
-    CompInfo compInfo
-) {
+sealed class OptionSourceBuilder(OptionHolderContextInfo contextInfo) {
     const string BaseOption = "global::Perf.Holders.Option";
     const string OptionMarker = "global::Perf.Holders.IOptionHolder";
     const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
@@ -24,6 +21,8 @@ sealed class OptionSourceBuilder(
 
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
     OptionHolderContextInfo context = contextInfo;
+
+    readonly CompInfo compInfo = contextInfo.CompInfo;
 
     // minimum at 1 because of generated type braces
     int bracesToCloseOnEnd = 1;
@@ -163,22 +162,20 @@ sealed class OptionSourceBuilder(
             """
         );
 
-        if (compInfo.SystemTextJsonAvailable
-            && context.Configuration.GenerateSystemTextJsonConverter is true
-            && context.Some.IsTypeParameter is false
-        ) {
-            sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(JsonConverter_{context.Option.OnlyName}))]");
+        if (context.ShouldGenerateJsonConverters()) {
+            sb.AppendInterpolatedLine(
+                $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.GeneratedJsonConverterTypeForAttribute}))]"
+            );
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof(global::Perf.Holders.Serialization.SystemTextJson.OptionHolderJsonConverterFactory))]"
             );
         }
 
-        if (compInfo.MessagePackAvailable
-            && context.Configuration.GenerateMessagePackFormatter is true
-            && context.Some.IsTypeParameter is false
-        ) {
-            sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof(MessagePackFormatter_{context.Option.OnlyName}))]");
+        if (context.ShouldGenerateMessagePackFormatters()) {
+            sb.AppendInterpolatedLine(
+                $"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.GeneratedMessagePackFormatterTypeForAttribute()}))]"
+            );
         } else if (compInfo.GenericSerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof(global::Perf.Holders.Serialization.MessagePack.OptionHolderFormatterResolver))]"

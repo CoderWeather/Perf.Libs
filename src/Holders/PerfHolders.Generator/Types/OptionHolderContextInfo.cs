@@ -12,7 +12,8 @@ readonly record struct OptionHolderContextInfo(
     OptionHolderContextInfo.SomeInfo Some,
     OptionHolderContextInfo.IsSomeInfo IsSome,
     EquatableList<HolderContainingType> ContainingTypes = default,
-    OptionHolderContextInfo.OptionConfiguration Configuration = default
+    OptionHolderContextInfo.OptionConfiguration Configuration = default,
+    CompInfo CompInfo = default
 ) {
     public readonly record struct OptionConfiguration(
         bool? ImplicitCastSomeTypeToOption,
@@ -91,6 +92,9 @@ readonly record struct OptionHolderContextInfo(
         return true;
     }
 
+    public string GeneratedJsonConverterTypeForAttribute { get; } =
+        $"global::Perf.Holders.Serialization.SystemTextJson.{(Some.IsTypeParameter ? "JsonConverterFactory" : "JsonConverter")}_{Option.OnlyName}";
+
     public bool ShouldGenerateMessagePackFormatters() {
         if (Configuration.GenerateMessagePackFormatter is not true) {
             return false;
@@ -108,6 +112,15 @@ readonly record struct OptionHolderContextInfo(
 
         return true;
     }
+
+    public string GeneratedMessagePackFormatterTypeForAttribute() {
+        return Some.IsTypeParameter
+            ? $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{Option.OnlyName}<>"
+            : $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{Option.OnlyName}";
+    }
+
+    public TypeAccessibility InheritedAccessibility { get; } =
+        (TypeAccessibility)Math.Max((int)Option.Accessibility, (int)ContainingTypes.Max(x => x.Accessibility));
 }
 
 static class OptionConfigurationExt {

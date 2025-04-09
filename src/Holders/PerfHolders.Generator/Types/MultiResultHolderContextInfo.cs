@@ -4,7 +4,9 @@
 
 namespace Perf.Holders.Generator.Types;
 
+using System.Buffers;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Internal;
 using Microsoft.CodeAnalysis;
@@ -16,7 +18,8 @@ readonly record struct MultiResultHolderContextInfo(
     MultiResultHolderContextInfo.MultiResultInfo MultiResult,
     EquatableList<MultiResultHolderContextInfo.MultiResultElementInfo> Elements,
     EquatableList<HolderContainingType> ContainingTypes = default,
-    MultiResultHolderContextInfo.MultiResultConfiguration Configuration = default
+    MultiResultHolderContextInfo.MultiResultConfiguration Configuration = default,
+    CompInfo CompInfo = default
 ) {
     public readonly record struct MultiResultConfiguration(
         bool? AddIsProperties,
@@ -141,6 +144,10 @@ readonly record struct MultiResultHolderContextInfo(
     }
 
     public bool ShouldGenerateJsonConverters() {
+        if (CompInfo.SystemTextJsonAvailable is false) {
+            return false;
+        }
+
         if (Configuration.GenerateSystemTextJsonConverter is not true) {
             return false;
         }
@@ -158,7 +165,14 @@ readonly record struct MultiResultHolderContextInfo(
         return true;
     }
 
+    public string GeneratedJsonConverterTypeForAttribute { get; } =
+        $"global::Perf.Holders.Serialization.SystemTextJson.{(MultiResult.TypeParameterCount is 0 ? $"JsonConverter_{MultiResult.OnlyName}" : $"JsonConverterFactory_{MultiResult.OnlyName}")}";
+
     public bool ShouldGenerateMessagePackFormatters() {
+        if (CompInfo.MessagePackAvailable is false) {
+            return false;
+        }
+
         if (Configuration.GenerateMessagePackFormatter is not true) {
             return false;
         }
@@ -175,6 +189,25 @@ readonly record struct MultiResultHolderContextInfo(
 
         return true;
     }
+
+    public string GeneratedMessagePackFormatterTypeForAttribute() {
+        if (MultiResult.TypeParameterCount is 0) {
+            return $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{MultiResult.OnlyName}";
+        }
+
+        var count = Elements.Count(x => x.IsTypeParameter);
+        var buffer = ArrayPool<char>.Shared.Rent(count * 2 - 1);
+        var span = buffer.AsSpan(0, count - 1);
+        span.Fill(',');
+
+        var type = $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{MultiResult.OnlyName}<{span}>";
+
+        ArrayPool<char>.Shared.Return(buffer);
+        return type;
+    }
+
+    public TypeAccessibility InheritedAccessibility { get; } =
+        (TypeAccessibility)Math.Max((int)MultiResult.Accessibility, (int)ContainingTypes.Max(x => x.Accessibility));
 }
 
 static class MultiResultConfigurationExt {

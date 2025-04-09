@@ -3,13 +3,10 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class ResultSystemTextJsonSourceBuilder(
-    ResultHolderContextInfo contextInfo,
-    CompInfo compInfo
-) {
-    const string Exceptions = "global::Perf.Holders.Exceptions.ResultHolderExceptions";
+sealed class ResultSystemTextJsonSourceBuilder(ResultHolderContextInfo contextInfo) {
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
 
+    readonly CompInfo compInfo = contextInfo.CompInfo;
     int bracesToCloseOnEnd;
     ResultHolderContextInfo context = contextInfo;
 
@@ -37,7 +34,6 @@ sealed class ResultSystemTextJsonSourceBuilder(
         Preparation();
         DeclareTopLevelStatements();
         WriteJsonConverter();
-        // WriteEndOfType();
         WriteEndOfFile();
         return sb.ToString();
     }
@@ -60,11 +56,17 @@ sealed class ResultSystemTextJsonSourceBuilder(
         var accessibility = context.Result.Accessibility is TypeAccessibility.Public ? "public " : "";
         const string stj = "global::System.Text.Json";
         const string stjSer = "global::System.Text.Json.Serialization";
+        var typeParametersConstraints = (context.Ok.IsTypeParameter, context.Error.IsTypeParameter) switch {
+            (true, true)  => $"    where {context.Ok.Type} : notnull where {context.Error.Type} : notnull ",
+            (true, false) => $"    where {context.Ok.Type} : notnull ",
+            (false, true) => $"    where {context.Error.Type} : notnull ",
+            _             => ""
+        };
         sb.AppendInterpolatedLine(
             $$"""
-            {{accessibility}}sealed class JsonConverter_{{context.Result.OnlyName}} : {{stjSer}}.JsonConverter<{{context.Result.GlobalName}}>
-            {
-                public static readonly JsonConverter_{{context.Result.OnlyName}} Instance = new();
+            {{accessibility}}sealed class JsonConverter_{{context.Result.DeclarationName}} : {{stjSer}}.JsonConverter<{{context.Result.GlobalName}}>
+            {{typeParametersConstraints}}{
+                public static readonly JsonConverter_{{context.Result.DeclarationName}} Instance = new();
                 
                 public override void Write({{stj}}.Utf8JsonWriter writer, {{context.Result.GlobalName}} value, {{stj}}.JsonSerializerOptions options)
                 {

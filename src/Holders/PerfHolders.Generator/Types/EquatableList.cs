@@ -58,4 +58,40 @@ readonly struct EquatableList<T>(List<T> list) :
 
         return false;
     }
+
+    public TComp Max<TComp>(Func<T, TComp> selector) {
+        var span = Span;
+        if (span.Length is 0) {
+            return default!;
+        }
+
+        if (span.Length is 1) {
+            return selector(span[0]);
+        }
+
+        var comparer = Comparer<TComp>.Default;
+        var max = selector(span[0]);
+        for (var i = 1; i < span.Length; i++) {
+            var item = selector(span[i]);
+            if (comparer.Compare(item, max) > 0) {
+                max = item;
+            }
+        }
+
+        return max;
+    }
+}
+
+static class EquatableListExtensions {
+    public static int Count<T>(this EquatableList<T> list, Func<T, bool> predicate)
+        where T : IEquatable<T> {
+        var count = 0;
+        foreach (ref readonly var item in list.Span) {
+            if (predicate(item)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
 }

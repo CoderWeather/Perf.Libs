@@ -3,11 +3,11 @@ namespace Perf.Holders.Generator.Builders;
 using Internal;
 using Types;
 
-sealed class OptionMessagePackSourceBuilder(OptionHolderContextInfo context) {
-    const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
+sealed class OptionMessagePackSourceBuilder(OptionHolderContextInfo contextInfo) {
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new());
 
-    readonly CompInfo compInfo = context.CompInfo;
+    OptionHolderContextInfo context = contextInfo;
+    readonly CompInfo compInfo = contextInfo.CompInfo;
     int bracesToCloseOnEnd;
 
     void Preparation() {
@@ -24,7 +24,6 @@ sealed class OptionMessagePackSourceBuilder(OptionHolderContextInfo context) {
         Preparation();
         DeclareTopLevelStatements();
         WriteMessagePackFormatter();
-        // WriteEndOfType();
         WriteEndOfFile();
         return sb.ToString();
     }
@@ -44,12 +43,14 @@ sealed class OptionMessagePackSourceBuilder(OptionHolderContextInfo context) {
     }
 
     void WriteMessagePackFormatter() {
-        var accessibility = context.Option.Accessibility is TypeAccessibility.Public ? "public " : "";
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
         const string msgPack = "global::MessagePack";
+        var typeParameterConstraint = context.Some.IsTypeParameter ? $"    where {context.Some.Type} : notnull " : "";
         sb.AppendInterpolatedLine(
             $$"""
-            {{accessibility}}sealed class MessagePackFormatter_{{context.Option.OnlyName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.Option.GlobalName}}> {
-                public static readonly MessagePackFormatter_{{context.Option.OnlyName}} Instance = new();
+            {{accessibility}}sealed class MessagePackFormatter_{{context.Option.DeclarationName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.Option.GlobalName}}>
+            {{typeParameterConstraint}}{
+                public static readonly MessagePackFormatter_{{context.Option.DeclarationName}} Instance = new();
                 
                 public void Serialize(ref {{msgPack}}.MessagePackWriter writer, {{context.Option.GlobalName}} value, {{msgPack}}.MessagePackSerializerOptions options) {
                     if(value.{{context.IsSome.Property}}) {

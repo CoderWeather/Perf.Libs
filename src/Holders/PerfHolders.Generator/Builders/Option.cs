@@ -162,7 +162,7 @@ sealed class OptionSourceBuilder(OptionHolderContextInfo contextInfo) {
             """
         );
 
-        if (context.ShouldGenerateJsonConverters()) {
+        if (context.ShouldGenerateJsonConverter()) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.GeneratedJsonConverterTypeForAttribute}))]"
             );
@@ -172,7 +172,7 @@ sealed class OptionSourceBuilder(OptionHolderContextInfo contextInfo) {
             );
         }
 
-        if (context.ShouldGenerateMessagePackFormatters()) {
+        if (context.ShouldGenerateMessagePackFormatter()) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.GeneratedMessagePackFormatterTypeForAttribute()}))]"
             );

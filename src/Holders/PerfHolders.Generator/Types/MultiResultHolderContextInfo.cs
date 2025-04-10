@@ -6,7 +6,6 @@ namespace Perf.Holders.Generator.Types;
 
 using System.Buffers;
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Internal;
 using Microsoft.CodeAnalysis;
@@ -143,7 +142,7 @@ readonly record struct MultiResultHolderContextInfo(
         return sb.ToString();
     }
 
-    public bool ShouldGenerateJsonConverters() {
+    public bool ShouldGenerateJsonConverter() {
         if (CompInfo.SystemTextJsonAvailable is false) {
             return false;
         }
@@ -152,23 +151,13 @@ readonly record struct MultiResultHolderContextInfo(
             return false;
         }
 
-        if (MultiResult.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-            return false;
-        }
-
-        foreach (var ct in ContainingTypes) {
-            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-                return false;
-            }
-        }
-
-        return true;
+        return GlobalAccessibility is TypeAccessibility.Public or TypeAccessibility.Internal;
     }
 
     public string GeneratedJsonConverterTypeForAttribute { get; } =
         $"global::Perf.Holders.Serialization.SystemTextJson.{(MultiResult.TypeParameterCount is 0 ? $"JsonConverter_{MultiResult.OnlyName}" : $"JsonConverterFactory_{MultiResult.OnlyName}")}";
 
-    public bool ShouldGenerateMessagePackFormatters() {
+    public bool ShouldGenerateMessagePackFormatter() {
         if (CompInfo.MessagePackAvailable is false) {
             return false;
         }
@@ -177,17 +166,7 @@ readonly record struct MultiResultHolderContextInfo(
             return false;
         }
 
-        if (MultiResult.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-            return false;
-        }
-
-        foreach (var ct in ContainingTypes) {
-            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-                return false;
-            }
-        }
-
-        return true;
+        return GlobalAccessibility is TypeAccessibility.Public or TypeAccessibility.Internal;
     }
 
     public string GeneratedMessagePackFormatterTypeForAttribute() {
@@ -206,7 +185,7 @@ readonly record struct MultiResultHolderContextInfo(
         return type;
     }
 
-    public TypeAccessibility InheritedAccessibility { get; } =
+    public TypeAccessibility GlobalAccessibility { get; } =
         (TypeAccessibility)Math.Max((int)MultiResult.Accessibility, (int)ContainingTypes.Max(x => x.Accessibility));
 }
 

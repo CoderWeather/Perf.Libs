@@ -1,5 +1,6 @@
 namespace Perf.Holders.Generator.Builders;
 
+using System.Buffers;
 using Internal;
 using Types;
 
@@ -33,6 +34,10 @@ sealed class ResultSystemTextJsonSourceBuilder(ResultHolderContextInfo contextIn
     public string WriteAllAndBuild() {
         Preparation();
         DeclareTopLevelStatements();
+        if (context.Ok.IsTypeParameter || context.Error.IsTypeParameter) {
+            WriteJsonConverterFactory();
+        }
+
         WriteJsonConverter();
         WriteEndOfFile();
         return sb.ToString();
@@ -52,8 +57,55 @@ sealed class ResultSystemTextJsonSourceBuilder(ResultHolderContextInfo contextIn
         }
     }
 
+    void WriteJsonConverterFactory() {
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
+        const string stj = "global::System.Text.Json";
+        const string stjSer = "global::System.Text.Json.Serialization";
+        var openTypeParameters = (context.Ok.IsTypeParameter, context.Error.IsTypeParameter) switch {
+            (true, true)                   => "<,>",
+            (true, false) or (false, true) => "<>",
+            _                              => ""
+        };
+
+        var globalNameString = context.Result.GlobalName;
+        var globalNameBuffer = ArrayPool<char>.Shared.Rent(globalNameString.Length);
+        var globalName = globalNameBuffer.AsSpan(0, globalNameString.Length);
+        globalNameString.AsSpan().CopyTo(globalName);
+        var indexStart = globalName.LastIndexOf('<');
+        openTypeParameters.AsSpan().CopyTo(globalName[indexStart..]);
+        globalName = globalName[..(indexStart + openTypeParameters.Length)];
+
+
+        sb.AppendInterpolatedLine(
+            $$"""
+            {{accessibility}}sealed class JsonConverterFactory_{{context.Result.OnlyName}} : {{stjSer}}.JsonConverterFactory
+            {
+                public static readonly JsonConverterFactory_{{context.Result.OnlyName}} Instance = new();
+
+                public override bool CanConvert(Type typeToConvert) =>
+                    cache.ContainsKey(typeToConvert) || (typeToConvert.IsConstructedGenericType && typeToConvert.GetGenericTypeDefinition() == typeof({{globalName}}));
+
+                private readonly global::System.Collections.Concurrent.ConcurrentDictionary<Type, {{stjSer}}.JsonConverter> cache = new();
+
+                public override {{stjSer}}.JsonConverter CreateConverter(Type typeToConvert, {{stj}}.JsonSerializerOptions options) =>
+                    cache.GetOrAdd(
+                        typeToConvert,
+                        static t => {
+                            var genericArguments = t.GetGenericArguments();
+                            var t1 = genericArguments[0];
+                            var t2 = genericArguments[1];
+                            return ({{stjSer}}.JsonConverter)global::System.Activator.CreateInstance(typeof(JsonConverter_{{context.Result.OnlyName}}{{openTypeParameters}}).MakeGenericType(genericArguments))!;
+                        }
+                    ); 
+            }
+            """
+        );
+
+        ArrayPool<char>.Shared.Return(globalNameBuffer);
+    }
+
     void WriteJsonConverter() {
-        var accessibility = context.Result.Accessibility is TypeAccessibility.Public ? "public " : "";
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
         const string stj = "global::System.Text.Json";
         const string stjSer = "global::System.Text.Json.Serialization";
         var typeParametersConstraints = (context.Ok.IsTypeParameter, context.Error.IsTypeParameter) switch {

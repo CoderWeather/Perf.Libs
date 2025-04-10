@@ -52,13 +52,13 @@ sealed class MultiResultGenerator : IIncrementalGenerator {
 
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
 
-                if (mrInfo.ShouldGenerateJsonConverters()) {
+                if (mrInfo.ShouldGenerateJsonConverter()) {
                     var sourceStj = new MultiResultSystemTextJsonSourceBuilder(mrInfo).WriteAllAndBuild();
                     var fileNameStj = $"{mrInfo.MetadataName}.Stj.g.cs";
                     context.AddSource(fileNameStj, SourceText.From(sourceStj, Encoding.UTF8));
                 }
 
-                if (mrInfo.ShouldGenerateMessagePackFormatters()) {
+                if (mrInfo.ShouldGenerateMessagePackFormatter()) {
                     var sourceMsgPack = new MultiResultMessagePackSourceBuilder(mrInfo).WriteAllAndBuild();
                     var fileNameMsgPack = $"{mrInfo.MetadataName}.MsgPack.g.cs";
                     context.AddSource(fileNameMsgPack, SourceText.From(sourceMsgPack, Encoding.UTF8));

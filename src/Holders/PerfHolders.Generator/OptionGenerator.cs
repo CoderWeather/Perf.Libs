@@ -51,13 +51,13 @@ sealed class OptionHolderGenerator : IIncrementalGenerator {
 
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
 
-                if (optionInfo.ShouldGenerateJsonConverters()) {
+                if (optionInfo.ShouldGenerateJsonConverter()) {
                     var sourceStj = new OptionSystemTextJsonSourceBuilder(optionInfo).WriteAllAndBuild();
                     var fileNameStj = $"{optionInfo.MetadataName}.Stj.g.cs";
                     context.AddSource(fileNameStj, SourceText.From(sourceStj, Encoding.UTF8));
                 }
 
-                if (optionInfo.ShouldGenerateMessagePackFormatters()) {
+                if (optionInfo.ShouldGenerateMessagePackFormatter()) {
                     var sourceMsgPack = new OptionMessagePackSourceBuilder(optionInfo).WriteAllAndBuild();
                     var fileNameMsgPack = $"{optionInfo.MetadataName}.MsgPack.g.cs";
                     context.AddSource(fileNameMsgPack, SourceText.From(sourceMsgPack, Encoding.UTF8));

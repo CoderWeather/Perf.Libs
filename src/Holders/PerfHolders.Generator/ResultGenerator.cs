@@ -51,13 +51,13 @@ sealed class ResultHolderGenerator : IIncrementalGenerator {
 
                 context.AddSource(fileName, SourceText.From(sourceText, Encoding.UTF8));
 
-                if (resultInfo.ShouldGenerateJsonConverters()) {
+                if (resultInfo.ShouldGenerateJsonConverter()) {
                     var sourceStj = new ResultSystemTextJsonSourceBuilder(resultInfo).WriteAllAndBuild();
                     var fileNameStj = $"{resultInfo.MetadataName}.Stj.g.cs";
                     context.AddSource(fileNameStj, SourceText.From(sourceStj, Encoding.UTF8));
                 }
 
-                if (resultInfo.ShouldGenerateMessagePackFormatters()) {
+                if (resultInfo.ShouldGenerateMessagePackFormatter()) {
                     var sourceMsgPack = new ResultMessagePackSourceBuilder(resultInfo).WriteAllAndBuild();
                     var fileNameMsgPack = $"{resultInfo.MetadataName}.MsgPack.g.cs";
                     context.AddSource(fileNameMsgPack, SourceText.From(sourceMsgPack, Encoding.UTF8));

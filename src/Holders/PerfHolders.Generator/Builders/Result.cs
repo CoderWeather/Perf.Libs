@@ -187,7 +187,7 @@ sealed class ResultSourceBuilder(ResultHolderContextInfo contextInfo) {
             """
         );
 
-        if (context.ShouldGenerateJsonConverters()) {
+        if (context.ShouldGenerateJsonConverter()) {
             sb.AppendInterpolatedLine($"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.GeneratedJsonConverterTypeForAttribute}))]");
         } else if (compInfo.GenericSerializerSystemTextJsonAvailable) {
             sb.AppendInterpolatedLine(
@@ -195,7 +195,7 @@ sealed class ResultSourceBuilder(ResultHolderContextInfo contextInfo) {
             );
         }
 
-        if (context.ShouldGenerateMessagePackFormatters()) {
+        if (context.ShouldGenerateMessagePackFormatter()) {
             sb.AppendInterpolatedLine($"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.GeneratedMessagePackFormatterTypeForAttribute()}))]");
         } else if (compInfo.GenericSerializerMessagePackAvailable) {
             sb.AppendInterpolatedLine(

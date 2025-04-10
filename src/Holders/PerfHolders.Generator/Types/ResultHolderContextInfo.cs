@@ -93,7 +93,7 @@ readonly record struct ResultHolderContextInfo(
         public const string DefaultProperty = "IsOk";
     }
 
-    public bool ShouldGenerateJsonConverters() {
+    public bool ShouldGenerateJsonConverter() {
         if (CompInfo.SystemTextJsonAvailable is false) {
             return false;
         }
@@ -102,23 +102,13 @@ readonly record struct ResultHolderContextInfo(
             return false;
         }
 
-        if (Result.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-            return false;
-        }
-
-        foreach (var ct in ContainingTypes) {
-            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-                return false;
-            }
-        }
-
-        return true;
+        return GlobalAccessibility is TypeAccessibility.Public or TypeAccessibility.Internal;
     }
 
     public string GeneratedJsonConverterTypeForAttribute { get; } =
         $"global::Perf.Holders.Serialization.SystemTextJson.{(Ok.IsTypeParameter || Error.IsTypeParameter ? $"JsonConverterFactory_{Result.OnlyName}" : $"JsonConverter_{Result.OnlyName}")}";
 
-    public bool ShouldGenerateMessagePackFormatters() {
+    public bool ShouldGenerateMessagePackFormatter() {
         if (CompInfo.MessagePackAvailable is false) {
             return false;
         }
@@ -127,17 +117,7 @@ readonly record struct ResultHolderContextInfo(
             return false;
         }
 
-        if (Result.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-            return false;
-        }
-
-        foreach (var ct in ContainingTypes) {
-            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-                return false;
-            }
-        }
-
-        return true;
+        return GlobalAccessibility is TypeAccessibility.Public or TypeAccessibility.Internal;
     }
 
     public string GeneratedMessagePackFormatterTypeForAttribute() {
@@ -149,7 +129,7 @@ readonly record struct ResultHolderContextInfo(
         return $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{Result.OnlyName}{openTypeArgs}";
     }
 
-    public TypeAccessibility InheritedAccessibility { get; } =
+    public TypeAccessibility GlobalAccessibility { get; } =
         (TypeAccessibility)Math.Max((int)Result.Accessibility, (int)ContainingTypes.Max(x => x.Accessibility));
 }
 

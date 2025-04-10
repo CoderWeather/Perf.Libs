@@ -53,7 +53,7 @@ sealed class ResultMessagePackSourceBuilder(ResultHolderContextInfo contextInfo)
     }
 
     void WriteMessagePackFormatter() {
-        var accessibility = context.InheritedAccessibility is TypeAccessibility.Public ? "public " : "";
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
         const string msgPack = "global::MessagePack";
         var typeParametersConstraints = (context.Ok.IsTypeParameter, context.Error.IsTypeParameter) switch {
             (true, true)  => $"    where {context.Ok.Type} : notnull where {context.Error.Type} : notnull ",

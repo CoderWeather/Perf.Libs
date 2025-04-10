@@ -1,10 +1,10 @@
 namespace Perf.Holders.Generator.Builders;
 
+using System.Buffers;
 using Internal;
 using Types;
 
 sealed class OptionSystemTextJsonSourceBuilder(OptionHolderContextInfo contextInfo) {
-    const string Exceptions = "global::Perf.Holders.Exceptions.OptionHolderExceptions";
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
 
     readonly CompInfo compInfo = contextInfo.CompInfo;
@@ -24,8 +24,11 @@ sealed class OptionSystemTextJsonSourceBuilder(OptionHolderContextInfo contextIn
     public string WriteAllAndBuild() {
         Preparation();
         DeclareTopLevelStatements();
+        if (context.Some.IsTypeParameter) {
+            WriteJsonConverterFactory();
+        }
+
         WriteJsonConverter();
-        // WriteEndOfType();
         WriteEndOfFile();
         return sb.ToString();
     }
@@ -44,16 +47,56 @@ sealed class OptionSystemTextJsonSourceBuilder(OptionHolderContextInfo contextIn
         }
     }
 
-    void WriteJsonConverter() {
-        var accessibility = context.Option.Accessibility is TypeAccessibility.Public ? "public " : "";
+    void WriteJsonConverterFactory() {
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
         const string stj = "global::System.Text.Json";
         const string stjSer = "global::System.Text.Json.Serialization";
+
+        var globalNameString = context.Option.GlobalName;
+        var globalNameBuffer = ArrayPool<char>.Shared.Rent(globalNameString.Length);
+        var globalName = globalNameBuffer.AsSpan(0, globalNameString.Length);
+        globalNameString.AsSpan().CopyTo(globalName);
+        var indexStart = globalName.LastIndexOf('<');
+        globalName[indexStart + 1] = '>';
+        globalName = globalName[..(indexStart + 2)];
+
         sb.AppendInterpolatedLine(
             $$"""
-            {{accessibility}}sealed class JsonConverter_{{context.Option.OnlyName}} : {{stjSer}}.JsonConverter<{{context.Option.GlobalName}}> {
-                public static readonly JsonConverter_{{context.Option.OnlyName}} Instance = new();
+            {{accessibility}}sealed class JsonConverterFactory_{{context.Option.OnlyName}} : {{stjSer}}.JsonConverterFactory
+            {
+                public static readonly JsonConverterFactory_{{context.Option.OnlyName}} Instance = new();
+
+                public override bool CanConvert(Type typeToConvert) =>
+                    cache.ContainsKey(typeToConvert) || (typeToConvert.IsConstructedGenericType && typeToConvert.GetGenericTypeDefinition() == typeof({{globalName}}));
+
+                private readonly global::System.Collections.Concurrent.ConcurrentDictionary<Type, {{stjSer}}.JsonConverter> cache = new();
+
+                public override {{stjSer}}.JsonConverter CreateConverter(Type typeToConvert, {{stj}}.JsonSerializerOptions options) =>
+                    cache.GetOrAdd(
+                        typeToConvert,
+                        static t => {
+                            var t1 = t.GetGenericArguments()[0];
+                            return ({{stjSer}}.JsonConverter)global::System.Activator.CreateInstance(typeof(JsonConverter_{{context.Option.OnlyName}}<>).MakeGenericType(t1))!;
+                        }
+                    );
+            }
+            """
+            );
+    }
+
+    void WriteJsonConverter() {
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
+        const string stj = "global::System.Text.Json";
+        const string stjSer = "global::System.Text.Json.Serialization";
+        var typeParameterConstraint = context.Some.IsTypeParameter ? $"    where {context.Some.Type} : notnull " : "";
+        sb.AppendInterpolatedLine(
+            $$"""
+            {{accessibility}}sealed class JsonConverter_{{context.Option.DeclarationName}} : {{stjSer}}.JsonConverter<{{context.Option.GlobalName}}>
+            {{typeParameterConstraint}}{
+                public static readonly JsonConverter_{{context.Option.DeclarationName}} Instance = new();
                 
-                public override void Write({{stj}}.Utf8JsonWriter writer, {{context.Option.GlobalName}} value, {{stj}}.JsonSerializerOptions options) {
+                public override void Write({{stj}}.Utf8JsonWriter writer, {{context.Option.GlobalName}} value, {{stj}}.JsonSerializerOptions options)
+                {
                     if(value.{{context.IsSome.Property}}) {
                         {{stj}}.JsonSerializer.Serialize(writer, value.{{context.Some.Property}}, options);
                     } else {
@@ -61,7 +104,8 @@ sealed class OptionSystemTextJsonSourceBuilder(OptionHolderContextInfo contextIn
                     }
                 }
                 
-                public override {{context.Option.GlobalName}} Read(ref {{stj}}.Utf8JsonReader reader, Type typeToConvert, {{stj}}.JsonSerializerOptions options) {
+                public override {{context.Option.GlobalName}} Read(ref {{stj}}.Utf8JsonReader reader, Type typeToConvert, {{stj}}.JsonSerializerOptions options)
+                {
                     if (reader.TokenType == {{stj}}.JsonTokenType.Null) {
                         reader.Read();
                         return default;

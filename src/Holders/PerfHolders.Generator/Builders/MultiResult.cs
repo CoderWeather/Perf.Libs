@@ -21,6 +21,7 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
     readonly InterpolatedStringBuilder sb = new(stringBuilder: new(8000));
 
     readonly CompInfo compInfo = context.CompInfo;
+
     // minimum at 1 because of generated type braces
     int bracesToCloseOnEnd = 1;
 
@@ -52,9 +53,16 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
         DeclareTopLevelStatements();
         WriteDeclarationClasses();
         WriteDebugView();
-        WriteCustomState();
+        if (context.Configuration.OpenState is true) {
+            WriteCustomState();
+        }
+
         WriteTypeAttributes();
         WriteTypeDeclaration();
+        if (context.Configuration.OpenState is false) {
+            WriteCustomState();
+        }
+
         WriteConstructors();
         WriteFields();
         WriteExplicitInterfaceMembers();
@@ -70,23 +78,6 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
         WriteEndOfType();
 
         WriteEndOfFile();
-
-        if (compInfo.SystemTextJsonAvailable && context.Configuration.GenerateSystemTextJsonConverter is true) {
-            sb.AppendLine("namespace Internal.Perf.Holders.Serialization.SystemTextJson\n{");
-            bracesToCloseOnEnd++;
-            // WriteJsonConverter();
-            // WriteGenericJsonConverter();
-            sb.AppendLine("}");
-            bracesToCloseOnEnd--;
-        }
-
-        if (compInfo.MessagePackAvailable && context.Configuration.GenerateMessagePackFormatter is true) {
-            sb.AppendLine("namespace Internal.Perf.Holders.Serialization.MessagePack\n{");
-            bracesToCloseOnEnd++;
-            // WriteMessagePackFormatter();
-            sb.AppendLine("}");
-            bracesToCloseOnEnd--;
-        }
     }
 
     void DeclareTopLevelStatements() {
@@ -158,7 +149,10 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
     // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
 
     void WriteCustomState() {
-        var accessibilityModifier = context.MultiResult.Accessibility is TypeAccessibility.Public ? "public " : "";
+        var accessibilityModifier = context.Configuration.OpenState is true
+            && context.MultiResult.Accessibility is TypeAccessibility.Public
+                ? "public "
+                : "";
         sb.AppendInterpolatedLine($"{accessibilityModifier}enum {context.MultiResult.OnlyName}State : byte {{");
         sb.Indent++;
         sb.AppendLine("Default = 0,");
@@ -197,7 +191,7 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
             """
         );
 
-        if (context.ShouldGenerateJsonConverters()) {
+        if (context.ShouldGenerateJsonConverter()) {
             sb.AppendInterpolatedLine(
                 $"[global::System.Text.Json.Serialization.JsonConverterAttribute(typeof({context.GeneratedJsonConverterTypeForAttribute}))]"
             );
@@ -207,7 +201,7 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
             );
         }
 
-        if (context.ShouldGenerateMessagePackFormatters()) {
+        if (context.ShouldGenerateMessagePackFormatter()) {
             sb.AppendInterpolatedLine(
                 $"[global::MessagePack.MessagePackFormatterAttribute(typeof({context.GeneratedMessagePackFormatterTypeForAttribute()}))]"
             );

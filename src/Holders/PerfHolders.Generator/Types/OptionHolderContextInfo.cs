@@ -74,43 +74,31 @@ readonly record struct OptionHolderContextInfo(
         public const string DefaultProperty = "IsSome";
     }
 
-    public bool ShouldGenerateJsonConverters() {
+    public bool ShouldGenerateJsonConverter() {
+        if (CompInfo.SystemTextJsonAvailable is false) {
+            return false;
+        }
+
         if (Configuration.GenerateSystemTextJsonConverter is not true) {
             return false;
         }
 
-        if (Option.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-            return false;
-        }
-
-        foreach (var ct in ContainingTypes) {
-            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-                return false;
-            }
-        }
-
-        return true;
+        return GlobalAccessibility is TypeAccessibility.Public or TypeAccessibility.Internal;
     }
 
     public string GeneratedJsonConverterTypeForAttribute { get; } =
         $"global::Perf.Holders.Serialization.SystemTextJson.{(Some.IsTypeParameter ? "JsonConverterFactory" : "JsonConverter")}_{Option.OnlyName}";
 
-    public bool ShouldGenerateMessagePackFormatters() {
+    public bool ShouldGenerateMessagePackFormatter() {
+        if (CompInfo.MessagePackAvailable is false) {
+            return false;
+        }
+
         if (Configuration.GenerateMessagePackFormatter is not true) {
             return false;
         }
 
-        if (Option.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-            return false;
-        }
-
-        foreach (var ct in ContainingTypes) {
-            if (ct.Accessibility is not TypeAccessibility.Public and not TypeAccessibility.Internal) {
-                return false;
-            }
-        }
-
-        return true;
+        return GlobalAccessibility is TypeAccessibility.Public or TypeAccessibility.Internal;
     }
 
     public string GeneratedMessagePackFormatterTypeForAttribute() {
@@ -119,7 +107,7 @@ readonly record struct OptionHolderContextInfo(
             : $"global::Perf.Holders.Serialization.MessagePack.MessagePackFormatter_{Option.OnlyName}";
     }
 
-    public TypeAccessibility InheritedAccessibility { get; } =
+    public TypeAccessibility GlobalAccessibility { get; } =
         (TypeAccessibility)Math.Max((int)Option.Accessibility, (int)ContainingTypes.Max(x => x.Accessibility));
 }
 

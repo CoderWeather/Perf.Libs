@@ -28,7 +28,6 @@ sealed class MultiResultMessagePackSourceBuilder(MultiResultHolderContextInfo co
         Preparation();
         DeclareTopLevelStatements();
         WriteMessagePackFormatter();
-        // WriteEndOfType();
         WriteEndOfFile();
         return sb.ToString();
     }
@@ -48,18 +47,16 @@ sealed class MultiResultMessagePackSourceBuilder(MultiResultHolderContextInfo co
     }
 
     void WriteMessagePackFormatter() {
-        if (context.MultiResult.TypeParameterCount > 0) {
-            return;
-        }
-
-        var accessibility = context.MultiResult.Accessibility is TypeAccessibility.Public ? "public " : "";
+        var accessibility = context.GlobalAccessibility is TypeAccessibility.Public ? "public " : "";
         const string msgPack = "global::MessagePack";
+        var typeParametersConstraints = context.MultiResult.TypeParameterCount > 0 ? $"    {context.TypeParametersConstraints(' ')} " : "";
+
         sb.AppendInterpolatedLine(
             $$"""
             [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Never)]
-            {{accessibility}}sealed class MessagePackFormatter_{{context.MultiResult.OnlyName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.MultiResult.GlobalName}}>
-            {
-                public static readonly MessagePackFormatter_{{context.MultiResult.OnlyName}} Instance = new();
+            {{accessibility}}sealed class MessagePackFormatter_{{context.MultiResult.DeclarationName}} : {{msgPack}}.Formatters.IMessagePackFormatter<{{context.MultiResult.GlobalName}}>
+            {{typeParametersConstraints}}{
+                public static readonly MessagePackFormatter_{{context.MultiResult.DeclarationName}} Instance = new();
             """
         );
         sb.Indent++;

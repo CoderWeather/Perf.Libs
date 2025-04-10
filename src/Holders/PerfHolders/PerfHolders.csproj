@@ -7,7 +7,7 @@
         <NoWarn>$(NoWarn);RS2000,RS2008</NoWarn>
 
         <PackageId>PerfHolders</PackageId>
-        <Version>1.4.3</Version>
+        <Version>1.5.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -23,12 +23,13 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
     </PropertyGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageReference Include="System.Threading.Tasks.Extensions" />
-    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\PerfHolders.Generator\PerfHolders.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+      <PackageReference Include="System.Threading.Tasks.Extensions" />
     </ItemGroup>
 
 </Project>

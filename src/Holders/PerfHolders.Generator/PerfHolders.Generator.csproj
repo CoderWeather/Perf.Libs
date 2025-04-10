@@ -13,6 +13,9 @@
         <IsPackable>false</IsPackable>
 
         <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+
+        <PackageId>PerfHolders.Generator</PackageId>
+        <Version>1.5.0</Version>
     </PropertyGroup>
 
     <ItemGroup>

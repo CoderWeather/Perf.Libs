@@ -12,7 +12,7 @@
 
     <PropertyGroup>
         <PackageId>PerfHolders.Serialization.SystemTextJson</PackageId>
-        <Version>1.4.4</Version>
+        <Version>1.5.0</Version>
         <Authors>coderweather</Authors>
         <Description>Struct based value holders for C#.</Description>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -21,12 +21,12 @@
         <PackageTags>result option holder valueobject csharp c# perf</PackageTags>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageReference Include="System.Text.Json" />
-    </ItemGroup>
-
     <ItemGroup>
         <ProjectReference Include="../PerfHolders/PerfHolders.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+      <PackageReference Include="System.Text.Json" />
     </ItemGroup>
 
 </Project>

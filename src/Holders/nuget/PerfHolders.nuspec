@@ -2,7 +2,7 @@
     <metadata>
         <id>PerfHolders</id>
         <title>Perf.Holders</title>
-        <version>1.4.5</version>
+        <version>1.5.0</version>
         <authors>coderweather</authors>
         <description>Struct based value holders for C#.</description>
         <license type="file">LICENSE</license>
@@ -14,8 +14,8 @@
             <group targetFramework="net8.0" />
             <group targetFramework="net9.0" />
             <group targetFramework="netstandard2.0">
-                <dependency id="System.Threading.Tasks.Extensions" version="4.6.0" exclude="Build,Analyzers" />
-                <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.1.0" exclude="Build,Analyzers" />
+                <dependency id="System.Threading.Tasks.Extensions" version="4.6.3" exclude="Build,Analyzers" />
+                <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.1.2" exclude="Build,Analyzers" />
             </group>
         </dependencies>
     </metadata>

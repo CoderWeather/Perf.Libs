@@ -202,7 +202,7 @@ static class StringBuilderExtensions {
 
     public static StringBuilder AppendInterpolatedLine(this StringBuilder sb, DefaultInterpolatedStringHandler interpolatedStringHandler) {
         AppendInterpolated(sb, interpolatedStringHandler);
-        sb.AppendLine();
+        sb.Append('\n');
         return sb;
     }
 }

@@ -71,7 +71,7 @@ sealed class InterpolatedStringBuilder(
                 }
 
                 sb.Append(span[..newLineIndex]);
-                sb.AppendLine();
+                sb.Append('\n');
                 shouldIndent = true;
                 ValidateIndent();
                 span = span[(newLineIndex + 1)..];
@@ -85,12 +85,12 @@ sealed class InterpolatedStringBuilder(
     public void AppendLine(string s) {
         ValidateIndent();
         Append(s);
-        sb.AppendLine();
+        sb.Append('\n');
         shouldIndent = true;
     }
 
     public void AppendLine() {
-        sb.AppendLine();
+        sb.Append('\n');
         shouldIndent = true;
     }
 
@@ -107,7 +107,7 @@ sealed class InterpolatedStringBuilder(
                 }
 
                 sb.Append(span[..newLineIndex]);
-                sb.AppendLine();
+                sb.Append('\n');
                 shouldIndent = true;
                 ValidateIndent();
                 span = span[(newLineIndex + 1)..];
@@ -122,7 +122,7 @@ sealed class InterpolatedStringBuilder(
     public void AppendInterpolatedLine(DefaultInterpolatedStringHandler interpolatedString) {
         ValidateIndent();
         AppendInterpolated(interpolatedString);
-        sb.AppendLine();
+        sb.Append('\n');
     }
 
     public int Length { get => sb.Length; set => sb.Length = value; }

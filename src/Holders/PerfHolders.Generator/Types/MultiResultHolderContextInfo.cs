@@ -64,6 +64,10 @@ readonly record struct MultiResultHolderContextInfo(
         bool HavePartial,
         MultiResultElementStateCheckInfo StateCheck
     ) {
+        /// <summary>
+        /// For older than net9 compatibility
+        /// </summary>
+        public bool OnlyNameOverriden { get; init; }
         public static ImmutableArray<string> Properties => [ "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth" ];
         public static ImmutableArray<string> Fields => [ "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth" ];
 
@@ -74,7 +78,12 @@ readonly record struct MultiResultHolderContextInfo(
     public readonly record struct MultiResultElementStateCheckInfo(
         string Property,
         bool HavePartial
-    );
+    ) {
+        /// <summary>
+        /// For older than net9 compatibility
+        /// </summary>
+        public bool OnlyNameOverriden { get; init; }
+    }
 
     /// <summary>
     /// &lt;,,,&gt;

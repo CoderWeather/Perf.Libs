@@ -272,7 +272,7 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
     }
 
     void WriteExplicitInterfaceMembers() {
-        if (context.Elements.Any(x => x.HavePartial) is false) {
+        if (context.Elements.Any(x => x.HavePartial || x.OnlyNameOverriden) is false) {
             return;
         }
 
@@ -289,7 +289,7 @@ sealed class MultiResultSourceBuilder(MultiResultHolderContextInfo context) {
         var typedMarker = typedMarkerSb.ToString();
 
         foreach (var el in context.Elements) {
-            if (el.HavePartial is false) {
+            if (el.HavePartial is false && el.OnlyNameOverriden is false) {
                 continue;
             }
 

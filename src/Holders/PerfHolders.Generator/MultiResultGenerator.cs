@@ -161,6 +161,25 @@ sealed class MultiResultGenerator : IIncrementalGenerator {
             }
         }
 
+        // For older than net9 compatibility
+        var namesOverrides = multiResult.GetAttributes().ReadPropertyNamesOverrides();
+        foreach (var no in namesOverrides) {
+            var noGlobalName = no.Type.GlobalName();
+            for (var elIndex = 0; elIndex < elements.Count; elIndex++) {
+                var el = elements[elIndex];
+                if (el.Type.Equals(noGlobalName) is false) {
+                    continue;
+                }
+
+                elements[elIndex] = el with {
+                    Property = no.Name,
+                    Field = no.Name.ToFieldFormat(),
+                    StateCheck = no.IsName is not null ? new(Property: no.IsName, false) { OnlyNameOverriden = true } : el.StateCheck,
+                    OnlyNameOverriden = true
+                };
+            }
+        }
+
         var containingTypes = multiResult.GetContainingTypeList();
         var configuration = multiResult.GetAttributes().ReadMultiResultConfigurationFromAttributes();
 

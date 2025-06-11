@@ -2,6 +2,8 @@
 
 namespace Perf.Holders.Generator.Types;
 
+using System.Collections.Immutable;
+using Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -59,3 +61,35 @@ static class CompInfoExtensions {
 }
 
 readonly record struct HolderContainingType(TypeAccessibility Accessibility, string Kind, string Name);
+
+/// <summary>
+/// For older than net9 compatibility
+/// </summary>
+readonly record struct HolderPropertyNameOverride(ITypeSymbol Type, string Name, string? IsName);
+
+static class HolderPropertyNameOverrideExtensions {
+    public static HolderPropertyNameOverride[] ReadPropertyNamesOverrides(
+        this ImmutableArray<AttributeData> attributes
+    ) {
+        var attributeData = attributes
+            .Where(x => x.AttributeClass?.FullPath().Equals(HolderTypeNames.HolderPropertyNameOverrideAttributeFullName) ?? false)
+            .ToArray();
+        if (attributeData is [ ]) {
+            return [ ];
+        }
+
+        var results = new HolderPropertyNameOverride[attributeData.Length];
+
+        for (var i = 0; i < attributeData.Length; i++) {
+            var attribute = attributeData[i];
+
+            results[i] = new(
+                Type: (ITypeSymbol)attribute.ConstructorArguments[0].Value!,
+                Name: (string)attribute.ConstructorArguments[1].Value!,
+                IsName: attribute.ConstructorArguments[2].Value as string
+            );
+        }
+
+        return results;
+    }
+}

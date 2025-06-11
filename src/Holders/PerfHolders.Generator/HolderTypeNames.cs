@@ -18,4 +18,6 @@ static class HolderTypeNames {
     public const string MultiResultConfigurationFullName = "Perf.Holders.Attributes.MultiResultHolderConfigurationAttribute";
     public const string MultiResultSerializationSystemTextJson = "Perf.Holders.Serialization.SystemTextJson.MultiResultHolderJsonConverterFactory";
     public const string MultiResultSerializationMessagePack = "Perf.Holders.Serialization.MessagePack.MultiResultHolderFormatterResolver";
+
+    public const string HolderPropertyNameOverrideAttributeFullName = "Perf.Holders.Attributes.HolderPropertyNameOverrideAttribute";
 }
